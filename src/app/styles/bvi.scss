@@ -1,0 +1,87 @@
+// =============================================================================
+// Версия для слабовидящих: перекрытие палитры и типографики.
+//
+// Режим включается data-атрибутами на <html> (см. features/bvi/useBvi.ts).
+// Правила намеренно агрессивные (!important и универсальный селектор):
+// компоненты используют собственные фоны и цвета, и точечно перебить их
+// нельзя — задача режима в том, чтобы палитра стала ровно одной.
+// =============================================================================
+
+html[data-bvi='on'] {
+  --bvi-bg: #ffffff;
+  --bvi-fg: #000000;
+  --bvi-link: #0000cc;
+
+  font-size: 20px;
+
+  &[data-bvi-theme='black'] {
+    --bvi-bg: #000000;
+    --bvi-fg: #ffffff;
+    --bvi-link: #ffff00;
+  }
+
+  &[data-bvi-theme='blue'] {
+    --bvi-bg: #9dd1ff;
+    --bvi-fg: #063462;
+    --bvi-link: #063462;
+  }
+
+  &[data-bvi-size='2'] { font-size: 24px; }
+  &[data-bvi-size='3'] { font-size: 30px; }
+
+  body,
+  body *:not(svg):not(svg *) {
+    background-color: var(--bvi-bg) !important;
+    background-image: none !important;
+    color: var(--bvi-fg) !important;
+    border-color: var(--bvi-fg) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif !important;
+    letter-spacing: normal !important;
+  }
+
+  a,
+  a * {
+    color: var(--bvi-link) !important;
+    text-decoration: underline !important;
+  }
+
+  // Декоративные иконки не должны спорить с монохромной палитрой.
+  svg { filter: grayscale(100%) contrast(120%); }
+  svg * { stroke: var(--bvi-fg) !important; fill: none !important; }
+
+  img { filter: grayscale(100%); }
+
+  // Анимации и параллаксы в этом режиме мешают.
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  // При 24–30px семь пунктов меню перестают помещаться в строку и уезжают
+  // за правый край. В этом режиме шапке разрешён перенос.
+  .header__inner,
+  .header__nav {
+    flex-wrap: wrap;
+  }
+
+  .header__nav {
+    justify-content: flex-start;
+  }
+
+  .header__nav-link,
+  .header__phone-num {
+    white-space: normal !important;
+  }
+
+  &[data-bvi-images='off'] {
+    img,
+    picture,
+    video {
+      display: none !important;
+    }
+  }
+}

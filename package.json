@@ -1,0 +1,51 @@
+{
+  "name": "dinamchiki-newest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Сайт детского футбольного клуба «Динамчики» (Vue 3 + GraphQL)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "node tests/e2e/smoke.cjs",
+    "verify": "npm run lint && npm run type-check && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.11.8",
+    "@vue/apollo-composable": "^4.2.1",
+    "@vueuse/core": "^11.1.0",
+    "graphql": "^16.9.0",
+    "graphql-tag": "^2.12.6",
+    "graphql-ws": "^5.16.0",
+    "pinia": "^2.2.4",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@graphql-tools/schema": "^10.1.0",
+    "@types/node": "^22.7.4",
+    "@typescript-eslint/parser": "^8.68.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.5.1",
+    "eslint": "^9.12.0",
+    "eslint-plugin-vue": "^9.29.0",
+    "globals": "^17.11.0",
+    "happy-dom": "^20.11.6",
+    "sass": "^1.79.4",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.8",
+    "vitest": "^4.1.11",
+    "vue-eslint-parser": "^9.4.3",
+    "vue-tsc": "^2.1.6"
+  }
+}

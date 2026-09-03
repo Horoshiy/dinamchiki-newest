@@ -1,0 +1,22 @@
+name: dinamchiki-newest
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dinamchiki-newest:latest
+    container_name: dinamchiki-newest
+    restart: unless-stopped
+    ports:
+      # Внутри Docker контейнер слушает 80. На хосте биндим на 8277 — не пересекается
+      # с другими сервисами (bestplayer 9091, squad 9090, dynamost-api 8081 и т.д.)
+      - "127.0.0.1:8277:80"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

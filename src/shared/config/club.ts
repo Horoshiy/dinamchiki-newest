@@ -1,0 +1,55 @@
+// =============================================================================
+// Единый источник правды по контактам клуба.
+//
+// Телефон и email — реальные, сверены с действующим сайтом dinamchiki.ru:
+// именно этот номер указан там в подразделах «Основные сведения»,
+// «Руководство», «Вакантные места» и «Организация питания».
+//
+// Telegram для связи и Telegram-канал — это РАЗНЫЕ адреса, не путать:
+// @Dinamchiki_DFC — личка для вопросов и записи, t.me/dinamchiki — канал.
+// WhatsApp живёт на отдельном номере, не на клубном телефоне.
+//
+// Раньше телефон был продублирован в трёх местах с тремя разными номерами
+// (шапка, моки контактов, JSON-LD в index.html). Теперь — только отсюда.
+// =============================================================================
+
+/**
+ * Контакты реальные, поэтому флаг снят.
+ *
+ * ВНИМАНИЕ: флаг сейчас нигде не читается — комментарий про LeadForm
+ * и HomeCta не соответствует коду. Либо подключить его там, где UI обещает
+ * обратный звонок, либо удалить как мёртвый.
+ */
+export const IS_DEMO_CONTACTS = false
+
+/** Телефон в международном формате — для tel:, WhatsApp и JSON-LD. */
+export const CLUB_PHONE_E164 = '+79283200494'
+
+/** Телефон для отображения. */
+export const CLUB_PHONE_DISPLAY = '+7 (928) 320-04-94'
+
+/** href для кнопки звонка. */
+export const CLUB_PHONE_HREF = `tel:${CLUB_PHONE_E164}`
+
+/** Telegram для связи (username без @ используется в ссылке). */
+export const CLUB_TELEGRAM = '@Dinamchiki_DFC'
+export const CLUB_TELEGRAM_HREF = `https://t.me/${CLUB_TELEGRAM.replace('@', '')}`
+
+/** Telegram-канал клуба — публикации, а не переписка. */
+export const CLUB_TELEGRAM_CHANNEL = '@dinamchiki'
+export const CLUB_TELEGRAM_CHANNEL_HREF = `https://t.me/${CLUB_TELEGRAM_CHANNEL.replace('@', '')}`
+
+/**
+ * WhatsApp — отдельный номер, НЕ клубный телефон.
+ * Раньше выводился из CLUB_PHONE_E164, и кнопка вела в несуществующий чат.
+ */
+export const CLUB_WHATSAPP = '79187610009'
+export const CLUB_WHATSAPP_DISPLAY = '+7 (918) 761-00-09'
+export const CLUB_WHATSAPP_HREF = `https://wa.me/${CLUB_WHATSAPP}`
+
+/** Email клуба. */
+export const CLUB_EMAIL = 'info@dinamchiki.ru'
+export const CLUB_EMAIL_HREF = `mailto:${CLUB_EMAIL}`
+
+/** Куда ведут кнопки «Записаться» по всему сайту. */
+export const SIGNUP_ROUTE = '/contacts#lead'
