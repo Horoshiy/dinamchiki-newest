@@ -16,6 +16,8 @@ interface ImportMetaEnv {
   readonly VITE_ALLOW_INDEXING: string
   /** Телефон клуба для JSON-LD. */
   readonly VITE_CLUB_PHONE: string
+  /** Номер счётчика Яндекс.Метрики. На стенде не задаётся. */
+  readonly VITE_YM_ID?: string
 }
 
 interface ImportMeta {

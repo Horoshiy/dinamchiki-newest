@@ -57,6 +57,7 @@ npm install
 
 npm run dev         # dev-сервер, порт 5173
 npm run build       # vue-tsc --noEmit && vite build
+npm run build:static  # build + пререндер страниц в готовый HTML (так собирать бету и прод)
 npm run preview     # превью прод-сборки, порт 4173
 npm run type-check  # только типы
 npm run lint        # eslint (flat config, eslint.config.js)
@@ -118,6 +119,7 @@ E2E-прогон работает против собранного прилож
 | `VITE_SITE_URL` | канонический адрес сборки — из него строятся `canonical`, `og:url` и `sitemap.xml` |
 | `VITE_ALLOW_INDEXING` | `true` разрешает индексацию. **На стенде обязательно `false`** |
 | `VITE_CLUB_PHONE` | телефон для JSON-LD; должен совпадать с `src/shared/config/club.ts` |
+| `VITE_YM_ID` | номер счётчика Яндекс.Метрики (31195281). **На стенде не задавать** |
 
 Шаблоны: `.env.example` (бета) и `.env.production.example` (прод).
 
@@ -151,7 +153,30 @@ export const USE_MOCKS_ONLY = false   // текущее значение — и�
 JSON-LD в `index.html` берёт телефон из `VITE_CLUB_PHONE` — держать в
 соответствии с `club.ts`.
 
+## Пререндер
+
+Яндекс плохо исполняет JavaScript: у SPA он видит пустой `<div id="app">`.
+Поэтому бета и прод собираются `npm run build:static`: после сборки
+`scripts/prerender.mjs` открывает каждую страницу в headless Chrome и
+сохраняет готовый HTML — `dist/<путь>/index.html`, `dist/404.html` и
+исходную оболочку `dist/spa.html` для страниц вне пререндера (игроки,
+турниры, новые группы). Список страниц — `vite-plugins/static-routes.json`
+плюс группы с расписанием и тренеры из API; они же дописываются в `sitemap.xml`.
+
+- Страницы открываются на домене `VITE_SITE_URL` (локальный HTTPS-сервер
+  и `--host-resolver-rules`), иначе API отказывает по CORS и сайт тихо
+  показывает моки. Снимок с моками или со скелетоном скрипт бракует.
+- Данные в HTML — на момент сборки. Расписание из CRM меняется раз в час,
+  поэтому после заметных изменений сайт надо пересобрать; Vue в браузере
+  всё равно подтягивает свежие данные.
+- Нужны Chrome (`CHROME_BIN` или chrome-headless-shell из кэша Playwright)
+  и `openssl`. В Docker-образе их нет — там собирается обычная SPA.
+
 ## Деплой
+
+```bash
+npm run build:static && sudo rsync -a --delete dist/ /srv/dynamost-flowise/
+```
 
 Бета обслуживается **Caddy** (`/etc/caddy/addons/flowise.conf`), статикой из
 собранного `dist/` в `/srv/dynamost-flowise`. Эталонный vhost —
@@ -182,11 +207,15 @@ caddy validate --config docker/Caddyfile.example --adapter caddyfile
 2. **Бэкенд** — добавить боевой домен фронтенда в `CORS_ORIGINS`
    (переменная окружения systemd-юнита). Без этого браузер заблокирует
    запросы с нового домена.
-3. **Caddy** — vhost с боевыми именами по образцу
-   `docker/Caddyfile.example` и `/etc/caddy/addons/apigql.conf`.
-4. **Контакты** — заменить демо-значения в `src/shared/config/club.ts`
+3. **Веб-сервер** — dinamchiki.ru на проде обслуживает nginx: готовый vhost
+   `docker/nginx.dinamchiki.ru.conf` (пререндер, честный 404, 301 со старых
+   адресов прежнего сайта, блоки `/vkid/` и `/uploads/` из действующего
+   конфига). До переезда решить судьбу `/nasledie/<slug>` — эти страницы
+   есть только на прежнем сайте.
+4. **Сборка** — `npm run build:static`, не `npm run build`.
+5. **Контакты** — заменить демо-значения в `src/shared/config/club.ts`
    и снять `IS_DEMO_CONTACTS`.
-5. **Проверка** — `npm run verify`, затем
+6. **Проверка** — `npm run verify`, затем
    `BASE_URL=https://<боевой-домен> npm run e2e`.
 
 ## Что осталось сделать

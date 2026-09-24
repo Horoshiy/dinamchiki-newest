@@ -65,7 +65,7 @@ describe('роутер: SEO-мета', () => {
 
   it('title собирается из meta и имени сайта', async () => {
     await go('/teams')
-    expect(document.title).toContain('Команды')
+    expect(document.title).toContain('Группы и расписание')
     expect(document.title).toContain('Динамчики')
   })
 

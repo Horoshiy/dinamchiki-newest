@@ -43,18 +43,18 @@ describe('vite-plugins/seo', () => {
   })
 
   describe('прод (индексация разрешена)', () => {
-    const files = emit({ VITE_SITE_URL: 'https://dynamost.ru', VITE_ALLOW_INDEXING: 'true' })
+    const files = emit({ VITE_SITE_URL: 'https://dinamchiki.ru', VITE_ALLOW_INDEXING: 'true' })
 
     it('robots.txt разрешает обход и указывает на sitemap своего домена', () => {
       expect(files['robots.txt']).toContain('Allow: /')
-      expect(files['robots.txt']).toContain('Sitemap: https://dynamost.ru/sitemap.xml')
+      expect(files['robots.txt']).toContain('Sitemap: https://dinamchiki.ru/sitemap.xml')
     })
 
     it('sitemap выпускается и содержит все публичные маршруты', () => {
       const xml = files['sitemap.xml']
       expect(xml).toBeDefined()
       for (const path of ['/', '/teams', '/coaches', '/tournaments', '/gallery', '/contacts']) {
-        expect(xml).toContain(`<loc>https://dynamost.ru${path}</loc>`)
+        expect(xml).toContain(`<loc>https://dinamchiki.ru${path}</loc>`)
       }
     })
 
@@ -74,9 +74,9 @@ describe('vite-plugins/seo', () => {
   })
 
   it('завершающий слэш в VITE_SITE_URL не даёт двойного слэша', () => {
-    const files = emit({ VITE_SITE_URL: 'https://dynamost.ru/', VITE_ALLOW_INDEXING: 'true' })
-    expect(files['sitemap.xml']).toContain('<loc>https://dynamost.ru/</loc>')
-    expect(files['sitemap.xml']).not.toContain('dynamost.ru//')
+    const files = emit({ VITE_SITE_URL: 'https://dinamchiki.ru/', VITE_ALLOW_INDEXING: 'true' })
+    expect(files['sitemap.xml']).toContain('<loc>https://dinamchiki.ru/</loc>')
+    expect(files['sitemap.xml']).not.toContain('dinamchiki.ru//')
   })
 
   it('без VITE_ALLOW_INDEXING индексация запрещена (безопасное умолчание)', () => {

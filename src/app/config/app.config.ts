@@ -9,6 +9,8 @@ export interface AppConfig {
   siteUrl: string
   /** Разрешена ли индексация этой сборки (на стенде — нет). */
   allowIndexing: boolean
+  /** Номер счётчика Яндекс.Метрики; пусто — Метрика не подключается. */
+  metrikaId: number | null
 }
 
 function readEnv(key: keyof ImportMetaEnv, fallback: string): string {
@@ -33,4 +35,5 @@ export const appConfig: AppConfig = {
   // Без завершающего слэша — иначе canonical получит двойной.
   siteUrl: readEnv('VITE_SITE_URL', '').replace(/\/+$/, ''),
   allowIndexing: readEnv('VITE_ALLOW_INDEXING', 'false') === 'true',
+  metrikaId: Number(readEnv('VITE_YM_ID', '')) || null,
 }

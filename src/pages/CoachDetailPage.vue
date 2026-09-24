@@ -28,6 +28,7 @@ import type { Coach, CoachAchievement, CoachSpec } from '@/entities/coach/coach.
 import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
 import { useCoachQuery } from '@/shared/api/composables'
 import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { usePageMeta } from '@/shared/lib/page-meta'
 
 const props = defineProps<{ id: string }>()
 
@@ -37,6 +38,18 @@ const { data, loading, error } = useCoachQuery(idRef)
 const coach = computed<Coach | null>(() => {
   const d = data.value as { coach?: Coach | null } | null
   return d?.coach ?? null
+})
+
+usePageMeta(() => {
+  const c = coach.value
+  if (!c) return null
+  const about = c.description.trim()
+  return {
+    title: `${c.fullName} — тренер по футболу`,
+    description: about
+      ? `${c.fullName}, ${c.role.toLowerCase()} ДФК «Динамчики» (Ставрополь). ${about}`.slice(0, 300)
+      : `${c.fullName}, ${c.role.toLowerCase()} детского футбольного клуба «Динамчики» в Ставрополе.`,
+  }
 })
 
 watch(error, (e) => { if (e) console.warn('[CoachDetailPage]', e.message) })

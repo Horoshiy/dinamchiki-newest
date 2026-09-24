@@ -1,0 +1,102 @@
+[
+  {
+    "path": "/",
+    "changefreq": "weekly",
+    "priority": "1.0"
+  },
+  {
+    "path": "/teams",
+    "changefreq": "weekly",
+    "priority": "0.9"
+  },
+  {
+    "path": "/coaches",
+    "changefreq": "monthly",
+    "priority": "0.8"
+  },
+  {
+    "path": "/tournaments",
+    "changefreq": "weekly",
+    "priority": "0.9"
+  },
+  {
+    "path": "/gallery",
+    "changefreq": "weekly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/contacts",
+    "changefreq": "monthly",
+    "priority": "0.8"
+  },
+  {
+    "path": "/sveden",
+    "changefreq": "monthly",
+    "priority": "0.9"
+  },
+  {
+    "path": "/sveden/common",
+    "changefreq": "monthly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/sveden/struct",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  },
+  {
+    "path": "/sveden/document",
+    "changefreq": "monthly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/sveden/education",
+    "changefreq": "monthly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/sveden/managers",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  },
+  {
+    "path": "/sveden/employees",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  },
+  {
+    "path": "/sveden/objects",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  },
+  {
+    "path": "/sveden/grants",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  },
+  {
+    "path": "/sveden/paid_edu",
+    "changefreq": "monthly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/sveden/budget",
+    "changefreq": "yearly",
+    "priority": "0.5"
+  },
+  {
+    "path": "/sveden/vacant",
+    "changefreq": "weekly",
+    "priority": "0.7"
+  },
+  {
+    "path": "/sveden/inter",
+    "changefreq": "yearly",
+    "priority": "0.5"
+  },
+  {
+    "path": "/sveden/catering",
+    "changefreq": "monthly",
+    "priority": "0.6"
+  }
+]

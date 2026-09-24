@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite'
+import staticRoutes from './static-routes.json'
 
 /**
  * Генерация robots.txt и sitemap.xml на этапе сборки.
@@ -10,34 +11,14 @@ import type { Plugin } from 'vite'
  * конфигурации, а не кода.
  */
 
-/** Статические маршруты сайта. Детальные (:id) в sitemap не попадают. */
-const STATIC_ROUTES: ReadonlyArray<{ path: string; changefreq: string; priority: string }> = [
-  { path: '/',            changefreq: 'weekly',  priority: '1.0' },
-  { path: '/teams',       changefreq: 'weekly',  priority: '0.9' },
-  { path: '/coaches',     changefreq: 'monthly', priority: '0.8' },
-  { path: '/tournaments', changefreq: 'weekly',  priority: '0.9' },
-  { path: '/gallery',     changefreq: 'weekly',  priority: '0.7' },
-  { path: '/contacts',    changefreq: 'monthly', priority: '0.8' },
-  // Раздел «Сведения об образовательной организации» — обязательный по ст. 29
-  // Федерального закона № 273-ФЗ, в карте сайта должен быть целиком.
-  { path: '/sveden',           changefreq: 'monthly', priority: '0.9' },
-  { path: '/sveden/common',    changefreq: 'monthly', priority: '0.7' },
-  { path: '/sveden/struct',    changefreq: 'monthly', priority: '0.6' },
-  { path: '/sveden/document',  changefreq: 'monthly', priority: '0.7' },
-  { path: '/sveden/education', changefreq: 'monthly', priority: '0.7' },
-  { path: '/sveden/managers',  changefreq: 'monthly', priority: '0.6' },
-  { path: '/sveden/employees', changefreq: 'monthly', priority: '0.6' },
-  { path: '/sveden/objects',   changefreq: 'monthly', priority: '0.6' },
-  { path: '/sveden/grants',    changefreq: 'monthly', priority: '0.6' },
-  { path: '/sveden/paid_edu',  changefreq: 'monthly', priority: '0.7' },
-  { path: '/sveden/budget',    changefreq: 'yearly',  priority: '0.5' },
-  { path: '/sveden/vacant',    changefreq: 'weekly',  priority: '0.7' },
-  { path: '/sveden/inter',     changefreq: 'yearly',  priority: '0.5' },
-  { path: '/sveden/catering',  changefreq: 'monthly', priority: '0.6' },
-]
+/**
+ * Статические маршруты сайта — общий список для sitemap.xml и пререндера
+ * (scripts/prerender.mjs). Детальные (:id) добавляет пререндер из API.
+ */
+const STATIC_ROUTES: ReadonlyArray<{ path: string; changefreq: string; priority: string }> = staticRoutes
 
 export function seoPlugin(env: Record<string, string>): Plugin {
-  const siteUrl = (env.VITE_SITE_URL || 'https://dynamost.ru').replace(/\/+$/, '')
+  const siteUrl = (env.VITE_SITE_URL || 'https://dinamchiki.ru').replace(/\/+$/, '')
   const allowIndexing = env.VITE_ALLOW_INDEXING === 'true'
 
   return {

@@ -20,6 +20,7 @@ import { useTeamQuery, usePlayersQuery } from '@/shared/api/composables'
 import type { Team } from '@/entities/team/team.types'
 import type { Player } from '@/entities/player/player.types'
 import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { usePageMeta } from '@/shared/lib/page-meta'
 
 const props = defineProps<{ id: string }>()
 
@@ -41,6 +42,22 @@ const roster = computed<ReadonlyArray<Player>>(() => {
 })
 
 watch(error, (e) => { if (e) console.warn('[TeamDetailPage]', e.message) })
+
+// Заголовок и описание из данных группы: иначе у всех групп одинаковый
+// «Команда — ДФК «Динамчики»», и поисковик видит дубли.
+usePageMeta(() => {
+  const t = team.value
+  if (!t) return null
+  const days = t.schedule.map((slot) => `${slot.day} ${slot.time}`).join(', ')
+  return {
+    title: `${t.name}: футбол для детей ${t.ageLabel} в Ставрополе`,
+    description: [
+      `Группа «${t.name}» детского футбольного клуба «Динамчики»: дети ${t.ageLabel}.`,
+      days ? `Тренировки: ${days}.` : '',
+      'Первая тренировка бесплатно.',
+    ].filter(Boolean).join(' '),
+  }
+})
 
 const crumbs = computed(() => [
   { label: 'Главная', to: '/' },

@@ -19,7 +19,7 @@ export default [
   // 800+ предупреждений и топят реальные находки.
   ...pluginVue.configs['flat/essential'],
   {
-    files: ['**/*.{js,ts,vue}'],
+    files: ['**/*.{js,mjs,ts,vue}'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

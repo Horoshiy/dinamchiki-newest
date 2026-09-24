@@ -4,6 +4,8 @@ import { appConfig } from '@/app/config/app.config'
 import DefaultLayout from '@/shared/ui/layout/DefaultLayout.vue'
 import BareLayout from '@/shared/ui/layout/BareLayout.vue'
 import { SVEDEN_LEGACY_REDIRECTS } from '@/entities/sveden/sveden.sections'
+import { applyPageMeta, setLink, setMeta, setOg } from '@/shared/lib/page-meta'
+import { trackPageView } from '@/shared/lib/metrika'
 
 // Lazy-loaded страницы.
 const HomePage        = () => import('@/pages/HomePage.vue')
@@ -48,8 +50,6 @@ declare module 'vue-router' {
   }
 }
 
-const SITE_NAME = 'ДФК «Динамчики»'
-
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -60,7 +60,9 @@ const routes: RouteRecordRaw[] = [
         name: 'home',
         component: HomePage,
         meta: {
-          title: 'Главная',
+          // Главная ранжируется по «детский футбол Ставрополь» — в заголовке
+          // нужны эти слова, а не «Главная».
+          title: 'Детский футбольный клуб в Ставрополе, футбол для детей 3–14 лет',
           description: 'Детский футбольный клуб «Динамчики» в Ставрополе — 17 групп на трёх площадках, дети 3–14 лет, занятия по образовательной лицензии. Абонемент от 4 500 ₽. Первая тренировка — бесплатно.',
           ogImage: '/og/dinamchiki-cover.png',
         },
@@ -70,8 +72,8 @@ const routes: RouteRecordRaw[] = [
         name: 'teams',
         component: TeamsPage,
         meta: {
-          title: 'Команды',
-          description: 'Команды ДФК «Динамчики» по возрастным группам: U-6, U-8, U-10, U-12. Составы, расписание тренировок, тренеры.',
+          title: 'Группы и расписание тренировок',
+          description: 'Группы ДФК «Динамчики» по возрасту и районам Ставрополя: дети 3–14 лет, расписание тренировок, площадки и тренеры.',
           ogImage: '/og/dinamchiki-teams.png',
         },
       },
@@ -132,6 +134,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Игрок',
           description: 'Профиль игрока ДФК «Динамчики»: статистика, достижения, фото, команда и тренер.',
+          // Игроки — дети: их страницы в поиск не отдаём.
+          noIndex: true,
         },
         props: true,
       },
@@ -354,62 +358,26 @@ export const router = createRouter({
 
 /**
  * Обновление <title>, <meta name="description">, og:* и каноникала при смене маршрута.
+ * Детальные страницы уточняют заголовок после загрузки данных (usePageMeta).
  */
 router.afterEach((to) => {
   const meta = to.meta ?? {}
-  const title = typeof meta.title === 'string' ? `${meta.title} — ${SITE_NAME}` : SITE_NAME
 
-  document.title = title
+  applyPageMeta({
+    title: typeof meta.title === 'string' ? meta.title : undefined,
+    description: meta.description ?? 'Детский футбольный клуб «Динамчики» в Ставрополе — тренировки для детей 3–14 лет.',
+    ogImage: meta.ogImage,
+  })
 
-  setMeta('description', meta.description ?? 'Детский футбольный клуб «Динамчики» в Ставрополе — тренировки для детей 3–14 лет.')
-
-  // OG
-  setOg('og:title', title)
-  setOg('og:description', meta.description ?? 'Детский футбольный клуб «Динамчики» в Ставрополе.')
-  setOg('og:image', meta.ogImage ?? '/og/dinamchiki-cover.png')
   // База — канонический домен из env, а не origin текущей вкладки:
-  // иначе стенд объявлял каноничными собственные адреса.
-  setOg('og:url', `${appConfig.siteUrl}${to.fullPath}`)
-
-  // Twitter
-  setMeta('twitter:title', title)
-  setMeta('twitter:description', meta.description ?? 'Детский футбольный клуб «Динамчики» в Ставрополе.')
-  setMeta('twitter:image', meta.ogImage ?? '/og/dinamchiki-cover.png')
-
-  // Canonical
-  setLink('canonical', `${appConfig.siteUrl}${to.fullPath}`)
+  // иначе стенд объявлял каноничными собственные адреса. Без query-строки:
+  // метки utm не должны плодить дубли страниц.
+  setOg('og:url', `${appConfig.siteUrl}${to.path}`)
+  setLink('canonical', `${appConfig.siteUrl}${to.path}`)
 
   // Robots. Неиндексируемая сборка (стенд) закрывается целиком.
   const noIndex = meta.noIndex || !appConfig.allowIndexing
   setMeta('robots', noIndex ? 'noindex, nofollow' : 'index, follow')
+
+  trackPageView(to.fullPath)
 })
-
-function setMeta(name: string, content: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-  if (!el) {
-    el = document.createElement('meta')
-    el.setAttribute('name', name)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('content', content)
-}
-
-function setOg(property: string, content: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
-  if (!el) {
-    el = document.createElement('meta')
-    el.setAttribute('property', property)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('content', content)
-}
-
-function setLink(rel: string, href: string) {
-  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)
-  if (!el) {
-    el = document.createElement('link')
-    el.setAttribute('rel', rel)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('href', href)
-}
