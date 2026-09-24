@@ -32,10 +32,6 @@ const venues = computed<ReadonlyArray<Venue>>(() => {
   return d?.venues ?? []
 })
 
-const primaryVenue = computed<Venue | null>(() =>
-  venues.value.find((v) => v.isPrimary) ?? null,
-)
-
 watch(error, (e) => { if (e) console.warn('[ContactsPage]', e.message) })
 </script>
 
@@ -45,7 +41,7 @@ watch(error, (e) => { if (e) console.warn('[ContactsPage]', e.message) })
       <PageHeader
         eyebrow="Контакты"
         title="Свяжитесь с нами"
-        description="Запишитесь на пробную тренировку, задайте вопрос тренерам или приезжайте в гости — мы всегда рады новым игрокам."
+        description="Первая тренировка бесплатная и ни к чему не обязывает. Запишитесь, задайте вопрос тренерам или приезжайте в гости — мы всегда рады новым игрокам."
       />
     </section>
 
@@ -70,19 +66,15 @@ watch(error, (e) => { if (e) console.warn('[ContactsPage]', e.message) })
             <ContactInfoBlock :contact="contact" />
           </div>
           <div>
-            <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на пробную" />
+            <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на бесплатную пробную" />
             <LeadForm />
           </div>
         </div>
       </section>
 
-      <section v-if="primaryVenue" class="container">
-        <SectionTitle eyebrow="Как добраться" title="Карта проезда" />
-        <MapEmbed
-          :address="primaryVenue.address"
-          :map-url="primaryVenue.mapUrl"
-          :venue-name="primaryVenue.name"
-        />
+      <section v-if="venues.length" class="container">
+        <SectionTitle eyebrow="Как добраться" title="Площадки на карте" />
+        <MapEmbed :venues="venues" />
       </section>
 
       <section v-if="venues.length" class="container">

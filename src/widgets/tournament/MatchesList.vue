@@ -37,19 +37,22 @@ const visibleMatches = computed<ReadonlyArray<TournamentMatch>>(() => {
   } else if (props.filter === 'upcoming') {
     list = list.filter((m) => m.score === null)
   }
-  // Сортировка: сыгранные — свежие сверху; предстоящие — ближайшие сверху
-  list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  // Сыгранные — свежие сверху, предстоящие — ближайшие сверху.
+  // Раньше и те и другие сортировались по убыванию, и в расписании
+  // первым стоял самый дальний матч.
+  const dir = props.filter === 'upcoming' ? 1 : -1
+  list.sort((a, b) => dir * (new Date(a.date).getTime() - new Date(b.date).getTime()))
   if (props.limit) list = list.slice(0, props.limit)
   return list
 })
 
+const TZ = 'Europe/Moscow'
+
 function fmtDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })
+  return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', timeZone: TZ })
 }
 function fmtTime(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
 /** Цвет бейджа типа матча. */
@@ -138,11 +141,14 @@ function kindColor(k: MatchKind): string {
   display: flex;
   flex-direction: column;
   gap: $space-3;
+  // Строки подстраиваются под ширину списка, а не окна: список стоит
+  // в узкой колонке рядом с турнирной таблицей.
+  container: matches / inline-size;
 }
 
 .matches__row {
   display: grid;
-  grid-template-columns: minmax(200px, 280px) 1fr;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
   gap: $space-5;
   padding: $space-4 $space-5;
   background: $color-white;
@@ -159,6 +165,13 @@ function kindColor(k: MatchKind): string {
 
   @media (max-width: $bp-md) {
     grid-template-columns: 1fr;
+    gap: $space-3;
+  }
+
+  // Узкая колонка на широком экране: окно большое, а места в строке нет,
+  // и медиазапрос этого не видит. Смотрим на ширину самого списка.
+  @container matches (max-width: 620px) {
+    grid-template-columns: minmax(0, 1fr);
     gap: $space-3;
   }
 }
@@ -200,7 +213,7 @@ function kindColor(k: MatchKind): string {
 
 .matches__teams {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: $space-3;
   align-items: center;
 }
@@ -209,12 +222,18 @@ function kindColor(k: MatchKind): string {
   display: flex;
   align-items: center;
   gap: $space-2;
+  // Без min-width: 0 флекс-элемент не даёт имени сжаться.
+  min-width: 0;
 
   &--home { justify-content: flex-end; }
   &--away { justify-content: flex-start; }
+
+  &--home .matches__team-name { text-align: right; }
+  &--away .matches__team-name { text-align: left; }
 }
 
 .matches__team-color {
+  flex: 0 0 auto;
   width: 12px;
   height: 12px;
   border-radius: 3px;
@@ -223,10 +242,15 @@ function kindColor(k: MatchKind): string {
 
 .matches__team-name {
   font-family: $font-family-display;
-  font-size: $font-size-md;
+  // Плавный размер: в узкой колонке 15px, на широком экране прежние 18px.
+  font-size: $font-size-base;
   font-weight: $font-weight-bold;
   color: $color-fg;
   letter-spacing: 0.02em;
+  min-width: 0;
+  line-height: 1.25;
+  // Длинное название переносится по словам, а не выезжает за карточку.
+  overflow-wrap: break-word;
 
   &--ours {
     color: $color-brand-500;

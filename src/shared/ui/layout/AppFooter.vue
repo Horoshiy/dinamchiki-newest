@@ -10,17 +10,22 @@ import { RouterLink } from 'vue-router'
 import LogoMark from '@/shared/ui/icons/LogoMark.vue'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import BviToggle from '@/features/bvi/BviToggle.vue'
-import {
-  CLUB_PHONE_DISPLAY, CLUB_PHONE_HREF, CLUB_EMAIL, CLUB_EMAIL_HREF,
-  CLUB_TELEGRAM_HREF, CLUB_TELEGRAM_CHANNEL_HREF, CLUB_WHATSAPP_HREF,
-} from '@/shared/config/club'
+import { computed } from 'vue'
+import { CLUB_TELEGRAM_CHANNEL_HREF } from '@/shared/config/club'
+import { useClubContacts } from '@/entities/contact/useClubContacts'
+
+// Телефон, почта, WhatsApp и Telegram — из базы. Канал в Telegram
+// (t.me/dinamchiki) остаётся константой: это публикации, а не переписка,
+// и в contactInfo он лежит отдельным полем socials, которого фолбэк не знает.
+const { phoneDisplay, phoneHref, email, emailHref, telegramHref, whatsappHref, maxHref } =
+  useClubContacts()
 
 interface FooterColumn {
   title: string
   links: Array<{ label: string; to?: string; href?: string }>
 }
 
-const columns: ReadonlyArray<FooterColumn> = [
+const columns = computed<ReadonlyArray<FooterColumn>>(() => [
   {
     title: 'Навигация',
     links: [
@@ -28,7 +33,6 @@ const columns: ReadonlyArray<FooterColumn> = [
       { label: 'Команды',       to: '/teams' },
       { label: 'Тренеры',       to: '/coaches' },
       { label: 'Турниры',       to: '/tournaments' },
-      { label: 'Новости',       to: '/gallery' },
       { label: 'Контакты',      to: '/contacts' },
       { label: 'Сведения об образовательной организации', to: '/sveden' },
     ],
@@ -37,28 +41,27 @@ const columns: ReadonlyArray<FooterColumn> = [
     title: 'Программы',
     // Четыре программы по лицензии № 4557, а не выдуманные «5–7 / 8–10 / 11–13».
     links: [
-      { label: 'Футбол 3–5 лет',   to: '/teams' },
-      { label: 'Футбол 6–7 лет',   to: '/teams' },
-      { label: 'Футбол 8–10 лет',  to: '/teams' },
-      { label: 'Футбол 11–14 лет', to: '/teams' },
+      // Раньше все четыре пункта вели на один и тот же /teams — это был
+      // не список программ, а четыре одинаковые ссылки.
+      { label: 'Футбол 3–5 лет',   to: '/teams?age=3-5' },
+      { label: 'Футбол 6–7 лет',   to: '/teams?age=6-7' },
+      { label: 'Футбол 8–10 лет',  to: '/teams?age=8-10' },
+      { label: 'Футбол 11–14 лет', to: '/teams?age=11-14' },
       { label: 'Стоимость обучения', to: '/sveden/paid_edu' },
     ],
   },
   {
     title: 'Контакты',
-    // Раньше здесь были захардкожены московский номер-заглушка со сломанным
-    // tel:-адресом (+749****4567) и почта на чужом домене dynamchiki.ru.
-    // Теперь всё берётся из shared/config/club — единственного места,
-    // где контакты клуба вообще задаются.
     links: [
-      { label: CLUB_PHONE_DISPLAY, href: CLUB_PHONE_HREF },
-      { label: CLUB_EMAIL,         href: CLUB_EMAIL_HREF },
-      { label: 'Telegram — написать', href: CLUB_TELEGRAM_HREF },
+      { label: phoneDisplay.value, href: phoneHref.value },
+      { label: email.value,        href: emailHref.value },
+      { label: 'Telegram — написать', href: telegramHref.value },
       { label: 'Telegram-канал',      href: CLUB_TELEGRAM_CHANNEL_HREF },
-      { label: 'WhatsApp',            href: CLUB_WHATSAPP_HREF },
+      { label: 'MAX — написать',      href: maxHref.value },
+      { label: 'WhatsApp',            href: whatsappHref.value },
     ],
   },
-]
+])
 
 const year = new Date().getFullYear()
 </script>
@@ -70,7 +73,7 @@ const year = new Date().getFullYear()
         <!-- Бренд-блок -->
         <div class="footer__brand">
           <RouterLink to="/" class="footer__brand-link" aria-label="На главную">
-            <LogoMark :size="48" />
+            <LogoMark :size="48" variant="white" />
             <span class="footer__brand-text">
               <span class="footer__brand-name">Динамчики</span>
               <span class="footer__brand-sub">детский футбольный клуб</span>
@@ -80,9 +83,9 @@ const year = new Date().getFullYear()
             Профессиональные тренировки, участие в турнирах и всестороннее
             развитие юных футболистов от 3 до 14 лет.
           </p>
-          <a :href="CLUB_PHONE_HREF" class="footer__phone">
+          <a :href="phoneHref" class="footer__phone">
             <IconPhone :size="18" color="#1e50d8" />
-            {{ CLUB_PHONE_DISPLAY }}
+            {{ phoneDisplay }}
           </a>
         </div>
 

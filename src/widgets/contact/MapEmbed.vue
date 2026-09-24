@@ -1,160 +1,150 @@
 <script setup lang="ts">
 /**
- * Карта проезда (плейсхолдер).
+ * Карта проезда — настоящие Яндекс.Карты со всеми площадками клуба.
  *
- * Реальный iframe с Яндекс.Картами подключим на Этапе 11 (после получения API-ключа).
- * Сейчас — стилизованный плейсхолдер с иконкой, адресом и кнопкой «Открыть».
+ * Раньше здесь была нарисованная сетка с булавкой посередине: она выглядела
+ * как карта, но ничего не показывала. Виджет `map-widget/v1` не требует
+ * API-ключа, поэтому ждать ключ было не нужно.
+ *
+ * Iframe грузится лениво и получает `title` — без него скринридер объявляет
+ * его как безымянный фрейм.
  */
-import IconLocation from '@/shared/ui/icons/IconLocation.vue'
+import { computed } from 'vue'
+import type { Venue } from '@/entities/contact/contact.types'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 
-defineProps<{
-  address: string
-  mapUrl: string
-  /** Опционально — название площадки для отображения */
-  venueName?: string
-}>()
+const props = defineProps<{ venues: ReadonlyArray<Venue> }>()
+
+/** Площадки, у которых есть координаты: только их можно поставить на карту. */
+const points = computed(() =>
+  props.venues.filter((v): v is Venue & { lat: number; lon: number } =>
+    typeof v.lat === 'number' && typeof v.lon === 'number'),
+)
+
+const center = computed(() => {
+  const p = points.value
+  if (!p.length) return null
+  return {
+    lat: p.reduce((s, v) => s + v.lat, 0) / p.length,
+    lon: p.reduce((s, v) => s + v.lon, 0) / p.length,
+  }
+})
+
+const src = computed(() => {
+  const c = center.value
+  if (!c) return null
+  // Яндекс ждёт долготу первой. pm2blm — синяя метка с буквой.
+  const pt = points.value.map((v) => `${v.lon.toFixed(6)},${v.lat.toFixed(6)},pm2blm`).join('~')
+  return `https://yandex.ru/map-widget/v1/?ll=${c.lon.toFixed(6)},${c.lat.toFixed(6)}`
+       + `&z=12&pt=${pt}`
+})
+
+/** Ссылка «открыть в Яндекс.Картах» — на главную площадку. */
+const primary = computed(() => props.venues.find((v) => v.isPrimary) ?? props.venues[0] ?? null)
 </script>
 
 <template>
-  <a :href="mapUrl" target="_blank" rel="noopener" class="map">
-    <!-- Декоративный фон-плейсхолдер -->
-    <div class="map__bg" aria-hidden="true">
-      <svg class="map__svg" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(30,80,216,0.1)" stroke-width="1"/>
-          </pattern>
-        </defs>
-        <rect width="600" height="300" fill="url(#map-grid)"/>
-        <!-- Декоративные "улицы" -->
-        <path d="M0 150 L600 150" stroke="rgba(30,80,216,0.25)" stroke-width="3"/>
-        <path d="M300 0 L300 300" stroke="rgba(30,80,216,0.25)" stroke-width="3"/>
-        <path d="M0 80 L600 80" stroke="rgba(30,80,216,0.15)" stroke-width="2"/>
-        <path d="M0 220 L600 220" stroke="rgba(30,80,216,0.15)" stroke-width="2"/>
-        <path d="M120 0 L120 300" stroke="rgba(30,80,216,0.15)" stroke-width="2"/>
-        <path d="M480 0 L480 300" stroke="rgba(30,80,216,0.15)" stroke-width="2"/>
-      </svg>
+  <div class="map">
+    <iframe
+      v-if="src"
+      class="map__frame"
+      :src="src"
+      title="Карта площадок ДФК «Динамчики» в Ставрополе"
+      loading="lazy"
+      allowfullscreen
+    ></iframe>
 
-      <!-- Пин -->
-      <div class="map__pin">
-        <IconLocation :size="28" />
-      </div>
+    <div class="map__legend">
+      <ul class="map__list">
+        <li v-for="v in venues" :key="v.id" class="map__item">
+          <strong class="map__name">{{ v.name }}</strong>
+          <span class="map__addr">{{ v.address }}</span>
+        </li>
+      </ul>
+      <a
+        v-if="primary"
+        :href="primary.mapUrl"
+        target="_blank"
+        rel="noopener"
+        class="map__open"
+      >
+        Открыть на Яндекс.Картах
+        <IconArrowRight :size="14" />
+      </a>
     </div>
-
-    <!-- Оверлей с адресом -->
-    <div class="map__overlay">
-      <div class="map__overlay-content">
-        <span v-if="venueName" class="map__venue-name">{{ venueName }}</span>
-        <strong class="map__address">{{ address }}</strong>
-        <span class="map__open">
-          Открыть на Яндекс.Картах
-          <IconArrowRight :size="14" />
-        </span>
-      </div>
-    </div>
-  </a>
+  </div>
 </template>
 
 <style scoped lang="scss">
 .map {
-  position: relative;
-  display: block;
-  aspect-ratio: 2 / 1;
-  border-radius: $radius-xl;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  background: $color-bg-soft;
-  border: 1px solid $color-border;
-  box-shadow: $shadow-sm;
-  transition: box-shadow $transition-base, transform $transition-base;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: $space-5;
+  align-items: stretch;
 
-  &:hover {
-    box-shadow: $shadow-md;
-    transform: translateY(-2px);
-
-    .map__pin {
-      transform: translate(-50%, -50%) scale(1.1);
-    }
+  @media (max-width: $bp-lg) {
+    grid-template-columns: 1fr;
   }
 }
 
-.map__bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(30, 80, 216, 0.04) 0%, rgba(81, 128, 244, 0.02) 100%);
-}
-
-.map__svg {
+.map__frame {
   width: 100%;
-  height: 100%;
-  display: block;
+  min-height: 380px;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  // Виджет рисует свой белый фон — рамка не должна просвечивать сквозь углы.
+  background: $color-bg-soft;
 }
 
-.map__pin {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: $color-brand-500;
-  color: $color-white;
-  border-radius: 50%;
-  box-shadow: $shadow-lg;
-  transition: transform $transition-base;
-}
-
-.map__overlay {
-  position: absolute;
-  bottom: $space-4;
-  left: $space-4;
-  right: $space-4;
-}
-
-.map__overlay-content {
+.map__legend {
   display: flex;
   flex-direction: column;
-  gap: $space-1;
-  padding: $space-4 $space-5;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
+  gap: $space-4;
+  padding: $space-6;
+  background: $color-white;
+  border: 1px solid $color-border;
   border-radius: $radius-lg;
-  box-shadow: $shadow-md;
 }
 
-.map__venue-name {
-  font-size: $font-size-xs;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: $color-fg-muted;
-  font-weight: $font-weight-bold;
+.map__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
 }
 
-.map__address {
-  font-family: $font-family-display;
-  font-size: $font-size-md;
+.map__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: $space-4;
+  border-left: 3px solid $color-brand-500;
+}
+
+.map__name {
+  font-size: $font-size-sm;
   font-weight: $font-weight-bold;
   color: $color-fg-strong;
-  line-height: 1.2;
+  line-height: 1.3;
+}
+
+.map__addr {
+  font-size: $font-size-sm;
+  color: $color-fg-muted;
 }
 
 .map__open {
   display: inline-flex;
   align-items: center;
-  gap: $space-1;
-  margin-top: $space-1;
+  gap: $space-2;
+  margin-top: auto;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $color-brand-500;
-}
+  text-decoration: none;
 
-@media (max-width: $bp-md) {
-  .map__overlay-content { padding: $space-3 $space-4; }
-  .map__address { font-size: $font-size-sm; }
+  &:hover { color: $color-brand-600; text-decoration: underline; }
 }
 </style>

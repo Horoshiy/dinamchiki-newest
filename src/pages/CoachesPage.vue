@@ -5,6 +5,7 @@
  * Данные из GraphQL через useCoachesQuery (с mock-fallback).
  */
 import { computed, ref, watch } from 'vue'
+import { plural } from '@/shared/lib/plural'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
@@ -66,10 +67,16 @@ const filteredCoaches = computed<ReadonlyArray<Coach>>(() => {
 
 watch(error, (e) => { if (e) console.warn('[CoachesPage]', e.message) })
 
+// «Безопасная среда» обещала наблюдение медицинского работника — раздел
+// «Сведения» на этом же сайте говорит другое: допуск по справке, аптечка,
+// обученные первой помощи тренеры. Оставлена вторая, правдивая формулировка.
+// «Индивидуальный подход» и «Профессиональный рост» дословно дублировали
+// блок «Почему выбирают наш клуб» на главной — тот блок переписан на факты,
+// здесь остаётся взгляд со стороны тренерской работы.
 const principles = [
   { title: 'Индивидуальный подход', description: 'Не гонимся за «одинаковостью»: каждый ребёнок развивается в своём темпе. Тренер подбирает нагрузку под характер и физиологию.', iconKey: 'users' },
-  { title: 'Профессиональный рост', description: 'Все наставники — дипломированные специалисты с регулярным повышением квалификации и действующими тренерскими лицензиями.', iconKey: 'badge' },
-  { title: 'Безопасная среда', description: 'Работаем только на сертифицированных площадках, с безопасным инвентарём и под наблюдением медицинского работника.', iconKey: 'shield' },
+  { title: 'Образование и стаж', description: 'Тренеры-преподаватели с профильным образованием, подтверждённым документами. Стаж по специальности — от 9 до 22 лет.', iconKey: 'award' },
+  { title: 'Что с безопасностью', description: 'Допуск к занятиям по медицинской справке 086-у, аптечка первой помощи на каждой площадке, все тренеры прошли обучение по оказанию первой помощи.', iconKey: 'shield' },
   { title: 'Честная конкуренция', description: 'Не делим детей на «сильных» и «слабых» по турнирной таблице. Каждый получает игровую практику и поддержку.', iconKey: 'trophy' },
 ] as const
 </script>
@@ -98,7 +105,7 @@ const principles = [
 
       <p v-if="!loading && coaches.length" class="coaches-summary">
         <strong>{{ filteredCoaches.length }}</strong>
-        из <strong>{{ coaches.length }}</strong> тренеров в клубе
+        из <strong>{{ coaches.length }}</strong> {{ plural(coaches.length, ['тренера', 'тренеров', 'тренеров']) }} в клубе
       </p>
     </section>
 

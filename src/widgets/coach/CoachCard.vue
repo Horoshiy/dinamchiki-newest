@@ -6,6 +6,7 @@
  * ФИО, роль, опыт, бейджи специализации, список команд, кнопка «Подробнее».
  */
 import { computed } from 'vue'
+import { withPlural } from '@/shared/lib/plural'
 import { RouterLink } from 'vue-router'
 import type { Coach } from '@/entities/coach/coach.types'
 import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
@@ -51,9 +52,9 @@ const teamsSummary = computed(() =>
       </span>
     </div>
 
-    <p class="coach-card__experience">
+    <p v-if="coach.experienceYears > 0" class="coach-card__experience">
       <IconAward :size="14" />
-      {{ coach.experienceYears }} лет опыта
+      {{ withPlural(coach.experienceYears, ['год опыта', 'года опыта', 'лет опыта']) }}
     </p>
 
     <p v-if="coach.teams.length" class="coach-card__teams">

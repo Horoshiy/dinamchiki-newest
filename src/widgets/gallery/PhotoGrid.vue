@@ -16,6 +16,11 @@ const emit = defineEmits<{
 }>()
 
 function open(i: number) { emit('open', i) }
+
+/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
+function isRealPhoto(url: string): boolean {
+  return /^https?:\/\//i.test(url)
+}
 </script>
 
 <template>
@@ -30,13 +35,29 @@ function open(i: number) { emit('open', i) }
       :aria-label="p.caption || `Фото ${i + 1}`"
       @click="open(i)"
     >
-      <span class="grid__caption">{{ p.caption }}</span>
-      <span class="grid__id">{{ i + 1 }}</span>
+      <img
+        v-if="isRealPhoto(p.url)"
+        class="grid__img"
+        :src="p.url"
+        :alt="p.caption || `Фото ${i + 1}`"
+        loading="lazy"
+        decoding="async"
+      />
+          <span v-if="p.caption" class="grid__caption">{{ p.caption }}</span>
+      <span v-if="!isRealPhoto(p.url)" class="grid__id">{{ i + 1 }}</span>
     </button>
   </div>
 </template>
 
 <style scoped lang="scss">
+.grid__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

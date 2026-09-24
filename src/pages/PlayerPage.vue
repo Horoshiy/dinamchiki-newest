@@ -109,7 +109,7 @@ const crumbs = computed(() => [
 
           <div class="player-detail__actions">
             <BaseButton :to="SIGNUP_ROUTE" size="lg" variant="solid" :icon-left="IconCalendar">
-              Записаться на просмотр
+              Записаться на пробную
             </BaseButton>
             <RouterLink :to="`/team/${player.team.id}`" custom v-slot="{ navigate }">
               <BaseButton size="lg" variant="outline" :icon-left="IconArrowRight" @click="navigate">

@@ -11,6 +11,7 @@ import IconShieldCheck from './IconShieldCheck.vue'
 import IconCalendar from './IconCalendar.vue'
 import IconStar from './IconStar.vue'
 import IconHeart from './IconHeart.vue'
+import IconBadge from './IconBadge.vue'
 
 const ICONS: Readonly<Record<IconKey, Component>> = {
   trophy:   IconTrophy,
@@ -21,6 +22,7 @@ const ICONS: Readonly<Record<IconKey, Component>> = {
   calendar: IconCalendar,
   star:     IconStar,
   heart:    IconHeart,
+  badge:    IconBadge,
 }
 
 /** Компонент иконки по ключу. Неизвестный ключ → мяч (нейтральный дефолт). */

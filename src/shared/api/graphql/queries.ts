@@ -174,7 +174,14 @@ export const PLAYER_FIELDS = gql`
   }
 `
 
-export const ALBUM_FIELDS = gql`
+/**
+ * Фрагменты галереи раньше жили в одной константе ALBUM_FIELDS, и запросы
+ * AllPhotos / AlbumPhotos тащили с собой неиспользуемый AlbumFields.
+ * GraphQL отвергает такой документ целиком («Fragment "AlbumFields" is never
+ * used», HTTP 400) — из-за этого страница «Галерея» уходила в мок-фолбэк
+ * и показывала 48 выдуманных фотографий вместо реальных данных.
+ */
+export const GALLERY_PHOTO_FIELDS = gql`
   fragment GalleryPhotoFields on GalleryPhoto {
     id
     albumId
@@ -183,6 +190,9 @@ export const ALBUM_FIELDS = gql`
     aspect
     placeholderColor
   }
+`
+
+export const ALBUM_FIELDS = gql`
   fragment AlbumFields on GalleryAlbum {
     id
     title
@@ -194,6 +204,7 @@ export const ALBUM_FIELDS = gql`
     coverPhotoId
     photos { ...GalleryPhotoFields }
   }
+  ${GALLERY_PHOTO_FIELDS}
 `
 
 export const VENUE_FIELDS = gql`
@@ -207,6 +218,8 @@ export const VENUE_FIELDS = gql`
     ageGroups
     mapUrl
     isPrimary
+    lat
+    lon
   }
 `
 
@@ -311,14 +324,14 @@ export const ALBUM_PHOTOS_QUERY = gql`
   query AlbumPhotos($albumId: ID!) {
     albumPhotos(albumId: $albumId) { ...GalleryPhotoFields }
   }
-  ${ALBUM_FIELDS}
+  ${GALLERY_PHOTO_FIELDS}
 `
 
 export const ALL_PHOTOS_QUERY = gql`
   query AllPhotos {
     allPhotos { ...GalleryPhotoFields }
   }
-  ${ALBUM_FIELDS}
+  ${GALLERY_PHOTO_FIELDS}
 `
 
 export const CONTACT_INFO_QUERY = gql`
@@ -330,8 +343,10 @@ export const CONTACT_INFO_QUERY = gql`
       telegram
       email
       legalAddress
+      address
+      workingHours
       inn
-      socials { vk youtube }
+      socials { vk youtube telegram max }
     }
   }
 `
@@ -353,6 +368,10 @@ export const PAGE_CONTENT_FIELDS = gql`
     titleLead
     titleAccent
     description
+    # Подписи кнопок редактируются в админке. Без них HomeHero всегда
+    # падал на захардкоженный фолбэк, и правка в /content ничего не меняла.
+    ctaPrimary
+    ctaSecondary
   }
 
   fragment StatItemFields on StatItem {
@@ -378,6 +397,12 @@ export const PAGE_CONTENT_FIELDS = gql`
     ageGroup
   }
 
+  fragment FaqItemFields on FaqItem {
+    id
+    question
+    answer
+  }
+
   fragment TrainingStepFields on TrainingStep {
     id
     title
@@ -391,6 +416,7 @@ export const PAGE_CONTENT_FIELDS = gql`
     features { ...FeatureItemFields }
     programs { ...AgeProgramFields }
     trainingSteps { ...TrainingStepFields }
+    faq { ...FaqItemFields }
   }
 `
 

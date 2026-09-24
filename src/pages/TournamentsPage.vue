@@ -9,6 +9,8 @@ import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
+import BaseButton from '@/shared/ui/base/BaseButton.vue'
+import { SIGNUP_ROUTE } from '@/shared/config/club'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import TournamentCard from '@/widgets/tournament/TournamentCard.vue'
 import StandingsTable from '@/widgets/tournament/StandingsTable.vue'
@@ -47,12 +49,22 @@ const finishedTournaments = computed<ReadonlyArray<Tournament>>(() => {
 
 const totalTeamsCount = computed(() => currentTournament.value?.teamsCount ?? 0)
 
+/** Ни текущего, ни предстоящих, ни завершённых — страница пуста целиком. */
+const upcomingMatches = computed(() => currentTournament.value?.matches.filter((m) => !m.score) ?? [])
+const playedMatches = computed(() => currentTournament.value?.matches.filter((m) => m.score) ?? [])
+
+const isEmpty = computed(() =>
+  !currentTournament.value &&
+  upcomingTournaments.value.length === 0 &&
+  finishedTournaments.value.length === 0,
+)
+
+// «Титулы» и «медали» были захардкожены (1 и 2) и не следовали ни из каких
+// данных — плитки убраны из вёрстки, считаем только то, что реально знаем.
 const clubStats = computed(() => {
   const finished = finishedTournaments.value
   return {
     totalTournaments: finished.length,
-    titles:           1,
-    medals:           2,
   }
 })
 
@@ -65,7 +77,7 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
       <PageHeader
         eyebrow="Соревнования"
         title="Турниры и матчи"
-        description="Следите за турнирами клуба: текущие матчи, турнирная таблица, статистика игроков и архив прошедших соревнований."
+        description="Турниры, в которых играют команды клуба: расписание матчей, положение в группе и результаты."
       />
     </section>
 
@@ -82,6 +94,21 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
         :icon="IconTrophy"
         variant="card"
       />
+    </section>
+
+    <!-- Турниров нет вовсе: показываем одно честное состояние вместо
+         пустых секций и «Итогов» с нулями. -->
+    <section v-else-if="isEmpty" class="container">
+      <EmptyState
+        title="Турнирная таблица ещё не опубликована"
+        description="Клуб играет товарищеские матчи и внутренние турниры; результаты появятся здесь, как только мы их сведём. Победителей региональных соревнований награждаем медалями и кубками."
+        :icon="IconTrophy"
+        variant="card"
+      >
+        <template #action>
+          <BaseButton :to="SIGNUP_ROUTE" size="md" variant="solid">Записаться на пробную</BaseButton>
+        </template>
+      </EmptyState>
     </section>
 
     <template v-else>
@@ -103,13 +130,29 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
             />
           </div>
           <div>
-            <SectionTitle eyebrow="Результаты" title="Последние матчи" />
-            <MatchesList
-              :matches="currentTournament.matches"
-              :teams="currentTournament.teams"
-              :limit="6"
-              filter="played"
-            />
+            <template v-if="upcomingMatches.length">
+              <SectionTitle eyebrow="Календарь" title="Расписание матчей" />
+              <MatchesList
+                :matches="currentTournament.matches"
+                :teams="currentTournament.teams"
+                :limit="8"
+                filter="upcoming"
+              />
+            </template>
+
+            <template v-if="playedMatches.length">
+              <SectionTitle
+                eyebrow="Результаты"
+                title="Сыгранные матчи"
+                :class="{ 'tournaments-second-title': upcomingMatches.length }"
+              />
+              <MatchesList
+                :matches="currentTournament.matches"
+                :teams="currentTournament.teams"
+                :limit="6"
+                filter="played"
+              />
+            </template>
           </div>
         </div>
       </section>
@@ -146,14 +189,6 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
             <strong class="tournaments-stats__num">{{ totalTeamsCount }}</strong>
             <span class="tournaments-stats__label">команд в текущем турнире</span>
           </div>
-          <div class="tournaments-stats__item">
-            <strong class="tournaments-stats__num">{{ clubStats.titles }}</strong>
-            <span class="tournaments-stats__label">кубков клуба</span>
-          </div>
-          <div class="tournaments-stats__item">
-            <strong class="tournaments-stats__num">{{ clubStats.medals }}</strong>
-            <span class="tournaments-stats__label">медалей разного достоинства</span>
-          </div>
         </div>
       </section>
 
@@ -167,6 +202,10 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
 </template>
 
 <style scoped lang="scss">
+.tournaments-second-title {
+  margin-top: $space-10;
+}
+
 .tournaments-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);

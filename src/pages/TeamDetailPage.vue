@@ -92,31 +92,31 @@ const crumbs = computed(() => [
           <IconBall :size="64" />
         </div>
         <div class="team-detail__hero-body">
-          <p class="team-detail__age">{{ team.ageLabel }}</p>
+          <p v-if="team.ageLabel" class="team-detail__age">{{ team.ageLabel }}</p>
           <h1 class="team-detail__name">{{ team.name }}</h1>
           <p class="team-detail__desc">{{ team.description }}</p>
 
           <div class="team-detail__meta">
-            <div class="meta-item">
+            <div v-if="team.coach" class="meta-item">
               <span class="meta-item__label">Тренер</span>
               <span class="meta-item__value">{{ team.coach.name }}</span>
               <span class="meta-item__sub">{{ team.coach.role }}</span>
             </div>
-            <div class="meta-item">
-              <span class="meta-item__label">Состав</span>
-              <span class="meta-item__value">{{ team.playersCount }} игроков</span>
-              <span class="meta-item__sub">Набор открыт</span>
+            <div v-if="team.schedule.length" class="meta-item">
+              <span class="meta-item__label">Площадка</span>
+              <span class="meta-item__value">{{ team.schedule[0].venue }}</span>
+              <span class="meta-item__sub">Занятия по расписанию группы</span>
             </div>
             <div class="meta-item">
               <span class="meta-item__label">Тренировок</span>
               <span class="meta-item__value">{{ team.schedule.length }} в неделю</span>
-              <span class="meta-item__sub">Регулярные занятия</span>
+              <span class="meta-item__sub">Набор открыт</span>
             </div>
           </div>
 
           <div class="team-detail__actions">
             <BaseButton :to="SIGNUP_ROUTE" size="lg" variant="solid" :icon-left="IconCalendar">
-              Записаться в команду
+              Записаться на пробную
             </BaseButton>
             <BaseButton size="lg" variant="outline" :to="'/coaches'">
               Все тренеры

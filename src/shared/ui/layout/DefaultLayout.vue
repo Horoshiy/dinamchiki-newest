@@ -8,6 +8,7 @@
 import AppHeader from '@/shared/ui/layout/AppHeader.vue'
 import AppFooter from '@/shared/ui/layout/AppFooter.vue'
 import BviPanel from '@/features/bvi/BviPanel.vue'
+import MobileContactBar from '@/shared/ui/layout/MobileContactBar.vue'
 </script>
 
 <template>
@@ -18,6 +19,7 @@ import BviPanel from '@/features/bvi/BviPanel.vue'
       <RouterView />
     </main>
     <AppFooter />
+    <MobileContactBar />
   </div>
 </template>
 
@@ -26,6 +28,11 @@ import BviPanel from '@/features/bvi/BviPanel.vue'
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+
+  // Место под липкую панель связи, иначе она перекрывает конец подвала.
+  @media (max-width: $bp-md) {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 }
 
 .layout-main {

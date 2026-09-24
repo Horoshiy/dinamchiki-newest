@@ -9,8 +9,7 @@
           <th class="standings__col-num">В</th>
           <th class="standings__col-num">Н</th>
           <th class="standings__col-num">П</th>
-          <th class="standings__col-num">ЗБ</th>
-          <th class="standings__col-num">ПР</th>
+          <th class="standings__col-num standings__col-goals">Мячи</th>
           <th v-if="showForm" class="standings__col-form">Форма</th>
           <th class="standings__col-num standings__col-points">О</th>
         </tr>
@@ -31,11 +30,10 @@
           <td class="standings__col-num">{{ row.wins }}</td>
           <td class="standings__col-num">{{ row.draws }}</td>
           <td class="standings__col-num">{{ row.losses }}</td>
-          <td class="standings__col-num">{{ row.goalsFor }}–{{ row.goalsAgainst }}</td>
-          <td class="standings__col-num">
-            <span :class="['standings__gd', row.goalDiff > 0 ? 'is-pos' : row.goalDiff < 0 ? 'is-neg' : 'is-zero']">
-              {{ row.goalDiff > 0 ? '+' : '' }}{{ row.goalDiff }}
-            </span>
+          <td class="standings__col-num standings__col-goals">
+            <!-- nobr, чтобы «5-5» не переносилось на две строки и не тянуло
+                 высоту строки таблицы вдвое. -->
+            <nobr>{{ row.goalsFor }}-{{ row.goalsAgainst }}</nobr>
           </td>
           <td v-if="showForm" class="standings__col-form">
             <span v-for="(res, i) in row.lastFive" :key="i" :class="['standings__dot', `standings__dot--${res}`]">
@@ -59,7 +57,7 @@
  * Турнирная таблица.
  *
  * Раньше компонент принимал только `standings` и рендерил `row.teamName`,
- * `row.goalDiff` и `row.lastFive` — полей, которых у сущности Standing нет.
+ * `row.lastFive` — поля, которого у сущности Standing нет.
  * Колонка «Команда» на сайте была пустой, а «ПР» и «Форма» не заполнялись.
  * Страницы при этом передавали `:teams`, но проп не был объявлен и молча
  * терялся в fallthrough-атрибутах.
@@ -105,7 +103,8 @@ function lastFiveOf(teamId: string): MatchResult[] {
     })
 }
 
-const showForm = computed(() => props.matches.length > 0)
+// Пока ни один матч не сыгран, колонка «Форма» была пустой и занимала место.
+const showForm = computed(() => props.matches.some((m) => m.score !== null))
 
 const rows = computed(() =>
   [...props.standings]
@@ -120,7 +119,6 @@ const rows = computed(() =>
         shortName: team?.shortName ?? '',
         isOurTeam: team?.isOurTeam ?? false,
         color: team?.color ?? 'transparent',
-        goalDiff: row.goalDifference,
         lastFive: showForm.value ? lastFiveOf(row.teamId) : [],
       }
     }),
@@ -135,11 +133,13 @@ const rows = computed(() =>
 // nowrap нужен на самой ячейке: иначе цветная метка команды отрывалась
 // от названия и уезжала на отдельную строку.
 .standings__col-team {
-  white-space: nowrap;
+  // nowrap распирал таблицу на «СШ №12 «Арсенал» (Ростов-на-Дону)».
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .standings__team-name {
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .standings__team-color {
@@ -196,11 +196,14 @@ const rows = computed(() =>
 
 .standings {
   width: 100%;
-  min-width: 720px;
+  // Минимум держим только для узких экранов, чтобы колонки не схлопнулись;
+  // на десктопе таблица должна умещаться в свою колонку целиком.
+  min-width: 420px;
   border-collapse: collapse;
+  table-layout: auto;
 
   th, td {
-    padding: $space-3 $space-4;
+    padding: $space-3 $space-2;
     text-align: left;
     font-size: $font-size-sm;
   }
@@ -236,8 +239,13 @@ const rows = computed(() =>
 }
 
 .standings__col-num {
-  width: 48px;
+  width: 42px;
   text-align: center;
+}
+
+.standings__col-goals {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .standings__col-form {

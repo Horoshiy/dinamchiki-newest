@@ -18,7 +18,8 @@ import IconMenu from '@/shared/ui/icons/IconMenu.vue'
 import IconClose from '@/shared/ui/icons/IconClose.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import { useUiStore } from '@/stores/ui'
-import { CLUB_PHONE_DISPLAY, CLUB_PHONE_HREF, SIGNUP_ROUTE } from '@/shared/config/club'
+import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { useClubContacts } from '@/entities/contact/useClubContacts'
 import BviToggle from '@/features/bvi/BviToggle.vue'
 
 interface NavItem {
@@ -69,8 +70,9 @@ function isActive(item: NavItem): boolean {
   return section === item.to || section.startsWith(item.to + '/')
 }
 
-const phoneDisplay = CLUB_PHONE_DISPLAY
-const phoneHref = CLUB_PHONE_HREF
+// Телефон — из базы (см. useClubContacts), не из константы:
+// иначе шапка и блок контактов расходятся.
+const { phoneDisplay, phoneHref } = useClubContacts()
 
 const mobileMenuClasses = computed(() => ['mobile-menu', { 'mobile-menu--open': ui.isMobileMenuOpen }])
 </script>

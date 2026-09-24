@@ -235,11 +235,11 @@ const upcomingMatches = computed(() =>
       <section v-if="tournament.teams.length" class="container">
         <SectionTitle eyebrow="Участники" :title="`Команды-участницы (${tournament.teamsCount})`" />
         <div class="tournament-detail__teams">
-          <RouterLink
+          <div
             v-for="t in tournament.teams"
             :key="t.id"
-            :to="`/team/${t.id}`"
             class="tournament-detail__team-card"
+            :class="{ 'tournament-detail__team-card--ours': t.isOurTeam }"
             :style="{ '--team-color': t.color }"
           >
             <span class="tournament-detail__team-color" />
@@ -247,8 +247,7 @@ const upcomingMatches = computed(() =>
               <strong class="tournament-detail__team-name">{{ t.name }}</strong>
               <span v-if="t.isOurTeam" class="tournament-detail__team-badge">Наша команда</span>
             </div>
-            <span class="tournament-detail__team-short">{{ t.shortName }}</span>
-          </RouterLink>
+          </div>
         </div>
       </section>
     </template>
@@ -425,14 +424,13 @@ const upcomingMatches = computed(() =>
   border: 1px solid $color-border;
   border-radius: $radius-lg;
   box-shadow: $shadow-xs;
-  text-decoration: none;
   color: inherit;
-  transition: box-shadow $transition-base, transform $transition-base;
+}
 
-  &:hover {
-    box-shadow: $shadow-md;
-    transform: translateY(-2px);
-  }
+/** Свою команду выделяем рамкой — раньше её отличал только бейдж. */
+.tournament-detail__team-card--ours {
+  border-color: $color-brand-500;
+  box-shadow: $shadow-sm;
 }
 
 .tournament-detail__team-color {
@@ -446,7 +444,11 @@ const upcomingMatches = computed(() =>
 .tournament-detail__team-body {
   display: flex;
   flex-direction: column;
-  gap: $space-1;
+  align-items: flex-start;
+  gap: $space-2;
+  // minmax(0) по вертикали не нужен, а вот min-width: 0 обязателен:
+  // без него длинное название распирает флекс-контейнер карточки.
+  min-width: 0;
   flex: 1;
 }
 
@@ -455,6 +457,8 @@ const upcomingMatches = computed(() =>
   font-size: $font-size-md;
   font-weight: $font-weight-bold;
   color: $color-fg-strong;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .tournament-detail__team-badge {
@@ -470,11 +474,4 @@ const upcomingMatches = computed(() =>
   letter-spacing: 0.04em;
 }
 
-.tournament-detail__team-short {
-  font-family: $font-family-display;
-  font-size: $font-size-xl;
-  font-weight: $font-weight-extrabold;
-  color: $color-brand-500;
-  letter-spacing: 0.06em;
-}
 </style>

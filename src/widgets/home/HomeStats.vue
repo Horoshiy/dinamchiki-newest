@@ -24,8 +24,8 @@ const stats = computed(() => {
   <section class="stats">
     <div class="container">
       <SectionTitle
-        eyebrow="Клуб в цифрах"
-        title="Результаты, которыми мы гордимся"
+        eyebrow="О клубе"
+        title="Клуб в цифрах"
         align="center"
       />
       <div v-if="loading" class="stats__grid">

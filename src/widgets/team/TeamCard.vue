@@ -6,6 +6,7 @@
  * краткое описание, тренер, превью расписания (3 слота) + кнопка «Подробнее».
  */
 import { RouterLink } from 'vue-router'
+import { withPlural } from '@/shared/lib/plural'
 import type { Team } from '@/entities/team/team.types'
 import IconUsers from '@/shared/ui/icons/IconUsers.vue'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
@@ -17,10 +18,10 @@ defineProps<{ team: Team }>()
 <template>
   <article class="team-card" :style="{ '--team-color': team.color }">
     <header class="team-card__head">
-      <span class="team-card__age">{{ team.ageLabel }}</span>
-      <span class="team-card__count">
-        <IconUsers :size="14" />
-        {{ team.playersCount }} игроков
+      <span v-if="team.ageLabel" class="team-card__age">{{ team.ageLabel }}</span>
+      <span v-if="team.schedule.length" class="team-card__count">
+        <IconCalendar :size="14" />
+        {{ withPlural(team.schedule.length, ['тренировка', 'тренировки', 'тренировок']) }} в неделю
       </span>
     </header>
 
@@ -28,7 +29,7 @@ defineProps<{ team: Team }>()
 
     <p class="team-card__desc">{{ team.description }}</p>
 
-    <div class="team-card__coach">
+    <div v-if="team.coach" class="team-card__coach">
       <span class="team-card__coach-label">Тренер</span>
       <span class="team-card__coach-name">{{ team.coach.name }}</span>
       <span class="team-card__coach-role">{{ team.coach.role }}</span>

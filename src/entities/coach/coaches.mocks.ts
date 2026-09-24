@@ -100,4 +100,19 @@ export const coachesMock: ReadonlyArray<Coach> = [
     avatarGradient: 'linear-gradient(135deg, #1a45bf 0%, #8aacff 100%)',
     gallery: galleryFor('andrey-kopylov'),
   },
+  {
+    // Сведения об образовании и стаже клуб пока не передал — не выдумываем:
+    // пустой стаж UI не показывает, достижений тоже нет.
+    id: 'rolan-chadaev',
+    fullName: 'Чадаев Ролан Майрбекович',
+    role: 'Тренер-преподаватель',
+    description: '',
+    experienceYears: 0,
+    specialization: [],
+    ageGroups: [],
+    achievements: [],
+    teams: [],
+    avatarGradient: 'linear-gradient(135deg, #2a5ce0 0%, #6f97ff 100%)',
+    gallery: galleryFor('rolan-chadaev'),
+  },
 ]

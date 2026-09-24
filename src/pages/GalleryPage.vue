@@ -95,8 +95,8 @@ function openAlbum(albumId: string) {
 
     <section v-else-if="visiblePhotos.length === 0" class="container">
       <EmptyState
-        title="В этом альбоме пока нет фото"
-        description="Попробуйте выбрать другой альбом или вернитесь к «Все альбомы»."
+        title="Фотографии скоро появятся"
+        description="Снимки с тренировок, матчей и турниров сейчас готовим к публикации. Пока можно посмотреть, как проходят занятия, на главной странице."
         :icon="IconBall"
         variant="card"
       />

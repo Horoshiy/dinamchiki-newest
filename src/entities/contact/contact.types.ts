@@ -27,6 +27,9 @@ export interface Venue {
   mapUrl: string
   /** Является ли основной площадкой */
   isPrimary: boolean
+  /** Координаты площадки — для карты. */
+  lat?: number | null
+  lon?: number | null
 }
 
 /** Контактная информация клуба. */
@@ -43,39 +46,39 @@ export interface ContactInfo {
   email: string
   /** Юридический адрес */
   legalAddress: string
+  /** Фактический адрес (может отсутствовать) */
+  address?: string
+  /** Часы работы офиса — источник правды для «Контактов» и подвала */
+  workingHours?: string
   /** ИНН/ОГРН (опционально) */
   inn?: string
   /** Ссылки на соцсети */
   socials: {
     vk?: string
     youtube?: string
+    telegram?: string
+    /** Мессенджер MAX — второй канал связи наравне с Telegram. */
+    max?: string
   }
 }
 
 /** Заполненная форма заявки. */
+/**
+ * Черновик формы заявки. Обе формы сайта собирают только имя звонящего
+ * и телефон: остальное — имя ребёнка, возраст, группу, удобное время —
+ * тренер уточняет при звонке.
+ */
 export interface LeadFormDraft {
-  childName: string
-  childAge: string
   parentName: string
   phone: string
-  email: string
-  /** Удобное время для связи */
-  preferredTime: string
-  /** Сообщение (опционально) */
-  message: string
-  /** Выбранный возраст (опционально) */
-  ageGroup?: string
   /** Согласие на обработку ПДн */
   consent: boolean
 }
 
 /** Ошибки валидации. */
 export interface LeadFormErrors {
-  childName?: string
-  childAge?: string
   parentName?: string
   phone?: string
-  email?: string
   consent?: string
 }
 

@@ -32,7 +32,9 @@ const ageGroupsText = computed(() => props.venue.ageGroups.join(' · '))
         <dt><IconClock :size="16" /> Часы работы</dt>
         <dd>{{ venue.workingHours }}</dd>
       </div>
-      <div class="venue__meta-item">
+      <!-- Группы к площадкам ещё не привязаны: пустая строка «Возрастные
+           группы» выглядела как недогруженные данные. -->
+      <div v-if="ageGroupsText" class="venue__meta-item">
         <dt><IconUsers :size="16" /> Возрастные группы</dt>
         <dd>{{ ageGroupsText }}</dd>
       </div>

@@ -25,6 +25,11 @@ const categoryColor = computed(() => GALLERY_CATEGORY_COLORS[props.album.categor
 const dateFmt = computed(() =>
   new Date(props.album.date).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
 )
+
+/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
+function isRealPhoto(url: string): boolean {
+  return /^https?:\/\//i.test(url)
+}
 </script>
 
 <template>
@@ -37,6 +42,14 @@ const dateFmt = computed(() =>
       class="album__cover"
       :style="{ background: cover?.placeholderColor ?? '#d8dde6' }"
     >
+      <img
+        v-if="cover && isRealPhoto(cover.url)"
+        class="album__img"
+        :src="cover.url"
+        :alt="album.title"
+        loading="lazy"
+        decoding="async"
+      />
       <span class="album__category">{{ categoryLabel }}</span>
       <span class="album__count">{{ album.photosCount }} фото</span>
     </div>
@@ -72,14 +85,32 @@ const dateFmt = computed(() =>
   }
 }
 
+.album__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .album__cover {
   position: relative;
+  overflow: hidden;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   padding: $space-3 $space-4;
   aspect-ratio: 4 / 3;
   color: $color-white;
+}
+
+// Бейджи лежат поверх снимка — поднимаем их над картинкой и притеняем,
+// иначе белый текст теряется на светлом кадре.
+.album__category,
+.album__count {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 .album__category {

@@ -5,14 +5,16 @@
  * Данные из GraphQL через useTeamsQuery (с mock-fallback).
  */
 import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
-import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import FilterChips from '@/shared/ui/base/FilterChips.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
+import BaseButton from '@/shared/ui/base/BaseButton.vue'
+import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { plural } from '@/shared/lib/plural'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import TeamCard from '@/widgets/team/TeamCard.vue'
-import TeamSchedule from '@/widgets/team/TeamSchedule.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useTeamsQuery } from '@/shared/api/composables'
 import type { Team } from '@/entities/team/team.types'
@@ -26,7 +28,21 @@ const ageGroups = [
   { value: '8-10',   label: '8–10 лет' },
   { value: '11-14',  label: '11–14 лет' },
 ]
-const selectedAge = ref<string | null>('all')
+/**
+ * Возраст берётся из ?age= — на него ведут карточки программ с главной
+ * и пункты «Программы» в подвале. Раньше параметр игнорировался,
+ * и все ссылки открывали один и тот же нефильтрованный список.
+ */
+const route = useRoute()
+const validAges = ageGroups.map((g) => g.value)
+const initialAge = typeof route.query.age === 'string' && validAges.includes(route.query.age)
+  ? route.query.age
+  : 'all'
+const selectedAge = ref<string | null>(initialAge)
+
+watch(() => route.query.age, (a) => {
+  if (typeof a === 'string' && validAges.includes(a)) selectedAge.value = a
+})
 
 const { data, loading, error } = useTeamsQuery()
 
@@ -36,14 +52,31 @@ const teams = computed<ReadonlyArray<Team>>(() => {
   return d?.teams ?? []
 })
 
-const filteredTeams = computed<ReadonlyArray<Team>>(() => {
-  if (!selectedAge.value || selectedAge.value === 'all') return teams.value
-  return teams.value.filter((t) => (t.ageGroup as string) === selectedAge.value)
-})
+/**
+ * Фильтруем по ПЕРЕСЕЧЕНИЮ диапазонов, а не по совпадению строки.
+ *
+ * Группа «Юг школьники» охватывает 7–14 лет и раньше попадала ровно в одну
+ * корзину — родитель двенадцатилетнего, выбрав «11–14», её не видел.
+ * Диапазон берём из подписи возраста («7–14 лет», «10 лет»); если подписи нет
+ * (в CRM у группы нет ни года рождения, ни слова «младшие»), падаем обратно
+ * на строковое сравнение.
+ */
+function ageSpan(label: string): [number, number] | null {
+  const nums = (label.match(/\d+/g) ?? []).map(Number)
+  if (!nums.length) return null
+  return [Math.min(...nums), Math.max(...nums)]
+}
 
-const totalPlayers = computed(() =>
-  teams.value.reduce((sum, t) => sum + t.playersCount, 0),
-)
+const filteredTeams = computed<ReadonlyArray<Team>>(() => {
+  const sel = selectedAge.value
+  if (!sel || sel === 'all') return teams.value
+  const want = ageSpan(sel.replace('-', '–'))
+  return teams.value.filter((t) => {
+    const has = ageSpan(t.ageLabel)
+    if (!has || !want) return (t.ageGroup as string) === sel
+    return has[0] <= want[1] && want[0] <= has[1]
+  })
+})
 
 // Логируем ошибки для отладки (мок fallback прозрачен для UI)
 watch(error, (e) => {
@@ -56,8 +89,8 @@ watch(error, (e) => {
     <section class="container">
       <PageHeader
         eyebrow="О клубе"
-        title="Наши команды"
-        description="В каждой команде — опытный тренер, индивидуальный подход и регулярные тренировки 2–3 раза в неделю. Выберите возраст, чтобы увидеть состав."
+        title="Группы и расписание"
+        description="17 групп на трёх площадках Ставрополя — Юг, Центр и 204 квартал. Три занятия в неделю. Выберите возраст, чтобы увидеть подходящие группы."
       >
         <template #action>
           <FilterChips v-model:selected="selectedAge" :items="ageGroups" />
@@ -65,8 +98,7 @@ watch(error, (e) => {
       </PageHeader>
 
       <p v-if="!loading && teams.length" class="teams-summary">
-        <strong>{{ filteredTeams.length }}</strong> команд ·
-        <strong>{{ totalPlayers }}</strong> игроков в клубе
+        <strong>{{ filteredTeams.length }}</strong> {{ plural(filteredTeams.length, ['группа', 'группы', 'групп']) }}
       </p>
     </section>
 
@@ -78,7 +110,7 @@ watch(error, (e) => {
 
       <div v-else-if="error" class="teams-error">
         <EmptyState
-          title="Не удалось загрузить команды"
+          title="Не удалось загрузить группы"
           :description="error.message"
           :icon="IconBall"
           variant="card"
@@ -87,11 +119,15 @@ watch(error, (e) => {
 
       <div v-else-if="filteredTeams.length === 0" class="teams-empty">
         <EmptyState
-          title="Нет команд в этой возрастной группе"
-          description="Попробуйте выбрать другой возраст или вернитесь к «Все возрасты»."
+          :title="selectedAge === 'all' ? 'Расписание групп ещё не опубликовано' : 'В этом возрасте свободной группы сейчас нет'"
+          description="Позвоните или напишите: подберём группу по возрасту, времени и ближайшей к вам площадке."
           :icon="IconBall"
           variant="card"
-        />
+        >
+          <template #action>
+            <BaseButton :to="SIGNUP_ROUTE" size="md" variant="solid">Записаться на пробную</BaseButton>
+          </template>
+        </EmptyState>
       </div>
 
       <div v-else class="teams-grid">
@@ -103,17 +139,6 @@ watch(error, (e) => {
       </div>
     </section>
 
-    <!-- Общее расписание -->
-    <section v-if="teams.length > 0" class="container">
-      <SectionTitle eyebrow="Расписание" title="Тренировки по командам" />
-      <div class="teams-schedule-grid">
-        <TeamSchedule
-          v-for="team in teams"
-          :key="team.id"
-          :schedule="team.schedule"
-        />
-      </div>
-    </section>
   </PageContainer>
 </template>
 

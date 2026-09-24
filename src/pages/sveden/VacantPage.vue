@@ -3,7 +3,7 @@
 import SvedenPage from '@/widgets/sveden/SvedenPage.vue'
 import SvedenBlock from '@/widgets/sveden/SvedenBlock.vue'
 import SvedenTable from '@/widgets/sveden/SvedenTable.vue'
-import { EDU_PROGRAMS, EDU_TOTALS, ENROLL_STEPS, ENROLL_DOCS } from '@/entities/sveden/sveden.data'
+import { EDU_PROGRAMS, EDU_TOTALS, ENROLL_STEPS, ENROLL_DOCS, ENROLL_DOCS_NOTE } from '@/entities/sveden/sveden.data'
 </script>
 
 <template>
@@ -64,10 +64,10 @@ import { EDU_PROGRAMS, EDU_TOTALS, ENROLL_STEPS, ENROLL_DOCS } from '@/entities/
       <ul>
         <li v-for="d in ENROLL_DOCS" :key="d">{{ d }}</li>
       </ul>
+      <p class="sv-note">{{ ENROLL_DOCS_NOTE }}</p>
       <p class="sv-note">
         Перевод обучающихся из других образовательных организаций осуществляется
-        при наличии свободных мест в соответствующих группах. Для перевода
-        дополнительно требуется заявление родителей (законных представителей).
+        при наличии свободных мест в соответствующих группах.
       </p>
     </SvedenBlock>
   </SvedenPage>

@@ -2,51 +2,25 @@
 /**
  * Форма заявки на пробную тренировку.
  *
- * Поля:
- *   - Имя ребёнка (обяз.)
- *   - Возраст ребёнка (обяз.)
- *   - Имя родителя (обяз.)
- *   - Телефон (обяз.)
- *   - Email (опц., валидируется если заполнен)
- *   - Удобное время (опц., select)
- *   - Сообщение (опц., textarea)
- *   - Возрастная группа (опц., select)
- *   - Согласие на ПДн (обяз., checkbox)
+ * Поля: имя звонящего, телефон и согласие на обработку данных.
+ * Возраст ребёнка, группу и удобное время тренер уточняет при звонке —
+ * длинная анкета только удлиняла путь до кнопки.
  *
  * Состояния: idle / submitting / success / error.
  */
 import { reactive, ref } from 'vue'
 import type { LeadFormDraft, LeadFormErrors } from '@/entities/contact/contact.types'
 import { validateLeadForm } from '@/entities/contact/lead.validation'
+import { formatPhone, normalizePhone } from '@/shared/lib/phone'
 import { useSubmitApplicationMutation } from '@/shared/api/composables'
 import IconSend from '@/shared/ui/icons/IconSend.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
 
-const ageGroupOptions = [
-  { value: '',         label: 'Не выбрано' },
-  { value: '5-7',      label: '5–7 лет' },
-  { value: '8-10',     label: '8–10 лет' },
-  { value: '11-14',    label: '11–14 лет' },
-]
-
-const preferredTimeOptions = [
-  { value: '',                  label: 'Любое время' },
-  { value: 'morning',           label: 'Утро (9:00–12:00)' },
-  { value: 'afternoon',         label: 'День (12:00–16:00)' },
-  { value: 'evening',           label: 'Вечер (16:00–21:00)' },
-  { value: 'weekend',           label: 'Выходные' },
-]
 
 const draft = reactive<LeadFormDraft>({
-  childName: '',
-  childAge: '',
   parentName: '',
   phone: '',
-  email: '',
-  preferredTime: '',
-  message: '',
-  ageGroup: '',
   consent: false,
 })
 
@@ -61,8 +35,21 @@ const leadId = ref<string | null>(null)
 
 const { submit: doSubmit } = useSubmitApplicationMutation()
 
+/**
+ * Маска ввода: что бы ни набрали — «8 928…», «7928…», «+7 928…» — в поле
+ * останется «+7 (928) 320-04-94». Ввод чего-то другого просто не появится.
+ */
+function onPhoneInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  const masked = formatPhone(el.value)
+  draft.phone = masked
+  el.value = masked
+}
+
 async function onSubmit() {
   // Клиентская валидация
+  // Согласие подтверждается нажатием кнопки (подпись под ней).
+  draft.consent = true
   const v = validateLeadForm(draft)
   errors.value = v
   if (Object.keys(v).length > 0) return
@@ -70,7 +57,8 @@ async function onSubmit() {
   status.value = 'submitting'
   submitError.value = null
   try {
-    const result = await doSubmit(draft)
+    // В бэкенд уходит каноничный «+79283200494», а не то, что видно в поле.
+    const result = await doSubmit({ ...draft, phone: normalizePhone(draft.phone) })
     if (result.ok) {
       status.value = 'success'
       leadId.value = result.leadId ?? null
@@ -88,14 +76,8 @@ async function onSubmit() {
 }
 
 function resetForm() {
-  draft.childName = ''
-  draft.childAge = ''
   draft.parentName = ''
   draft.phone = ''
-  draft.email = ''
-  draft.preferredTime = ''
-  draft.message = ''
-  draft.ageGroup = ''
   draft.consent = false
   errors.value = {}
   status.value = 'idle'
@@ -111,8 +93,8 @@ function resetForm() {
       <div class="lform__state-icon">✓</div>
       <h3 class="lform__state-title">Заявка отправлена!</h3>
       <p class="lform__state-desc">
-        Спасибо, <strong>{{ draft.childName }}</strong>! Тренер свяжется с вами
-        в удобное время. Номер заявки: <code>{{ leadId }}</code>
+        Спасибо, <strong>{{ draft.parentName }}</strong>! Тренер перезвонит вам
+        по указанному номеру. Номер заявки: <code>{{ leadId }}</code>
       </p>
       <BaseButton variant="outline" @click="resetForm">Отправить ещё одну</BaseButton>
     </div>
@@ -132,105 +114,33 @@ function resetForm() {
 
     <!-- Form -->
     <form v-else class="lform__form" @submit.prevent="onSubmit">
-      <div class="lform__row">
-        <label class="lform__field">
-          <span class="lform__label">Имя ребёнка <span class="lform__req">*</span></span>
-          <input
-            v-model="draft.childName"
-            type="text"
-            class="lform__input"
-            :class="{ 'lform__input--error': errors.childName }"
-            placeholder="Иван Иванов"
-          />
-          <span v-if="errors.childName" class="lform__error">{{ errors.childName }}</span>
-        </label>
-
-        <label class="lform__field">
-          <span class="lform__label">Возраст <span class="lform__req">*</span></span>
-          <input
-            v-model="draft.childAge"
-            type="text"
-            class="lform__input"
-            :class="{ 'lform__input--error': errors.childAge }"
-            placeholder="7 лет"
-          />
-          <span v-if="errors.childAge" class="lform__error">{{ errors.childAge }}</span>
-        </label>
-      </div>
-
       <label class="lform__field">
-        <span class="lform__label">Имя родителя <span class="lform__req">*</span></span>
+        <span class="lform__label">Как вас зовут <span class="lform__req">*</span></span>
         <input
           v-model="draft.parentName"
           type="text"
           class="lform__input"
           :class="{ 'lform__input--error': errors.parentName }"
-          placeholder="Сергей Иванов"
+          placeholder="Сергей"
+          autocomplete="name"
         />
         <span v-if="errors.parentName" class="lform__error">{{ errors.parentName }}</span>
       </label>
 
-      <div class="lform__row">
-        <label class="lform__field">
-          <span class="lform__label">Телефон <span class="lform__req">*</span></span>
-          <input
-            v-model="draft.phone"
-            type="tel"
-            class="lform__input"
-            :class="{ 'lform__input--error': errors.phone }"
-            placeholder="+7 (___) ___-__-__"
-          />
-          <span v-if="errors.phone" class="lform__error">{{ errors.phone }}</span>
-        </label>
-
-        <label class="lform__field">
-          <span class="lform__label">Email</span>
-          <input
-            v-model="draft.email"
-            type="email"
-            class="lform__input"
-            :class="{ 'lform__input--error': errors.email }"
-            placeholder="name@example.com"
-          />
-          <span v-if="errors.email" class="lform__error">{{ errors.email }}</span>
-        </label>
-      </div>
-
-      <div class="lform__row">
-        <label class="lform__field">
-          <span class="lform__label">Возрастная группа</span>
-          <select v-model="draft.ageGroup" class="lform__input lform__select">
-            <option v-for="o in ageGroupOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-
-        <label class="lform__field">
-          <span class="lform__label">Удобное время для связи</span>
-          <select v-model="draft.preferredTime" class="lform__input lform__select">
-            <option v-for="o in preferredTimeOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-      </div>
-
       <label class="lform__field">
-        <span class="lform__label">Сообщение (необязательно)</span>
-        <textarea
-          v-model="draft.message"
-          class="lform__input lform__textarea"
-          rows="3"
-          placeholder="Удобная площадка, пожелания, вопросы..."
+        <span class="lform__label">Телефон <span class="lform__req">*</span></span>
+        <input
+          :value="draft.phone"
+          type="tel"
+          inputmode="tel"
+          autocomplete="tel"
+          class="lform__input"
+          :class="{ 'lform__input--error': errors.phone }"
+          placeholder="+7 (___) ___-__-__"
+          @input="onPhoneInput"
         />
+        <span v-if="errors.phone" class="lform__error">{{ errors.phone }}</span>
       </label>
-
-      <label class="lform__consent" :class="{ 'lform__consent--error': errors.consent }">
-        <input v-model="draft.consent" type="checkbox" class="lform__checkbox" />
-        <span class="lform__consent-text">
-          Согласен на обработку персональных данных в соответствии с
-          <a href="#" target="_blank">политикой конфиденциальности</a>
-          <span class="lform__req">*</span>
-        </span>
-      </label>
-      <span v-if="errors.consent" class="lform__error">{{ errors.consent }}</span>
 
       <div v-if="status === 'error' && submitError" class="lform__server-error">
         {{ submitError }}
@@ -245,8 +155,11 @@ function resetForm() {
           :loading="status === 'submitting'"
           block
         >
-          {{ status === 'submitting' ? 'Отправляем...' : 'Записаться на пробную' }}
+          {{ status === 'submitting' ? 'Отправляем...' : 'Записаться на бесплатную пробную' }}
         </BaseButton>
+        <p class="lform__hint">
+          Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
+        </p>
       </div>
     </form>
   </div>
@@ -349,60 +262,6 @@ function resetForm() {
   font-weight: $font-weight-medium;
 }
 
-.lform__consent {
-  display: flex;
-  align-items: flex-start;
-  gap: $space-3;
-  cursor: pointer;
-
-  &--error {
-    .lform__checkbox {
-      border-color: #dc2626;
-    }
-  }
-}
-
-.lform__checkbox {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid $color-border;
-  border-radius: 4px;
-  background: $color-white;
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-top: 2px;
-  position: relative;
-  transition: background $transition-base, border-color $transition-base;
-
-  &:checked {
-    background: $color-brand-500;
-    border-color: $color-brand-500;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 6px;
-      width: 5px;
-      height: 10px;
-      border: solid $color-white;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-    }
-  }
-}
-
-.lform__consent-text {
-  font-size: $font-size-sm;
-  color: $color-fg;
-  line-height: $line-height-base;
-
-  a {
-    color: $color-brand-500;
-    text-decoration: underline;
-  }
-}
 
 .lform__server-error {
   padding: $space-3 $space-4;
@@ -411,6 +270,13 @@ function resetForm() {
   border-radius: $radius-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
+}
+
+.lform__hint {
+  margin: $space-3 0 0;
+  font-size: $font-size-xs;
+  color: $color-fg-muted;
+  text-align: center;
 }
 
 .lform__actions {

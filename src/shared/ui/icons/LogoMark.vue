@@ -1,45 +1,54 @@
 <script setup lang="ts">
 /**
- * Простой логотип клуба — щит с монограммой Д.
- * Используется в Header и Footer.
+ * Логотип клуба — «Д» с фигурой футболиста в круге.
+ *
+ * Раньше здесь был нарисованный щит с монограммой: настоящего логотипа
+ * у проекта не было. Клуб передал два файла, синий и белый, — они и стоят
+ * тут. Вариант выбирается по фону: на светлой шапке синий, на тёмном
+ * подвале белый.
+ *
+ * Отдаём готовые размеры через srcset, чтобы на ретине логотип не мылился,
+ * а на обычном экране не тянулись лишние килобайты.
  */
-defineProps<{ size?: number | string }>()
+withDefaults(
+  defineProps<{
+    size?: number
+    /** 'blue' — для светлого фона, 'white' — для тёмного. */
+    variant?: 'blue' | 'white'
+    /**
+     * Логотип рядом с названием клуба — декоративный: текст «Динамчики»
+     * стоит рядом и уже читается скринридером. Осмысленную подпись
+     * задавайте явно там, где логотип стоит один.
+     */
+    alt?: string
+  }>(),
+  { size: 48, variant: 'blue', alt: '' },
+)
 </script>
 
 <template>
-  <span class="logo" :style="{ width: `${size ?? 48}px`, height: `${size ?? 48}px` }">
-    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="logo-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#5180f4"/>
-          <stop offset="100%" stop-color="#1a45bf"/>
-        </linearGradient>
-      </defs>
-      <path
-        d="M32 4 L56 12 V32 C56 46 44 56 32 60 C20 56 8 46 8 32 V12 Z"
-        fill="url(#logo-g)"
-        stroke="#ffffff"
-        stroke-width="1.5"
-      />
-      <text
-        x="32" y="40"
-        font-family="Manrope, Inter, sans-serif"
-        font-size="28" font-weight="800"
-        fill="#ffffff"
-        text-anchor="middle"
-      >Д</text>
-      <circle cx="32" cy="50" r="3.5" fill="#ffffff"/>
-    </svg>
-  </span>
+  <img
+    class="logo"
+    :src="`/logo/dinamchiki-${variant}-192.png`"
+    :srcset="`/logo/dinamchiki-${variant}-96.png 96w,
+              /logo/dinamchiki-${variant}-192.png 192w,
+              /logo/dinamchiki-${variant}-512.png 512w`"
+    :sizes="`${size}px`"
+    :width="size"
+    :height="size"
+    :alt="alt"
+    :aria-hidden="alt ? undefined : 'true'"
+    decoding="async"
+  />
 </template>
 
 <style scoped lang="scss">
 .logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  svg { width: 100%; height: 100%; display: block; }
+  display: block;
+  object-fit: contain;
+  // Логотип квадратный: фиксируем соотношение, чтобы он не «прыгал»
+  // до загрузки файла.
+  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
 }
 </style>

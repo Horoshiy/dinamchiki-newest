@@ -12,10 +12,7 @@
  */
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import IconUsers from '@/shared/ui/icons/IconUsers.vue'
-import IconBadge from '@/shared/ui/icons/IconBadge.vue'
-import IconShieldCheck from '@/shared/ui/icons/IconShieldCheck.vue'
-import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
+import { iconByKey } from '@/shared/ui/icons/registry'
 
 const props = withDefaults(
   defineProps<{
@@ -25,8 +22,8 @@ const props = withDefaults(
     description?: string
     /** Иконка — Vue-компонент (приоритетнее iconKey). */
     icon?: object | (() => unknown)
-    /** Ключ встроенной иконки: 'users' | 'badge' | 'shield' | 'trophy'. */
-    iconKey?: 'users' | 'badge' | 'shield' | 'trophy'
+    /** Ключ иконки из общего реестра (@/shared/ui/icons/registry). */
+    iconKey?: string
     /** Паддинг внутри карточки: 'md' (по умолчанию), 'lg' или 'none'. */
     padding?: 'md' | 'none' | 'lg'
     /** Эффект при наведении. */
@@ -39,14 +36,7 @@ const props = withDefaults(
   { padding: 'md', hoverable: false },
 )
 
-const ICONS: Record<string, unknown> = {
-  users: IconUsers,
-  badge: IconBadge,
-  shield: IconShieldCheck,
-  trophy: IconTrophy,
-}
-
-const resolvedIcon = computed(() => props.icon || (props.iconKey ? ICONS[props.iconKey] : null))
+const resolvedIcon = computed(() => props.icon || (props.iconKey ? iconByKey(props.iconKey) : null))
 
 /** Тег корневого элемента: маршрут → RouterLink, внешняя ссылка → <a>, иначе <div>. */
 const tag = computed(() => (props.to ? RouterLink : props.href ? 'a' : 'div'))
@@ -74,11 +64,8 @@ const linkAttrs = computed<Record<string, unknown>>(() => {
     :class="[`card--p-${padding}`, { 'card--hoverable': hoverable, 'card--link': !!to || !!href, 'card--with-title': title && !$slots.default }]"
   >
     <template v-if="title && !$slots.default">
-      <div v-if="icon || iconKey" class="card__icon">
-        <component :is="icon || IconUsers" v-if="iconKey === 'users' || icon" :size="28" />
-        <IconBadge v-else-if="iconKey === 'badge'" :size="28" />
-        <IconShieldCheck v-else-if="iconKey === 'shield'" :size="28" />
-        <IconTrophy v-else-if="iconKey === 'trophy'" :size="28" />
+      <div v-if="resolvedIcon" class="card__icon">
+        <component :is="resolvedIcon" :size="28" />
       </div>
       <h3 v-if="title" class="card__title">{{ title }}</h3>
       <p v-if="description" class="card__desc">{{ description }}</p>

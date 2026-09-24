@@ -117,6 +117,11 @@ onBeforeUnmount(() => {
   lockScroll(false)
   document.removeEventListener('keydown', onKey)
 })
+
+/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
+function isRealPhoto(url: string): boolean {
+  return /^https?:\/\//i.test(url)
+}
 </script>
 
 <template>
@@ -162,7 +167,13 @@ onBeforeUnmount(() => {
           class="lightbox__photo"
           :style="{ background: currentPhoto.placeholderColor }"
         >
-          <span class="lightbox__photo-id">{{ currentPhoto.id }}</span>
+          <img
+            v-if="isRealPhoto(currentPhoto.url)"
+            class="lightbox__img"
+            :src="currentPhoto.url"
+            :alt="currentPhoto.caption || 'Фото клуба'"
+          />
+          <span v-else class="lightbox__photo-id">{{ currentPhoto.id }}</span>
         </div>
 
         <!-- Подпись -->
@@ -234,6 +245,13 @@ onBeforeUnmount(() => {
   border-radius: $radius-pill;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
+}
+
+.lightbox__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: $radius-lg;
 }
 
 .lightbox__photo {

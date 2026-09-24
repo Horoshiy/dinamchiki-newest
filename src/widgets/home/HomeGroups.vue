@@ -10,7 +10,6 @@ import { RouterLink } from 'vue-router'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
-import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useHomeContentQuery } from '@/shared/api/composables'
 import type { PageContent } from '@/entities/content/content.types'
 
@@ -26,20 +25,17 @@ const groups = computed(() => {
 </script>
 
 <template>
-  <section class="groups">
+  <section id="programs" class="groups">
     <div class="container">
       <SectionTitle
         eyebrow="Программы"
-        title="Возрастные группы"
+        title="Возрастные группы и цены"
       />
       <div v-if="loading" class="groups__list">
         <LoadingSkeleton v-for="i in 3" :key="i" variant="block" height="260px" />
       </div>
       <ul v-else class="groups__list">
         <li v-for="g in groups" :key="g.id" class="group">
-          <div class="group__photo" aria-hidden="true">
-            <IconBall :size="40" />
-          </div>
           <div class="group__body">
             <p class="group__age">{{ g.ageLabel }} лет</p>
             <h3 class="group__title">{{ g.title }}</h3>
@@ -60,23 +56,29 @@ const groups = computed(() => {
 .groups {
   padding: $space-16 0;
   background: $color-white;
+  // Якорь из hero («Возрастные группы и цены») — отступ под липкую шапку.
+  scroll-margin-top: 88px;
 }
 
 .groups__list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // Программ ровно четыре — в три колонки последняя карточка оставалась
+  // одна в ряду. Четыре колонки на широком экране, две на планшете.
+  grid-template-columns: repeat(4, 1fr);
   gap: $space-5;
 
-  @media (max-width: $bp-lg) {
+  @media (max-width: $bp-xl) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: $bp-md) {
     grid-template-columns: 1fr;
   }
 }
 
 .group {
-  display: grid;
-  // Доля, а не фиксированные 200px: при трёх карточках в ряду фикс съедал
-  // половину карточки и текст ломался в колонку шириной ~190px.
-  grid-template-columns: 42% 1fr;
+  display: flex;
+  flex-direction: column;
   background: $color-white;
   border: 1px solid $color-border;
   border-radius: $radius-lg;
@@ -88,28 +90,13 @@ const groups = computed(() => {
     transform: translateY(-2px);
   }
 
-  @media (max-width: $bp-sm) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.group__photo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, $color-brand-100 0%, $color-brand-50 100%);
-  color: $color-brand-500;
-  min-height: 240px;
-
-  @media (max-width: $bp-sm) {
-    min-height: 160px;
-  }
 }
 
 .group__body {
   padding: $space-6;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: $space-2;
 }
 

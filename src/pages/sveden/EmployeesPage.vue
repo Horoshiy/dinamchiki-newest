@@ -44,7 +44,7 @@ import { TEACHERS, TEACHERS_SUMMARY } from '@/entities/sveden/sveden.data'
                 <span itemprop="degree">{{ t.degree }}</span> /
                 <span itemprop="academStat">{{ t.academicStatus }}</span>
               </td>
-              <td class="num" itemprop="specExperience">{{ t.experience }}</td>
+              <td class="num" itemprop="specExperience">{{ t.experience > 0 ? t.experience : 'уточняется' }}</td>
             </tr>
           </tbody>
         </SvedenTable>

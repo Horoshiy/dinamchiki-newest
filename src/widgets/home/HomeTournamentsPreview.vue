@@ -49,6 +49,24 @@ const teamNameById = computed(() => {
   return m
 })
 
+/**
+ * Короткое имя для карточки матчей: полные названия вроде
+ * «СШ №12 «Арсенал» (Ростов-на-Дону)» ломают строку на три части
+ * и растягивают карточку на весь экран.
+ */
+const teamShortById = computed(() => {
+  const m = new Map<string, string>()
+  for (const t of tournament.value?.teams ?? []) m.set(t.id, t.shortName || t.name)
+  return m
+})
+
+/** «13:00» по московскому времени — турниры играются в России. */
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('ru-RU', {
+    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow',
+  })
+}
+
 const tableRows = computed(() =>
   [...(tournament.value?.standings ?? [])]
     .sort((a, b) => a.position - b.position)
@@ -64,6 +82,20 @@ const tableRows = computed(() =>
     })),
 )
 
+const upcomingMatches = computed(() =>
+  [...(tournament.value?.matches ?? [])]
+    .filter((m) => m.score === null)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, MATCHES_LIMIT)
+    .map((m) => ({
+      id: m.id,
+      date: formatDay(m.date),
+      home: teamShortById.value.get(m.homeTeamId) ?? m.homeTeamId,
+      away: teamShortById.value.get(m.awayTeamId) ?? m.awayTeamId,
+      score: formatTime(m.date),
+    })),
+)
+
 const recentMatches = computed(() =>
   [...(tournament.value?.matches ?? [])]
     .filter((m) => m.score !== null)
@@ -72,8 +104,8 @@ const recentMatches = computed(() =>
     .map((m) => ({
       id: m.id,
       date: formatDay(m.date),
-      home: teamNameById.value.get(m.homeTeamId) ?? m.homeTeamId,
-      away: teamNameById.value.get(m.awayTeamId) ?? m.awayTeamId,
+      home: teamShortById.value.get(m.homeTeamId) ?? m.homeTeamId,
+      away: teamShortById.value.get(m.awayTeamId) ?? m.awayTeamId,
       score: `${m.score!.home} : ${m.score!.away}`,
     })),
 )
@@ -163,14 +195,14 @@ const recentMatches = computed(() =>
           </RouterLink>
         </article>
 
-        <!-- 3) Последние матчи -->
+        <!-- 3) Сыгранные матчи, а пока их нет — ближайшие -->
         <article class="matches-card">
           <h3 class="matches-card__title">
             <IconBall :size="20" />
-            Последние матчи
+            {{ recentMatches.length ? 'Последние матчи' : 'Ближайшие матчи' }}
           </h3>
-          <ul v-if="recentMatches.length" class="matches">
-            <li v-for="m in recentMatches" :key="m.id" class="match">
+          <ul v-if="recentMatches.length || upcomingMatches.length" class="matches">
+            <li v-for="m in (recentMatches.length ? recentMatches : upcomingMatches)" :key="m.id" class="match">
               <span class="match__date">{{ m.date }}</span>
               <div class="match__teams">
                 <span class="match__team">{{ m.home }}</span>
@@ -179,9 +211,9 @@ const recentMatches = computed(() =>
               </div>
             </li>
           </ul>
-          <p v-else class="table-card__empty">Сыгранных матчей пока нет.</p>
+          <p v-else class="table-card__empty">Матчей пока нет.</p>
           <RouterLink :to="`/tournament/${tournament.id}`" class="table-card__link">
-            Все результаты
+            {{ recentMatches.length ? 'Все результаты' : 'Всё расписание' }}
             <IconArrowRight :size="14" />
           </RouterLink>
         </article>

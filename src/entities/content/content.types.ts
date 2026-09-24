@@ -21,6 +21,7 @@ export type IconKey =
   | 'calendar'
   | 'star'
   | 'heart'
+  | 'badge'
 
 /** Метрика клуба для блока «Клуб в цифрах». */
 export interface StatItem {
@@ -64,6 +65,17 @@ export interface HeroContent {
   titleLead: string
   titleAccent: string
   description: string
+  /** Подпись основной кнопки. Редактируется в админке. */
+  ctaPrimary?: string | null
+  /** Подпись второй кнопки (ведёт к блоку программ). */
+  ctaSecondary?: string | null
+}
+
+/** Вопрос-ответ перед записью. */
+export interface FaqItem {
+  id: string
+  question: string
+  answer: string
 }
 
 /** Контент главной страницы целиком. */
@@ -73,6 +85,7 @@ export interface PageContent {
   features: ReadonlyArray<FeatureItem>
   programs: ReadonlyArray<AgeProgram>
   trainingSteps: ReadonlyArray<TrainingStep>
+  faq: ReadonlyArray<FaqItem>
 }
 
 /** Отзыв родителя. */

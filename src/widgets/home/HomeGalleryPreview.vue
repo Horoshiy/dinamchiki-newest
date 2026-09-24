@@ -13,10 +13,8 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
-import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
-import IconBall from '@/shared/ui/icons/IconBall.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
-import { useReviewsQuery } from '@/shared/api/composables'
+import { useReviewsQuery, useAlbumsQuery, useAllPhotosQuery } from '@/shared/api/composables'
 import type { Review } from '@/entities/content/content.types'
 
 const { data, loading } = useReviewsQuery()
@@ -25,12 +23,34 @@ const reviews = computed<ReadonlyArray<Review>>(() => {
   const d = data.value as { reviews?: ReadonlyArray<Review> } | null
   return d?.reviews ?? []
 })
+
+/** Альбомы нужны только для решения, показывать ли секцию отзывов ниже. */
+const { data: albumsData } = useAlbumsQuery()
+const hasAlbums = computed(() => {
+  const d = albumsData.value as { albums?: ReadonlyArray<unknown> } | null
+  return (d?.albums?.length ?? 0) > 0
+})
+
+/**
+ * Семь снимков для превью. Раньше сетка была из статических плиток с мячом —
+ * теперь показываем настоящие кадры из галереи клуба.
+ */
+const { data: photosData } = useAllPhotosQuery()
+const preview = computed(() => {
+  const d = photosData.value as { allPhotos?: ReadonlyArray<{ id: string; url: string; caption: string }> } | null
+  return (d?.allPhotos ?? []).filter((p) => /^https?:\/\//i.test(p.url)).slice(0, 7)
+})
+
+/** Ни фото, ни отзывов — секцию рендерить незачем. */
+const hasPhotos = computed(() => preview.value.length > 0)
+const hasAnything = computed(() => hasPhotos.value || hasAlbums.value || reviews.value.length > 0)
 </script>
 
 <template>
-  <section class="gallery-preview">
+  <section v-if="hasAnything" class="gallery-preview">
     <div class="container">
       <SectionTitle
+        v-if="hasPhotos"
         eyebrow="Атмосфера"
         title="Галерея клуба"
       >
@@ -41,17 +61,17 @@ const reviews = computed<ReadonlyArray<Review>>(() => {
         </template>
       </SectionTitle>
 
-      <!-- Сетка фото: 1 большое + 4 меньших -->
-      <div class="gallery">
-        <div class="gallery__cell gallery__cell--lg">
-          <IconBall :size="40" />
-        </div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
-        <div class="gallery__cell"><IconBall :size="28" /></div>
+      <!-- Сетка: первый кадр крупный, остальные — плитками. -->
+      <div v-if="hasPhotos" class="gallery">
+        <RouterLink
+          v-for="(p, i) in preview"
+          :key="p.id"
+          to="/gallery"
+          class="gallery__cell"
+          :class="{ 'gallery__cell--lg': i === 0 }"
+        >
+          <img class="gallery__img" :src="p.url" :alt="p.caption || 'Фото клуба'" loading="lazy" decoding="async" />
+        </RouterLink>
         <div class="gallery__cell gallery__cell--cta">
           <RouterLink to="/gallery" class="gallery__more">
             Смотреть все фото
@@ -60,23 +80,30 @@ const reviews = computed<ReadonlyArray<Review>>(() => {
         </div>
       </div>
 
-      <!-- Отзывы -->
-      <div v-if="loading" class="reviews">
-        <LoadingSkeleton v-for="i in 2" :key="i" variant="block" height="200px" />
-      </div>
-      <div v-else-if="reviews.length" class="reviews">
-        <article v-for="r in reviews" :key="r.id" class="review">
-          <p class="review__quote-mark" aria-hidden="true">«</p>
-          <p class="review__text">{{ r.text }}</p>
-          <div class="review__author">
-            <span class="review__avatar">{{ r.initials }}</span>
-            <div>
-              <p class="review__name">{{ r.authorName }}</p>
-              <p class="review__role">{{ r.authorRelation }}</p>
+      <!--
+        Отзывы стояли без заголовка внутри блока «Галерея клуба» — их там
+        никто не находил. Теперь у них своя подпись, а пока отзывов нет,
+        блок не показывается вовсе (скелетон убран: он мигал впустую).
+      -->
+      <template v-if="!loading && reviews.length">
+        <SectionTitle
+          eyebrow="Родители о нас"
+          title="Отзывы"
+        />
+        <div class="reviews">
+          <article v-for="r in reviews" :key="r.id" class="review">
+            <p class="review__quote-mark" aria-hidden="true">«</p>
+            <p class="review__text">{{ r.text }}</p>
+            <div class="review__author">
+              <span class="review__avatar">{{ r.initials }}</span>
+              <div>
+                <p class="review__name">{{ r.authorName }}</p>
+                <p class="review__role">{{ r.authorRelation }}</p>
+              </div>
             </div>
-          </div>
-        </article>
-      </div>
+          </article>
+        </div>
+      </template>
     </div>
   </section>
 </template>
@@ -93,12 +120,24 @@ const reviews = computed<ReadonlyArray<Review>>(() => {
   grid-template-columns: repeat(4, 1fr);
   grid-auto-rows: 140px;
   gap: $space-3;
+  // Отступ нужен только когда под сеткой есть отзывы; без них секция
+  // иначе получает двойной нижний воздух.
   margin-bottom: $space-12;
+
+  &:last-child { margin-bottom: 0; }
 
   @media (max-width: $bp-md) {
     grid-template-columns: repeat(2, 1fr);
     grid-auto-rows: 120px;
   }
+}
+
+.gallery__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .gallery__cell {

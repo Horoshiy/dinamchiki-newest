@@ -15,21 +15,20 @@ import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import IconUsers from '@/shared/ui/icons/IconUsers.vue'
 import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
 import { useSubmitApplicationMutation } from '@/shared/api/composables'
-import {
-  CLUB_PHONE_DISPLAY,
-  CLUB_PHONE_HREF,
-  CLUB_TELEGRAM,
-  CLUB_TELEGRAM_HREF,
-  CLUB_WHATSAPP_HREF,
-} from '@/shared/config/club'
+import { useClubContacts } from '@/entities/contact/useClubContacts'
+import { formatPhone, normalizePhone, isPhoneComplete } from '@/shared/lib/phone'
+import IconMax from '@/shared/ui/icons/IconMax.vue'
+
+// Контакты — из базы, единым источником с шапкой и «Контактами».
+const { phoneDisplay, phoneHref, whatsappHref, telegramHandle, telegramHref, maxHref, email, emailHref } =
+  useClubContacts()
 
 interface FormState {
   name: string
   phone: string
-  childAge: string
 }
 
-const form = ref<FormState>({ name: '', phone: '', childAge: '' })
+const form = ref<FormState>({ name: '', phone: '' })
 
 /**
  * 'unavailable' — сервер заявок не подключён.
@@ -43,28 +42,39 @@ const { submit: doSubmit } = useSubmitApplicationMutation()
 
 const isSubmitting = computed(() => status.value === 'submitting')
 
+/** Та же маска, что и в форме на «Контактах»: только +7 и десять цифр. */
+function onPhoneInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  const masked = formatPhone(el.value)
+  form.value.phone = masked
+  el.value = masked
+}
+
 async function onSubmit(event: Event) {
   event.preventDefault()
+  if (!isPhoneComplete(form.value.phone)) {
+    status.value = 'error'
+    submitError.value = 'Введите номер полностью: +7 и 10 цифр'
+    return
+  }
   status.value = 'submitting'
   submitError.value = null
 
-  // Компактная форма собирает 3 поля; согласие на ПДн подтверждается
-  // самим нажатием кнопки (см. подпись под формой).
+  // Форма собирает только имя звонящего и телефон; согласие на ПДн
+  // подтверждается самим нажатием кнопки (см. подпись под формой).
+  // Имя ребёнка, возраст и группу тренер уточняет при звонке.
   const result = await doSubmit({
-    childName: form.value.name,
-    childAge: form.value.childAge,
     parentName: form.value.name,
-    phone: form.value.phone,
+    phone: normalizePhone(form.value.phone),
     email: '',
     preferredTime: '',
     message: 'Заявка с главной страницы',
-    ageGroup: form.value.childAge,
     consent: true,
   })
 
   if (result.ok) {
     status.value = 'success'
-    form.value = { name: '', phone: '', childAge: '' }
+    form.value = { name: '', phone: '' }
   } else if (result.notDelivered) {
     status.value = 'unavailable'
   } else {
@@ -88,45 +98,38 @@ function backToForm() {
           <p class="cta__eyebrow">Запишитесь сегодня</p>
           <h2 class="cta__title">
             Запишите ребёнка<br />
-            <span class="cta__title-accent">на пробную тренировку</span>
+            <span class="cta__title-accent">на бесплатную пробную</span>
           </h2>
           <p class="cta__lead">
-            Оставьте заявку — мы свяжемся с вами в&nbsp;течение дня и&nbsp;подберём
-            удобное время и&nbsp;группу.
+            Имя и&nbsp;телефон — тренер перезвонит, подберёт группу
+            и&nbsp;удобное время. Первая тренировка бесплатная
+            и&nbsp;ни&nbsp;к&nbsp;чему не&nbsp;обязывает.
           </p>
 
           <form v-if="status !== 'success' && status !== 'unavailable'" class="form" @submit="onSubmit">
             <div class="form__field">
-              <label for="lead-name">Имя ребёнка</label>
+              <label for="lead-name">Как вас зовут</label>
               <input
                 id="lead-name"
                 v-model="form.name"
                 type="text"
-                placeholder="Артём"
+                placeholder="Сергей"
                 required
-                autocomplete="given-name"
+                autocomplete="name"
               />
             </div>
             <div class="form__field">
-              <label for="lead-phone">Телефон родителя</label>
+              <label for="lead-phone">Телефон</label>
               <input
                 id="lead-phone"
-                v-model="form.phone"
+                :value="form.phone"
                 type="tel"
+                inputmode="tel"
                 placeholder="+7 (___) ___-__-__"
                 required
                 autocomplete="tel"
+                @input="onPhoneInput"
               />
-            </div>
-            <div class="form__field">
-              <label for="lead-age">Возраст ребёнка</label>
-              <select id="lead-age" v-model="form.childAge" required>
-                <option value="" disabled>Выберите возраст</option>
-                <option value="4-5">4–5 лет</option>
-                <option value="6-7">6–7 лет</option>
-                <option value="8-10">8–10 лет</option>
-                <option value="11-14">11–14 лет</option>
-              </select>
             </div>
             <BaseButton
               type="submit"
@@ -147,7 +150,7 @@ function backToForm() {
 
           <div v-else-if="status === 'success'" class="form-success" role="status">
             <p class="form-success__title">Спасибо! Заявка отправлена.</p>
-            <p class="form-success__text">Мы свяжемся с вами в&nbsp;течение дня.</p>
+            <p class="form-success__text">Тренер перезвонит вам по&nbsp;указанному номеру.</p>
           </div>
 
           <div v-else class="form-unavailable" role="status">
@@ -173,7 +176,7 @@ function backToForm() {
               </span>
               <div class="contact__body">
                 <p class="contact__label">Телефон</p>
-                <a :href="CLUB_PHONE_HREF" class="contact__value">{{ CLUB_PHONE_DISPLAY }}</a>
+                <a :href="phoneHref" class="contact__value">{{ phoneDisplay }}</a>
               </div>
             </li>
             <li class="contact">
@@ -182,7 +185,7 @@ function backToForm() {
               </span>
               <div class="contact__body">
                 <p class="contact__label">WhatsApp</p>
-                <a :href="CLUB_WHATSAPP_HREF" target="_blank" rel="noopener" class="contact__value">Написать в WhatsApp</a>
+                <a :href="whatsappHref" target="_blank" rel="noopener" class="contact__value">Написать в WhatsApp</a>
               </div>
             </li>
             <li class="contact">
@@ -191,7 +194,16 @@ function backToForm() {
               </span>
               <div class="contact__body">
                 <p class="contact__label">Telegram</p>
-                <a :href="CLUB_TELEGRAM_HREF" target="_blank" rel="noopener" class="contact__value">{{ CLUB_TELEGRAM }}</a>
+                <a :href="telegramHref" target="_blank" rel="noopener" class="contact__value">{{ telegramHandle }}</a>
+              </div>
+            </li>
+            <li v-if="maxHref" class="contact">
+              <span class="contact__icon contact__icon--sky">
+                <IconMax :size="22" />
+              </span>
+              <div class="contact__body">
+                <p class="contact__label">MAX</p>
+                <a :href="maxHref" target="_blank" rel="noopener" class="contact__value">Написать в MAX</a>
               </div>
             </li>
           </ul>

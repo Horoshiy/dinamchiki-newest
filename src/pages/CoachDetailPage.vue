@@ -4,6 +4,7 @@
  *
  * Данные из GraphQL через useCoachQuery (с mock-fallback).
  */
+import { withPlural } from '@/shared/lib/plural'
 import { computed, ref, toRef, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/shared/ui/base/Breadcrumbs.vue'
@@ -69,11 +70,6 @@ const primarySpecLabel = computed<string>(() => {
   return COACH_SPEC_LABELS[first]
 })
 
-const totalPlayers = computed<number>(() => {
-  if (!coach.value) return 0
-  return coach.value.teams.length * 14
-})
-
 const achievementIcons: Readonly<Record<CoachAchievement['iconKey'], Component>> = {
   trophy: IconTrophy,
   badge:  IconBadge,
@@ -135,9 +131,9 @@ const achievementIcons: Readonly<Record<CoachAchievement['iconKey'], Component>>
           <p class="coach-detail__quote">«{{ coach.description }}»</p>
 
           <div class="coach-detail__meta">
-            <div class="meta-item">
+            <div v-if="coach.experienceYears > 0" class="meta-item">
               <span class="meta-item__label">Опыт</span>
-              <span class="meta-item__value">{{ coach.experienceYears }} лет</span>
+              <span class="meta-item__value">{{ withPlural(coach.experienceYears, ['год', 'года', 'лет']) }}</span>
               <span class="meta-item__sub">тренерской работы</span>
             </div>
             <div class="meta-item">
@@ -147,16 +143,16 @@ const achievementIcons: Readonly<Record<CoachAchievement['iconKey'], Component>>
               </span>
               <span class="meta-item__sub">{{ coach.ageGroups.join(' · ') }}</span>
             </div>
-            <div class="meta-item">
-              <span class="meta-item__label">Команд</span>
+            <div v-if="coach.teams.length" class="meta-item">
+              <span class="meta-item__label">Групп</span>
               <span class="meta-item__value">{{ coach.teams.length }}</span>
-              <span class="meta-item__sub">~{{ totalPlayers }} игроков</span>
+              <span class="meta-item__sub">Ведёт занятия</span>
             </div>
           </div>
 
           <div class="coach-detail__actions">
             <BaseButton :to="SIGNUP_ROUTE" size="lg" variant="solid" :icon-left="IconCalendar">
-              Записаться к тренеру
+              Записаться на пробную
             </BaseButton>
             <BaseButton size="lg" variant="outline" :to="'/coaches'">
               Все тренеры

@@ -6,18 +6,33 @@
  */
 import { computed } from 'vue'
 import type { ContactInfo } from '@/entities/contact/contact.types'
+import { formatRuPhone, telegramUsername } from '@/entities/contact/useClubContacts'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
 import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
 import IconMail from '@/shared/ui/icons/IconMail.vue'
 import IconLocation from '@/shared/ui/icons/IconLocation.vue'
 import IconClock from '@/shared/ui/icons/IconClock.vue'
+import IconMax from '@/shared/ui/icons/IconMax.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 
 const props = defineProps<{ contact: ContactInfo }>()
 
-const whatsappUrl = computed(() => `https://wa.me/${props.contact.whatsapp}`)
-const telegramUrl = computed(() => `https://t.me/${props.contact.telegram.replace('@', '')}`)
+const whatsappUrl  = computed(() => `https://wa.me/${props.contact.whatsapp.replace(/\D/g, '')}`)
+const telegramUrl  = computed(() => `https://t.me/${telegramUsername(props.contact.telegram)}`)
+
+const telegramHandle = computed(() => `@${telegramUsername(props.contact.telegram)}`)
+/** MAX — второй мессенджер клуба. Нет ссылки в базе — блок не показываем. */
+const maxUrl = computed(() => props.contact.socials?.max?.trim() || '')
+const whatsappDisplay = computed(() => formatRuPhone(props.contact.whatsapp))
+
+/**
+ * Часы работы приходят из базы одной строкой. Раньше здесь было
+ * захардкожено «Пн–Пт 9:00–21:00 / Сб 10:00–18:00», и это расходилось
+ * с тем, что стоит в админке.
+ */
+const workingHours = computed(() => props.contact.workingHours?.trim() || null)
+
 const phoneHref   = computed(() => `tel:${props.contact.phone.replace(/[^\d+]/g, '')}`)
 const emailHref   = computed(() => `mailto:${props.contact.email}`)
 </script>
@@ -42,7 +57,7 @@ const emailHref   = computed(() => `mailto:${props.contact.email}`)
         </div>
         <div class="cinfo__body">
           <span class="cinfo__label">WhatsApp</span>
-          <strong class="cinfo__value">+{{ contact.whatsapp }}</strong>
+          <strong class="cinfo__value">{{ whatsappDisplay }}</strong>
         </div>
       </a>
 
@@ -52,7 +67,17 @@ const emailHref   = computed(() => `mailto:${props.contact.email}`)
         </div>
         <div class="cinfo__body">
           <span class="cinfo__label">Telegram</span>
-          <strong class="cinfo__value">{{ contact.telegram }}</strong>
+          <strong class="cinfo__value">{{ telegramHandle }}</strong>
+        </div>
+      </a>
+
+      <a v-if="maxUrl" :href="maxUrl" target="_blank" rel="noopener" class="cinfo__item">
+        <div class="cinfo__icon cinfo__icon--max">
+          <IconMax :size="22" />
+        </div>
+        <div class="cinfo__body">
+          <span class="cinfo__label">MAX</span>
+          <strong class="cinfo__value">Написать в MAX</strong>
         </div>
       </a>
     </div>
@@ -78,14 +103,13 @@ const emailHref   = computed(() => `mailto:${props.contact.email}`)
       </div>
     </div>
 
-    <div class="cinfo__item cinfo__item--static">
+    <div v-if="workingHours" class="cinfo__item cinfo__item--static">
       <div class="cinfo__icon">
         <IconClock :size="22" />
       </div>
       <div class="cinfo__body">
         <span class="cinfo__label">Часы работы офиса</span>
-        <strong class="cinfo__value">Пн–Пт 9:00–21:00</strong>
-        <span class="cinfo__sub">Сб 10:00–18:00 · Вс — выходной</span>
+        <strong class="cinfo__value">{{ workingHours }}</strong>
       </div>
     </div>
   </div>
@@ -157,6 +181,11 @@ const emailHref   = computed(() => `mailto:${props.contact.email}`)
     background: rgba(34, 197, 94, 0.1);
     color: #16a34a;
   }
+  &--max {
+    background: #6b4eff;
+    color: $color-white;
+  }
+
   &--telegram {
     background: rgba(56, 132, 230, 0.1);
     color: #2563eb;

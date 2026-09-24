@@ -21,6 +21,7 @@ import HomeHowItWorks from '@/widgets/home/HomeHowItWorks.vue'
 import HomeCoachesPreview from '@/widgets/home/HomeCoachesPreview.vue'
 import HomeTournamentsPreview from '@/widgets/home/HomeTournamentsPreview.vue'
 import HomeGalleryPreview from '@/widgets/home/HomeGalleryPreview.vue'
+import HomeFaq from '@/widgets/home/HomeFaq.vue'
 import HomeCta from '@/widgets/home/HomeCta.vue'
 import { usePageLayoutQuery, type PageSection } from '@/shared/api/composables'
 
@@ -83,6 +84,7 @@ const renderableSections = computed(() =>
     <HomeCoachesPreview />
     <HomeTournamentsPreview />
     <HomeGalleryPreview />
+    <HomeFaq />
     <HomeCta />
   </div>
 </template>

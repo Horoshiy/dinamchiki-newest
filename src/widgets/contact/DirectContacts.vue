@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Прямые способы связи: телефон, Telegram, WhatsApp, email.
+ * Прямые способы связи: телефон, Telegram, MAX, WhatsApp, email.
  *
  * Используется там, где онлайн-заявка недоступна — вместо того чтобы
  * показывать посетителю благодарность за неотправленную форму.
@@ -8,42 +8,45 @@
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
 import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
+import IconMax from '@/shared/ui/icons/IconMax.vue'
 import IconMail from '@/shared/ui/icons/IconMail.vue'
-import {
-  CLUB_PHONE_DISPLAY,
-  CLUB_PHONE_HREF,
-  CLUB_TELEGRAM,
-  CLUB_TELEGRAM_HREF,
-  CLUB_WHATSAPP_HREF,
-  CLUB_EMAIL,
-  CLUB_EMAIL_HREF,
-} from '@/shared/config/club'
+import { useClubContacts } from '@/entities/contact/useClubContacts'
+
+// Контакты — из базы, единым источником с шапкой и «Контактами».
+const { phoneDisplay, phoneHref, whatsappHref, telegramHandle, telegramHref, maxHref, email, emailHref } =
+  useClubContacts()
 </script>
 
 <template>
   <ul class="direct">
     <li>
-      <a :href="CLUB_PHONE_HREF" class="direct__link">
+      <a :href="phoneHref" class="direct__link">
         <IconPhone :size="18" />
-        <span>{{ CLUB_PHONE_DISPLAY }}</span>
+        <span>{{ phoneDisplay }}</span>
       </a>
     </li>
     <li>
-      <a :href="CLUB_TELEGRAM_HREF" target="_blank" rel="noopener" class="direct__link">
+      <a :href="telegramHref" target="_blank" rel="noopener" class="direct__link">
         <IconTelegram :size="18" />
-        <span>{{ CLUB_TELEGRAM }}</span>
+        <span>{{ telegramHandle }}</span>
+      </a>
+    </li>
+    <li v-if="maxHref">
+      <a :href="maxHref" target="_blank" rel="noopener" class="direct__link">
+        <IconMax :size="18" />
+        <span>Написать в MAX</span>
       </a>
     </li>
     <li>
-      <a :href="CLUB_WHATSAPP_HREF" target="_blank" rel="noopener" class="direct__link">
+      <a :href="whatsappHref" target="_blank" rel="noopener" class="direct__link">
         <IconWhatsApp :size="18" />
         <span>WhatsApp</span>
       </a>
     </li>
     <li>
-      <a :href="CLUB_EMAIL_HREF" class="direct__link">
+      <a :href="emailHref" class="direct__link">
         <IconMail :size="18" />
-        <span>{{ CLUB_EMAIL }}</span>
+        <span>{{ email }}</span>
       </a>
     </li>
   </ul>
