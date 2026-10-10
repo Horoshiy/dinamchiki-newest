@@ -43,6 +43,13 @@ done
 
 cd "$PROJECT_DIR"
 
+# Без .env.production образ соберётся с пустым адресом API — сборка упадёт
+# на env-guard уже на сервере. Проверяем заранее, пока ничего не сломано.
+if $DO_BUILD && [ ! -f .env.production ]; then
+  echo "Нет .env.production — скопируйте .env.production.example и заполните." >&2
+  exit 1
+fi
+
 SSH="ssh -p $REMOTE_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=10"
 
 run_remote() { $SSH "$REMOTE_HOST" "$1"; }

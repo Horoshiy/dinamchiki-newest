@@ -4,7 +4,6 @@
 export interface AppConfig {
   title: string
   graphqlHttp: string
-  graphqlWs: string
   /** Канонический адрес сайта — база для canonical и og:url. */
   siteUrl: string
   /** Разрешена ли индексация этой сборки (на стенде — нет). */
@@ -31,7 +30,6 @@ const MISSING_API = 'https://graphql-endpoint-not-configured.invalid/query'
 export const appConfig: AppConfig = {
   title: readEnv('VITE_APP_TITLE', 'ДФК «Динамчики»'),
   graphqlHttp: readEnv('VITE_GRAPHQL_HTTP', MISSING_API),
-  graphqlWs: readEnv('VITE_GRAPHQL_WS', MISSING_API.replace('https://', 'wss://')),
   // Без завершающего слэша — иначе canonical получит двойной.
   siteUrl: readEnv('VITE_SITE_URL', '').replace(/\/+$/, ''),
   allowIndexing: readEnv('VITE_ALLOW_INDEXING', 'false') === 'true',

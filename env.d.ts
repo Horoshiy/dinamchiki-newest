@@ -8,7 +8,6 @@ declare module '*.vue' {
 
 interface ImportMetaEnv {
   readonly VITE_GRAPHQL_HTTP: string
-  readonly VITE_GRAPHQL_WS: string
   readonly VITE_APP_TITLE: string
   /** Канонический адрес сборки — источник canonical, og:url и sitemap. */
   readonly VITE_SITE_URL: string

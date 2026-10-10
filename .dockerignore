@@ -5,6 +5,8 @@ dist/
 .env
 .env.*
 !.env.example
+# Боевые настройки сборки — без них образ собирался с пустым API.
+!.env.production
 *.log
 .vscode/
 .idea/

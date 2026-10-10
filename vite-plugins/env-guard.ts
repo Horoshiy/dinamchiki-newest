@@ -1,53 +1,57 @@
 import type { Plugin } from 'vite'
 
 /**
- * Защита от раскатки боевой сборки с бета-настройками.
+ * Проверка окружения перед сборкой.
  *
- * Самая незаметная ошибка при переходе бета → прод: собрать прод с
- * VITE_GRAPHQL_HTTP, оставшимся на бета-домене. Сайт будет работать,
- * но ходить в бета-бэкенд, и заметить это можно очень нескоро.
+ * Любая сборка (бета или прод) падает, если не задан адрес API или сайта
+ * либо в нём остался плейсхолдер из *.example. Раньше Docker-образ собирался
+ * без .env (его отсекал .dockerignore) и молча выходил с API
+ * «graphql-endpoint-not-configured.invalid» и литералами %VITE_SITE_URL% в HTML.
  *
- * Поэтому сборка с VITE_ALLOW_INDEXING=true и бета-хостом падает.
+ * Боевая сборка (VITE_ALLOW_INDEXING=true) дополнительно не должна смотреть
+ * на бета-хосты: сайт работал бы, но ходил в бета-бэкенд, и заметили бы
+ * это очень нескоро.
  */
 
 /** Хосты бета-окружения. Дополнять при появлении новых. */
 const BETA_HOSTS = ['flowise.dinamchiki.ru', 'apigql.dinamchiki.ru']
+
+const REQUIRED = ['VITE_GRAPHQL_HTTP', 'VITE_SITE_URL', 'VITE_CLUB_PHONE'] as const
+
+/** Ошибки окружения; пустой массив — можно собирать. */
+export function checkEnv(env: Record<string, string>): string[] {
+  const problems: string[] = []
+
+  for (const key of REQUIRED) {
+    const value = env[key] ?? ''
+    if (!value) problems.push(`${key} не задан`)
+    else if (value.includes('<') || /X{3,}/.test(value)) {
+      problems.push(`${key} содержит незаполненный плейсхолдер: ${value}`)
+    }
+  }
+
+  if (env.VITE_ALLOW_INDEXING === 'true') {
+    for (const key of ['VITE_GRAPHQL_HTTP', 'VITE_SITE_URL'] as const) {
+      const beta = BETA_HOSTS.find((h) => (env[key] ?? '').includes(h))
+      if (beta) problems.push(`${key} указывает на бета-хост ${beta}: ${env[key]}`)
+    }
+  }
+
+  return problems
+}
 
 export function envGuardPlugin(env: Record<string, string>): Plugin {
   return {
     name: 'dinamchiki-env-guard',
     apply: 'build',
     buildStart() {
-      const isProdBuild = env.VITE_ALLOW_INDEXING === 'true'
-      if (!isProdBuild) return
-
-      const problems: string[] = []
-
-      for (const key of ['VITE_GRAPHQL_HTTP', 'VITE_GRAPHQL_WS', 'VITE_SITE_URL'] as const) {
-        const value = env[key] ?? ''
-        if (!value) {
-          problems.push(`${key} не задан`)
-          continue
-        }
-        if (value.includes('<')) {
-          problems.push(`${key} содержит незаполненный плейсхолдер: ${value}`)
-          continue
-        }
-        const beta = BETA_HOSTS.find((h) => value.includes(h))
-        if (beta) problems.push(`${key} указывает на бета-хост ${beta}: ${value}`)
-      }
-
-      const phone = env.VITE_CLUB_PHONE ?? ''
-      if (phone.includes('X') || phone.includes('<')) {
-        problems.push(`VITE_CLUB_PHONE не заполнен: ${phone}`)
-      }
-
+      const problems = checkEnv(env)
       if (problems.length > 0) {
         this.error(
-          'Боевая сборка с бета-настройками:\n  - ' +
+          'Окружение сборки не заполнено:\n  - ' +
             problems.join('\n  - ') +
-            '\n\nЗаполните .env.production (см. .env.production.example) ' +
-            'или соберите бету с VITE_ALLOW_INDEXING=false.',
+            '\n\nБета — .env (см. .env.example), прод — .env.production ' +
+            '(см. .env.production.example).',
         )
       }
     },
