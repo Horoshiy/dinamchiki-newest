@@ -5,7 +5,7 @@
  * Данные из GraphQL через useTeamsQuery (с mock-fallback).
  */
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import FilterChips from '@/shared/ui/base/FilterChips.vue'
@@ -34,6 +34,7 @@ const ageGroups = [
  * и все ссылки открывали один и тот же нефильтрованный список.
  */
 const route = useRoute()
+const router = useRouter()
 const validAges = ageGroups.map((g) => g.value)
 const initialAge = typeof route.query.age === 'string' && validAges.includes(route.query.age)
   ? route.query.age
@@ -41,7 +42,16 @@ const initialAge = typeof route.query.age === 'string' && validAges.includes(rou
 const selectedAge = ref<string | null>(initialAge)
 
 watch(() => route.query.age, (a) => {
-  if (typeof a === 'string' && validAges.includes(a)) selectedAge.value = a
+  selectedAge.value = typeof a === 'string' && validAges.includes(a) ? a : 'all'
+})
+
+// Выбор пишется обратно в адрес: ссылку на «группы 6–7 лет» можно отправить,
+// и обновление страницы не сбрасывает фильтр. replace — чтобы клики
+// по чипам не забивали историю браузера.
+watch(selectedAge, (sel) => {
+  const age = sel && sel !== 'all' ? sel : undefined
+  if (route.query.age === age) return
+  void router.replace({ query: { ...route.query, age } })
 })
 
 const { data, loading, error } = useTeamsQuery()
@@ -165,12 +175,6 @@ const filteredTeams = computed<ReadonlyArray<Team>>(() => {
 .teams-error,
 .teams-empty {
   display: block;
-}
-
-.teams-schedule-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
-  gap: $space-5;
 }
 
 .teams-error :deep(.empty-state),

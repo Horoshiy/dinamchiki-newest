@@ -117,16 +117,6 @@ const {
   gap: $space-4;
 }
 
-.lform__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $space-4;
-
-  @media (max-width: $bp-md) {
-    grid-template-columns: 1fr;
-  }
-}
-
 .lform__field {
   display: flex;
   flex-direction: column;
@@ -176,25 +166,11 @@ const {
   }
 }
 
-.lform__select {
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a6478' stroke-width='2'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right $space-4 center;
-  background-size: 12px;
-  padding-right: $space-10;
-}
-
-.lform__textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
 .lform__error {
   font-size: $font-size-xs;
   color: #dc2626;
   font-weight: $font-weight-medium;
 }
-
 
 .lform__server-error {
   padding: $space-3 $space-4;

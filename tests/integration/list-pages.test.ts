@@ -71,6 +71,19 @@ describe('TeamsPage', () => {
     expect(w.findAll('.team-card').length).toBe(teamsMock.length)
   })
 
+  it('выбранный возраст попадает в адрес, «Все» его убирает', async () => {
+    const router = await routerPlugin()
+    const w = mount(TeamsPage, { global: { plugins: [router] } })
+    await flushPromises()
+    const chips = w.findAll('.chip')
+    await chips[2].trigger('click') // 6–7 лет
+    await flushPromises()
+    expect(router.currentRoute.value.query.age).toBe('6-7')
+    await chips[0].trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.age).toBeUndefined()
+  })
+
   it('заголовок страницы один', async () => {
     const w = await render(TeamsPage)
     expect(w.findAll('h1')).toHaveLength(1)
