@@ -23,7 +23,10 @@ import HomeTournamentsPreview from '@/widgets/home/HomeTournamentsPreview.vue'
 import HomeGalleryPreview from '@/widgets/home/HomeGalleryPreview.vue'
 import HomeFaq from '@/widgets/home/HomeFaq.vue'
 import HomeCta from '@/widgets/home/HomeCta.vue'
-import { usePageLayoutQuery, type PageSection } from '@/shared/api/composables'
+import { useRoute } from 'vue-router'
+import { usePageLayoutQuery, useTeamsQuery, type PageSection } from '@/shared/api/composables'
+import { usePageMeta } from '@/shared/lib/page-meta'
+import { clubDescription } from '@/entities/club/club.facts'
 
 /** Маппинг `collection` (бэкенд) → Vue-компонент (фронт). */
 const COLLECTION_TO_COMPONENT: Record<string, unknown> = {
@@ -52,6 +55,20 @@ const FALLBACK_HOME_SECTIONS: PageSection[] = [
 ]
 
 const { data: layoutData } = usePageLayoutQuery('/')
+
+// Описание для поисковика и превью ссылок — с числом групп из CRM.
+// Пререндер дожидается данных, так что число попадает и в статический HTML.
+const route = useRoute()
+const { data: teamsData } = useTeamsQuery()
+usePageMeta(() => {
+  const n = (teamsData.value as { teams?: unknown[] } | null)?.teams?.length
+  if (!n) return null
+  return {
+    title: route.meta.title as string | undefined,
+    description: clubDescription(n),
+    ogImage: route.meta.ogImage as string | undefined,
+  }
+})
 
 /** Секции для рендера: из бэкенда или fallback. */
 const sectionsToRender = computed<PageSection[]>(() => {

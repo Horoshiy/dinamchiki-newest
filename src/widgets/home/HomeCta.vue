@@ -7,7 +7,7 @@
  *   - Справа: 3 карточки контактов (телефон, WhatsApp, Telegram)
  *   - Внизу справа: трофей/щит с надписью
  */
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, useId } from 'vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
@@ -43,6 +43,17 @@ const { submit: doSubmit } = useSubmitApplicationMutation()
 
 const isSubmitting = computed(() => status.value === 'submitting')
 
+/** Ошибка относится к полю телефона — тогда поле помечается невалидным. */
+const phoneInvalid = ref(false)
+const errorId = useId()
+
+/** Форма сменяется результатом — переносим фокус на него (см. LeadForm). */
+const resultEl = ref<HTMLElement | null>(null)
+async function focusResult() {
+  await nextTick()
+  resultEl.value?.focus()
+}
+
 /** Та же маска, что и в форме на «Контактах»: только +7 и десять цифр. */
 function onPhoneInput(e: Event) {
   form.value.phone = applyPhoneMask(e.target as HTMLInputElement)
@@ -54,8 +65,10 @@ async function onSubmit(event: Event) {
   if (!isPhoneComplete(form.value.phone)) {
     status.value = 'error'
     submitError.value = 'Введите номер полностью: +7 и 10 цифр'
+    phoneInvalid.value = true
     return
   }
+  phoneInvalid.value = false
   status.value = 'submitting'
   submitError.value = null
 
@@ -73,8 +86,10 @@ async function onSubmit(event: Event) {
   if (result.ok) {
     status.value = 'success'
     form.value = { phone: '' }
+    void focusResult()
   } else if (result.notDelivered) {
     status.value = 'unavailable'
+    void focusResult()
   } else {
     status.value = 'error'
     submitError.value = result.error ?? 'Что-то пошло не так'
@@ -115,6 +130,8 @@ function backToForm() {
                 placeholder="+7 (___) ___-__-__"
                 required
                 autocomplete="tel"
+                :aria-invalid="phoneInvalid ? 'true' : undefined"
+                :aria-describedby="submitError ? errorId : undefined"
                 @input="onPhoneInput"
               />
             </div>
@@ -129,16 +146,16 @@ function backToForm() {
             >
               {{ isSubmitting ? 'Отправляем…' : 'Записаться на тренировку' }}
             </BaseButton>
-            <p v-if="submitError" class="form__server-error" role="alert">{{ submitError }}</p>
+            <p v-if="submitError" :id="errorId" class="form__server-error" role="alert">{{ submitError }}</p>
             <ConsentNote button="Записаться на тренировку" />
           </form>
 
-          <div v-else-if="status === 'success'" class="form-success" role="status">
+          <div v-else-if="status === 'success'" ref="resultEl" class="form-success" role="status" tabindex="-1">
             <p class="form-success__title">Спасибо! Заявка отправлена.</p>
             <p class="form-success__text">Тренер перезвонит вам по&nbsp;указанному номеру.</p>
           </div>
 
-          <div v-else class="form-unavailable" role="status">
+          <div v-else ref="resultEl" class="form-unavailable" role="status" tabindex="-1">
             <p class="form-unavailable__title">Онлайн-заявка пока не работает</p>
             <p class="form-unavailable__text">
               Приём заявок с сайта ещё подключается, поэтому форма не отправит
@@ -224,6 +241,9 @@ function backToForm() {
   background: $color-warning-bg;
   border: 1px solid $color-warning;
   border-radius: $radius-lg;
+
+  // Фокус ставится программно, чтобы читалка зачитала результат.
+  &:focus { outline: none; }
 }
 
 .form-unavailable__title {
@@ -362,6 +382,9 @@ function backToForm() {
     color: $color-brand-700;
     margin: 0;
   }
+
+  // Фокус ставится программно, чтобы читалка зачитала результат.
+  &:focus { outline: none; }
 }
 
 // ---- Контакты ------------------------------------------------------------

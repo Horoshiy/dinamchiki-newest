@@ -12,7 +12,7 @@ import FilterChips from '@/shared/ui/base/FilterChips.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
-import { plural } from '@/shared/lib/plural'
+import { plural, withPlural } from '@/shared/lib/plural'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import TeamCard from '@/widgets/team/TeamCard.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
@@ -52,6 +52,15 @@ const teams = computed<ReadonlyArray<Team>>(() => {
   return d?.teams ?? []
 })
 
+/** Число групп — из CRM, а не литерал «17», который устаревал с каждой новой группой. */
+const headerDescription = computed(() => {
+  const n = teams.value.length
+  const lead = n
+    ? `${withPlural(n, ['группа', 'группы', 'групп'])} в разных районах Ставрополя`
+    : 'Группы в разных районах Ставрополя'
+  return `${lead}. Три занятия в неделю. Выберите возраст, чтобы увидеть подходящие группы.`
+})
+
 /**
  * Фильтруем по ПЕРЕСЕЧЕНИЮ диапазонов, а не по совпадению строки.
  *
@@ -86,7 +95,7 @@ const filteredTeams = computed<ReadonlyArray<Team>>(() => {
       <PageHeader
         eyebrow="О клубе"
         title="Группы и расписание"
-        description="17 групп на трёх площадках Ставрополя — Юг, Центр и 204 квартал. Три занятия в неделю. Выберите возраст, чтобы увидеть подходящие группы."
+        :description="headerDescription"
       >
         <template #action>
           <FilterChips v-model:selected="selectedAge" :items="ageGroups" />

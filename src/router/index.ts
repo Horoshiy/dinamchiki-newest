@@ -6,6 +6,7 @@ import BareLayout from '@/shared/ui/layout/BareLayout.vue'
 import { SVEDEN_LEGACY_REDIRECTS } from '@/entities/sveden/sveden.sections'
 import { applyPageMeta, setLink, setMeta, setOg } from '@/shared/lib/page-meta'
 import { trackPageView } from '@/shared/lib/metrika'
+import { clubDescription, STAFF_EXPERIENCE_TEXT } from '@/entities/club/club.facts'
 
 // Lazy-loaded страницы.
 const HomePage        = () => import('@/pages/HomePage.vue')
@@ -65,7 +66,8 @@ const routes: RouteRecordRaw[] = [
           // Главная ранжируется по «детский футбол Ставрополь» — в заголовке
           // нужны эти слова, а не «Главная».
           title: 'Детский футбольный клуб в Ставрополе, футбол для детей 3–14 лет',
-          description: 'Детский футбольный клуб «Динамчики» в Ставрополе — 17 групп на трёх площадках, дети 3–14 лет, занятия по образовательной лицензии. Абонемент от 4 500 ₽. Первая тренировка — бесплатно.',
+          // Число групп главная дописывает сама, когда загрузит их из CRM.
+          description: clubDescription(),
           ogImage: '/og/dinamchiki-cover.png',
         },
       },
@@ -95,7 +97,7 @@ const routes: RouteRecordRaw[] = [
         component: CoachesPage,
         meta: {
           title: 'Тренеры',
-          description: 'Тренерский состав ДФК «Динамчики»: тренеры-преподаватели с профильным образованием и стажем от 9 до 22 лет.',
+          description: `Тренерский состав ДФК «Динамчики»: тренеры-преподаватели с профильным образованием и стажем ${STAFF_EXPERIENCE_TEXT}.`,
           ogImage: '/og/dinamchiki-coaches.png',
         },
       },

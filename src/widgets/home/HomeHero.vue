@@ -18,6 +18,13 @@ import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { SIGNUP_ROUTE } from '@/shared/config/club'
 import { useHomeContentQuery } from '@/shared/api/composables'
 import type { PageContent, HeroContent } from '@/entities/content/content.types'
+import { clubYears, clubYearsLabel, STUDENTS_TOTAL } from '@/entities/club/club.facts'
+import { plural } from '@/shared/lib/plural'
+
+// Возраст клуба — от даты регистрации, учащиеся — из «Сведений».
+const years = clubYears()
+const yearsLabel = clubYearsLabel(years)
+const studentsLabel = plural(STUDENTS_TOTAL, ['юный футболист', 'юных футболиста', 'юных футболистов'])
 
 /** Тексты hero берём из pageContent — правятся контентом, а не кодом. */
 const { data } = useHomeContentQuery()
@@ -84,12 +91,12 @@ const hero = computed<HeroContent | null>(() => {
           </div>
         </div>
         <div class="hero__float hero__float--top">
-          <span class="hero__float-num">11</span>
-          <span class="hero__float-label">лет&nbsp;опыта</span>
+          <span class="hero__float-num">{{ years }}</span>
+          <span class="hero__float-label">{{ yearsLabel }}&nbsp;опыта</span>
         </div>
         <div class="hero__float hero__float--bottom">
           <IconUsers :size="20" color="#1e50d8" />
-          <span><strong>208</strong> юных футболистов</span>
+          <span><strong>{{ STUDENTS_TOTAL }}</strong> {{ studentsLabel }}</span>
         </div>
       </div>
     </div>

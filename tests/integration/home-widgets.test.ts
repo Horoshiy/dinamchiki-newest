@@ -14,6 +14,8 @@ import { homeContentMock, reviewsMock } from '@/entities/content/content.mocks'
 import { coachesMock } from '@/entities/coach/coaches.mocks'
 import { getCurrentTournament } from '@/entities/tournament/tournaments.mocks'
 import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { clubYears } from '@/entities/club/club.facts'
+import { teamsMock } from '@/entities/team/teams.mocks'
 
 /**
  * Главная раньше держала данные литералами прямо в виджетах: она жила своей
@@ -90,10 +92,19 @@ describe('HomeStats', () => {
     const w = await render(HomeStats)
     const cards = w.findAll('.stat-card')
     expect(cards).toHaveLength(homeContentMock.stats.length)
-    for (const s of homeContentMock.stats) {
+    // years и groups считаются сами — их проверяет следующий тест.
+    for (const s of homeContentMock.stats.filter((x) => !['years', 'groups'].includes(x.id))) {
       expect(w.text()).toContain(s.value)
       expect(w.text()).toContain(s.label)
     }
+  })
+
+  it('возраст клуба и число групп считаются, а не берутся из админки', async () => {
+    const w = await render(HomeStats)
+    const byId = (id: string) =>
+      w.findAll('.stat-card')[homeContentMock.stats.findIndex((x) => x.id === id)].text()
+    expect(byId('years')).toContain(String(clubYears()))
+    expect(byId('groups')).toContain(String(teamsMock.length))
   })
 
   it('у каждой метрики есть иконка из реестра', async () => {

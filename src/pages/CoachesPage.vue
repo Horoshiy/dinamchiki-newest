@@ -6,6 +6,7 @@
  */
 import { computed, ref} from 'vue'
 import { plural } from '@/shared/lib/plural'
+import { STAFF_EXPERIENCE_TEXT } from '@/entities/club/club.facts'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
@@ -74,7 +75,7 @@ const filteredCoaches = computed<ReadonlyArray<Coach>>(() => {
 // здесь остаётся взгляд со стороны тренерской работы.
 const principles = [
   { title: 'Индивидуальный подход', description: 'Не гонимся за «одинаковостью»: каждый ребёнок развивается в своём темпе. Тренер подбирает нагрузку под характер и физиологию.', iconKey: 'users' },
-  { title: 'Образование и стаж', description: 'Тренеры-преподаватели с профильным образованием, подтверждённым документами. Стаж по специальности — от 9 до 22 лет.', iconKey: 'award' },
+  { title: 'Образование и стаж', description: `Тренеры-преподаватели с профильным образованием, подтверждённым документами. Стаж по специальности — ${STAFF_EXPERIENCE_TEXT}.`, iconKey: 'award' },
   { title: 'Что с безопасностью', description: 'Допуск к занятиям по медицинской справке 086-у, аптечка первой помощи на каждой площадке, все тренеры прошли обучение по оказанию первой помощи.', iconKey: 'shield' },
   { title: 'Честная конкуренция', description: 'Не делим детей на «сильных» и «слабых» по турнирной таблице. Каждый получает игровую практику и поддержку.', iconKey: 'trophy' },
 ] as const
@@ -86,7 +87,7 @@ const principles = [
       <PageHeader
         eyebrow="Команда"
         title="Наши тренеры"
-        description="Тренеры-преподаватели ведут занятия по образовательным программам клуба. Стаж работы по специальности — от 9 до 22 лет."
+        :description="`Тренеры-преподаватели ведут занятия по образовательным программам клуба. Стаж работы по специальности — ${STAFF_EXPERIENCE_TEXT}.`"
       />
     </section>
 

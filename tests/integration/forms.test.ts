@@ -50,8 +50,8 @@ describe('DirectContacts', () => {
 })
 
 describe('LeadForm — форма заявки на /contacts', () => {
-  async function form() {
-    const w = mount(LeadForm, { global: { plugins: [await routerPlugin()] } })
+  async function form(opts: { attachTo?: HTMLElement } = {}) {
+    const w = mount(LeadForm, { ...opts, global: { plugins: [await routerPlugin()] } })
     await settle()
     return w
   }
@@ -81,6 +81,26 @@ describe('LeadForm — форма заявки на /contacts', () => {
     await settle()
     expect(w.findAll('.lform__error').length).toBeGreaterThan(0)
     expect(w.find('form').exists()).toBe(true)
+  })
+
+  it('ошибка телефона связана с полем для читалки экрана', async () => {
+    const w = await form()
+    await w.find('form').trigger('submit')
+    await settle()
+    const input = w.find('input[type="tel"]')
+    expect(input.attributes('aria-invalid')).toBe('true')
+    const errId = input.attributes('aria-describedby')
+    expect(errId).toBeTruthy()
+    expect(w.find(`[id="${errId}"]`).text()).toContain('телефон')
+  })
+
+  it('после отправки фокус переходит на результат', async () => {
+    const w = await form({ attachTo: document.body })
+    await fillValid(w)
+    await w.find('form').trigger('submit')
+    await settle()
+    expect(document.activeElement?.textContent).toContain('Заявка отправлена')
+    w.unmount()
   })
 
   it('невалидная заявка не уходит на бэкенд', async () => {

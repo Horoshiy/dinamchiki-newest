@@ -9,7 +9,7 @@
  *
  * Состояния: idle / submitting / success / error.
  */
-import { reactive, ref } from 'vue'
+import { nextTick, reactive, ref, useId } from 'vue'
 import type { LeadFormDraft, LeadFormErrors } from '@/entities/contact/contact.types'
 import { validateLeadForm } from '@/entities/contact/lead.validation'
 import { applyPhoneMask, normalizePhone } from '@/shared/lib/phone'
@@ -36,6 +36,19 @@ const leadId = ref<string | null>(null)
 
 const { submit: doSubmit } = useSubmitApplicationMutation()
 
+const phoneErrorId = useId()
+
+/**
+ * Форма целиком сменяется результатом, и фокус с кнопки пропадал в никуда:
+ * читалка экрана молчала, и с клавиатуры приходилось начинать с начала
+ * страницы. Переводим фокус на заголовок результата — его и зачитают.
+ */
+const stateTitle = ref<HTMLElement | null>(null)
+async function focusResult() {
+  await nextTick()
+  stateTitle.value?.focus()
+}
+
 /**
  * Маска ввода: что бы ни набрали — «8 928…», «7928…», «+7 928…» — в поле
  * останется «+7 (928) 320-04-94». Ввод чего-то другого просто не появится.
@@ -60,9 +73,11 @@ async function onSubmit() {
     if (result.ok) {
       status.value = 'success'
       leadId.value = result.leadId ?? null
+      void focusResult()
     } else if (result.notDelivered) {
       status.value = 'unavailable'
       submitError.value = null
+      void focusResult()
     } else {
       status.value = 'error'
       submitError.value = result.error ?? 'Что-то пошло не так'
@@ -88,7 +103,7 @@ function resetForm() {
     <!-- Success state -->
     <div v-if="status === 'success'" class="lform__state lform__state--success">
       <div class="lform__state-icon">✓</div>
-      <h3 class="lform__state-title">Заявка отправлена!</h3>
+      <h3 ref="stateTitle" class="lform__state-title" tabindex="-1">Заявка отправлена!</h3>
       <p class="lform__state-desc">
         Спасибо! Тренер перезвонит вам по указанному номеру.
         Номер заявки: <code>{{ leadId }}</code>
@@ -99,7 +114,7 @@ function resetForm() {
     <!-- Сервер заявок не подключён: честно говорим и даём прямые контакты -->
     <div v-else-if="status === 'unavailable'" class="lform__state lform__state--unavailable">
       <div class="lform__state-icon">!</div>
-      <h3 class="lform__state-title">Онлайн-заявка пока не работает</h3>
+      <h3 ref="stateTitle" class="lform__state-title" tabindex="-1">Онлайн-заявка пока не работает</h3>
       <p class="lform__state-desc">
         Мы ещё подключаем приём заявок с сайта, поэтому эта форма не отправит
         ваше сообщение. Чтобы записаться на пробную тренировку, свяжитесь
@@ -121,9 +136,12 @@ function resetForm() {
           class="lform__input"
           :class="{ 'lform__input--error': errors.phone }"
           placeholder="+7 (___) ___-__-__"
+          aria-required="true"
+          :aria-invalid="errors.phone ? 'true' : undefined"
+          :aria-describedby="errors.phone ? phoneErrorId : undefined"
           @input="onPhoneInput"
         />
-        <span v-if="errors.phone" class="lform__error">{{ errors.phone }}</span>
+        <span v-if="errors.phone" :id="phoneErrorId" class="lform__error" role="alert">{{ errors.phone }}</span>
       </label>
 
       <div v-if="status === 'error' && submitError" class="lform__server-error" role="alert">
@@ -306,6 +324,9 @@ function resetForm() {
   font-weight: $font-weight-extrabold;
   color: $color-fg-strong;
   margin: 0;
+
+  // Фокус ставится программно, чтобы читалка зачитала результат.
+  &:focus { outline: none; }
 }
 
 .lform__state-desc {

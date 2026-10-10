@@ -158,8 +158,10 @@ export interface EduProgram {
   subjects: ReadonlyArray<string>
   /** Вакантных мест по договорам об образовании. */
   vacantPaid: number
-  /** Стоимость обучения, ₽/месяц. */
+  /** Стоимость обучения, ₽/месяц — полный абонемент, 12 занятий. */
   price: number
+  /** Частичный абонемент, 8 занятий, ₽. */
+  pricePartial: number
   /** Режим занятий. */
   schedule: string
 }
@@ -177,6 +179,7 @@ export const EDU_PROGRAMS: ReadonlyArray<EduProgram> = [
     subjects: ['Общая физическая подготовка', 'Основы техники владения мячом', 'Подвижные игры с элементами футбола'],
     vacantPaid: 70,
     price: 5000,
+    pricePartial: 4000,
     schedule: '3 занятия в неделю по 45 минут',
   },
   {
@@ -191,6 +194,7 @@ export const EDU_PROGRAMS: ReadonlyArray<EduProgram> = [
     subjects: ['Техническая подготовка', 'Тактическая подготовка', 'Игровая практика', 'Физическая подготовка'],
     vacantPaid: 63,
     price: 5000,
+    pricePartial: 4000,
     schedule: '3 занятия в неделю по 60 минут',
   },
   {
@@ -205,6 +209,7 @@ export const EDU_PROGRAMS: ReadonlyArray<EduProgram> = [
     subjects: ['Специальная техническая подготовка', 'Тактика игры', 'Интегральная подготовка', 'Соревновательная практика'],
     vacantPaid: 42,
     price: 4500,
+    pricePartial: 3500,
     schedule: '3 занятия в неделю по 60 минут',
   },
   {
@@ -219,6 +224,7 @@ export const EDU_PROGRAMS: ReadonlyArray<EduProgram> = [
     subjects: ['Профессиональная техника', 'Продвинутая тактика', 'Психологическая подготовка', 'Спортивная практика'],
     vacantPaid: 74,
     price: 4500,
+    pricePartial: 3500,
     schedule: '3 занятия в неделю по 60 минут',
   },
 ]
@@ -467,9 +473,22 @@ export const PAID_EDU_DOCS: ReadonlyArray<SvedenDoc> = [
 export const PAID_EDU_PARENTS_NOTE =
   'Присмотр и уход за детьми организация не осуществляет, плата за присмотр и уход не взимается.'
 
+/** «4 000 ₽ для групп 3–5 и 6–7 лет, 3 500 ₽ для групп 8–10 и 11–14 лет» — из программ. */
+function partialPricesText(): string {
+  const byPrice = new Map<number, string[]>()
+  for (const p of EDU_PROGRAMS) {
+    const ages = p.name.replace(/^.*детей\s+/, '').replace(/\s+лет$/, '')
+    byPrice.set(p.pricePartial, [...(byPrice.get(p.pricePartial) ?? []), ages])
+  }
+  return [...byPrice]
+    .sort(([a], [b]) => b - a)
+    .map(([price, ages]) => `${price.toLocaleString('ru-RU').replace(/\s/g, ' ')} ₽ для групп ${ages.join(' и ')} лет`)
+    .join(', ')
+}
+
 export const PAID_EDU_PRICE_NOTE =
   'Указана стоимость полного абонемента — 12 занятий. Частичный абонемент (8 занятий) — ' +
-  '4 000 ₽ для групп 3–5 и 6–7 лет, 3 500 ₽ для остальных. Стоимость зависит от выбранного ' +
+  `${partialPricesText()}. Стоимость зависит от выбранного ` +
   'расписания, площадки и формата занятий (групповые, индивидуальные). ' +
   'Точная стоимость фиксируется в договоре об оказании платных образовательных услуг.'
 
