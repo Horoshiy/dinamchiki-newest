@@ -11,7 +11,7 @@ import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import FilterChips from '@/shared/ui/base/FilterChips.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
-import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
 import { plural } from '@/shared/lib/plural'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import TeamCard from '@/widgets/team/TeamCard.vue'
@@ -78,10 +78,6 @@ const filteredTeams = computed<ReadonlyArray<Team>>(() => {
   })
 })
 
-// Логируем ошибки для отладки (мок fallback прозрачен для UI)
-watch(error, (e) => {
-  if (e) console.warn('[TeamsPage]', e.message)
-})
 </script>
 
 <template>
@@ -111,7 +107,7 @@ watch(error, (e) => {
       <div v-else-if="error" class="teams-error">
         <EmptyState
           title="Не удалось загрузить группы"
-          :description="error.message"
+          :description="LOAD_ERROR_HINT"
           :icon="IconBall"
           variant="card"
         />

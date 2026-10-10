@@ -2,7 +2,7 @@
 /**
  * Детальная страница игрока (`/player/:id`).
  */
-import { computed, toRef, watch } from 'vue'
+import { computed, toRef} from 'vue'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/shared/ui/base/Breadcrumbs.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -20,7 +20,8 @@ import IconShieldCheck from '@/shared/ui/icons/IconShieldCheck.vue'
 import type { Player } from '@/entities/player/player.types'
 import { POSITION_LABELS } from '@/entities/player/player.types'
 import { usePlayerQuery } from '@/shared/api/composables'
-import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
+import { withPlural } from '@/shared/lib/plural'
 
 const props = defineProps<{ id: string }>()
 
@@ -32,7 +33,6 @@ const player = computed<Player | null>(() => {
   return d?.player ?? null
 })
 
-watch(error, (e) => { if (e) console.warn('[PlayerPage]', e.message) })
 
 const initials = computed<string>(() => {
   if (!player.value) return ''
@@ -63,7 +63,7 @@ const crumbs = computed(() => [
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить игрока"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconBall"
         variant="card"
       />
@@ -100,7 +100,7 @@ const crumbs = computed(() => [
         <div class="player-detail__hero-body">
           <div class="player-detail__tags">
             <span class="player-detail__position">{{ POSITION_LABELS[player.position] }}</span>
-            <span class="player-detail__age">{{ player.age }} лет</span>
+            <span class="player-detail__age">{{ withPlural(player.age, ['год', 'года', 'лет']) }}</span>
             <span class="player-detail__number">№ {{ player.jerseyNumber }}</span>
           </div>
 

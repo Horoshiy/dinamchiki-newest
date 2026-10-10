@@ -64,12 +64,11 @@ export interface ContactInfo {
 
 /** Заполненная форма заявки. */
 /**
- * Черновик формы заявки. Обе формы сайта собирают только имя звонящего
- * и телефон: остальное — имя ребёнка, возраст, группу, удобное время —
+ * Черновик формы заявки. Обе формы сайта собирают только телефон:
+ * остальное — как зовут, имя и возраст ребёнка, группу, удобное время —
  * тренер уточняет при звонке.
  */
 export interface LeadFormDraft {
-  parentName: string
   phone: string
   /** Согласие на обработку ПДн */
   consent: boolean
@@ -77,7 +76,6 @@ export interface LeadFormDraft {
 
 /** Ошибки валидации. */
 export interface LeadFormErrors {
-  parentName?: string
   phone?: string
   consent?: string
 }

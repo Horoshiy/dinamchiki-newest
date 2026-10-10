@@ -18,6 +18,12 @@ import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 
 const props = defineProps<{ contact: ContactInfo }>()
 
+// В базе ИНН лежит то голым номером, то строкой «ИНН … / ОГРН …».
+const innLabel = computed(() => {
+  const v = props.contact.inn ?? ''
+  return /^ИНН/i.test(v) ? v : `ИНН ${v}`
+})
+
 const whatsappUrl  = computed(() => `https://wa.me/${props.contact.whatsapp.replace(/\D/g, '')}`)
 const telegramUrl  = computed(() => `https://t.me/${telegramUsername(props.contact.telegram)}`)
 
@@ -99,7 +105,7 @@ const emailHref   = computed(() => `mailto:${props.contact.email}`)
       <div class="cinfo__body">
         <span class="cinfo__label">Юридический адрес</span>
         <strong class="cinfo__value">{{ contact.legalAddress }}</strong>
-        <span v-if="contact.inn" class="cinfo__sub">{{ contact.inn }}</span>
+        <span v-if="contact.inn" class="cinfo__sub">{{ innLabel }}</span>
       </div>
     </div>
 

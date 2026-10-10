@@ -93,6 +93,10 @@ withDefaults(
   color: $color-fg-strong;
   margin: 0;
   letter-spacing: -0.02em;
+  // «образовательной» при крупном системном шрифте шире экрана 360px:
+  // переносим по слогам, а не распираем страницу.
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .page-header__description {

@@ -51,11 +51,12 @@ describe('StandingsTable', () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
   })
 
-  it('разница мячей берётся из goalDifference и показывает знак', () => {
+  /** С 04.09.2026 колонка «Мячи» — забитые-пропущенные, как в протоколах детских лиг. */
+  it('мячи показаны как «забито-пропущено»', () => {
     const w = render()
     const first = [...tournament.standings].sort((a, b) => a.position - b.position)[0]
-    const gd = w.find('.standings__gd').text()
-    expect(gd).toBe(`${first.goalDifference > 0 ? '+' : ''}${first.goalDifference}`)
+    const goals = w.find('.standings__row td.standings__col-goals').text()
+    expect(goals).toBe(`${first.goalsFor}-${first.goalsAgainst}`)
   })
 
   it('команда клуба подсвечена', () => {

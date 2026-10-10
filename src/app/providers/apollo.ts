@@ -1,17 +1,15 @@
 // Apollo Client. Один экземпляр на всё приложение.
-// InMemoryCache — дефолт. Подписки включены (пригодится в Этапе 11).
 // Адрес HTTP-эндпоинта берётся из env через app.config.ts.
+//
+// WebSocket-линк для подписок убран: подписок на сайте нет, а graphql-ws
+// лежал в стартовом чанке у каждого посетителя.
 
 import {
   ApolloClient,
   InMemoryCache,
   HttpLink,
-  split,
   ApolloLink,
 } from '@apollo/client/core'
-import { getMainDefinition } from '@apollo/client/utilities'
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
-import { createClient } from 'graphql-ws'
 import { appConfig } from '../config/app.config'
 import { GRAPHQL_TIMEOUT_MS } from '@/shared/api/config'
 
@@ -25,13 +23,21 @@ import { GRAPHQL_TIMEOUT_MS } from '@/shared/api/config'
 export function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), GRAPHQL_TIMEOUT_MS)
+  // Apollo отменяет запрос своим сигналом (ушли со страницы) — его нельзя
+  // терять, иначе отменённые запросы досиживают до таймаута.
+  const outer = init?.signal
+  if (outer) {
+    if (outer.aborted) controller.abort()
+    else outer.addEventListener('abort', () => controller.abort(), { once: true })
+  }
   return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
 }
 
 // --- HTTP ----------------------------------------------------------------
+// Запросы публичные: cookie на API не нужны (credentials по умолчанию —
+// same-origin), и CORS не обязан разрешать Allow-Credentials.
 const httpLink = new HttpLink({
   uri: appConfig.graphqlHttp,
-  credentials: 'include',
   fetch: fetchWithTimeout,
 })
 
@@ -50,37 +56,8 @@ const logLink = new ApolloLink((operation, forward) => {
   })
 })
 
-// --- WS (subscriptions) — необязательный, но не мешает -------------------
-let wsLink: GraphQLWsLink | null = null
-try {
-  wsLink = new GraphQLWsLink(
-    createClient({
-      url: appConfig.graphqlWs,
-      retryAttempts: 3,
-    }),
-  )
-} catch (err) {
-  // Если браузер не поддерживает WS — просто работаем без подписок.
-  if (import.meta.env.DEV) {
-     
-    console.warn('[Apollo] WS link disabled:', err)
-  }
-}
-
-// --- Split: подписки через WS, остальное через HTTP -----------------------
-const splitLink = wsLink
-  ? split(
-      ({ query }) => {
-        const def = getMainDefinition(query)
-        return def.kind === 'OperationDefinition' && def.operation === 'subscription'
-      },
-      wsLink,
-      logLink.concat(httpLink),
-    )
-  : logLink.concat(httpLink)
-
 export const apolloClient = new ApolloClient({
-  link: splitLink,
+  link: logLink.concat(httpLink),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
@@ -89,15 +66,17 @@ export const apolloClient = new ApolloClient({
           teams:       { merge: false },
           coaches:     { merge: false },
           tournaments: { merge: false },
-          matches:     { merge: false },
           players:     { merge: false },
-          galleryAlbums: { merge: false },
+          albums:      { merge: false },
           reviews:     { merge: false },
         },
       },
+      // id достижений повторяются у разных игроков (a1, a2…): с нормализацией
+      // по id все игроки показывали бы одни и те же достижения.
+      PlayerAchievement: { keyFields: false },
     },
   }),
-  connectToDevTools: import.meta.env.DEV,
+  devtools: { enabled: import.meta.env.DEV },
   defaultOptions: {
     watchQuery:    { fetchPolicy: 'cache-and-network', errorPolicy: 'all' },
     query:         { fetchPolicy: 'network-only',     errorPolicy: 'all' },

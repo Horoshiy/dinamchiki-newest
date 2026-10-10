@@ -16,6 +16,7 @@ import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
 import { useCoachesQuery } from '@/shared/api/composables'
 import { COACH_AGE_LABELS } from '@/entities/coach/coach.types'
 import type { Coach } from '@/entities/coach/coach.types'
+import { withPlural } from '@/shared/lib/plural'
 
 /** Сколько тренеров показываем в превью. */
 const PREVIEW_LIMIT = 3
@@ -28,7 +29,7 @@ const coaches = computed(() => {
     id: c.id,
     name: c.fullName,
     role: c.role,
-    experience: `Опыт: ${c.experienceYears} лет`,
+    experience: c.experienceYears > 0 ? `Опыт: ${withPlural(c.experienceYears, ['год', 'года', 'лет'])}` : '',
     ages: `Группы: ${c.ageGroups.map((a) => COACH_AGE_LABELS[a]).join(', ')}`,
     badge: c.fullName.charAt(0),
   }))
@@ -62,7 +63,7 @@ const coaches = computed(() => {
             <h3 class="coach__name">{{ c.name }}</h3>
             <p class="coach__role">{{ c.role }}</p>
             <div class="coach__meta">
-              <span><IconTrophy :size="16" /> {{ c.experience }}</span>
+              <span v-if="c.experience"><IconTrophy :size="16" /> {{ c.experience }}</span>
               <span><IconUsers :size="16" /> {{ c.ages }}</span>
             </div>
             <RouterLink :to="`/coach/${c.id}`" class="coach__link">

@@ -8,6 +8,7 @@ import CoachCard from './CoachCard.vue'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
 import IconUsers from '@/shared/ui/icons/IconUsers.vue'
+import { LOAD_ERROR_HINT } from '@/shared/config/club'
 
 defineProps<{
   coaches: ReadonlyArray<Coach> | null
@@ -29,7 +30,7 @@ defineProps<{
   <div v-else-if="error" class="coaches-grid-state">
     <EmptyState
       title="Не удалось загрузить тренеров"
-      :description="error.message"
+      :description="LOAD_ERROR_HINT"
       :icon="IconUsers"
       variant="card"
     />

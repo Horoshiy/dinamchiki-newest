@@ -45,11 +45,6 @@ import {
 
     <SvedenBlock title="Документы">
       <SvedenDocList :docs="PAID_EDU_DOCS" />
-      <p class="sv-warn">
-        Документы этого подраздела обязательны к размещению. До их публикации
-        подраздел не соответствует требованиям приказа № 1493 — файлы нужно
-        разместить, а не оставлять пометку.
-      </p>
     </SvedenBlock>
 
     <SvedenBlock title="Плата за присмотр и уход">
@@ -60,12 +55,4 @@ import {
 
 <style scoped lang="scss">
 .sv-note { font-size: $font-size-sm; color: $color-fg-muted; }
-
-.sv-warn {
-  font-size: $font-size-sm;
-  padding: $space-3 $space-4;
-  border-radius: $radius-md;
-  background: $color-warning-bg;
-  color: $color-warning-fg;
-}
 </style>

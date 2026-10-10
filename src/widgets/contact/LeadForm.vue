@@ -2,24 +2,25 @@
 /**
  * Форма заявки на пробную тренировку.
  *
- * Поля: имя звонящего, телефон и согласие на обработку данных.
- * Возраст ребёнка, группу и удобное время тренер уточняет при звонке —
- * длинная анкета только удлиняла путь до кнопки.
+ * Одно поле — телефон. Согласие на обработку данных даётся нажатием
+ * кнопки — подпись под ней ведёт на текст согласия.
+ * Как зовут, возраст ребёнка, группу и удобное время тренер уточняет
+ * при звонке — каждое лишнее поле удлиняло путь до кнопки.
  *
  * Состояния: idle / submitting / success / error.
  */
 import { reactive, ref } from 'vue'
 import type { LeadFormDraft, LeadFormErrors } from '@/entities/contact/contact.types'
 import { validateLeadForm } from '@/entities/contact/lead.validation'
-import { formatPhone, normalizePhone } from '@/shared/lib/phone'
+import { applyPhoneMask, normalizePhone } from '@/shared/lib/phone'
 import { useSubmitApplicationMutation } from '@/shared/api/composables'
 import IconSend from '@/shared/ui/icons/IconSend.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
+import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 
 
 const draft = reactive<LeadFormDraft>({
-  parentName: '',
   phone: '',
   consent: false,
 })
@@ -40,15 +41,12 @@ const { submit: doSubmit } = useSubmitApplicationMutation()
  * останется «+7 (928) 320-04-94». Ввод чего-то другого просто не появится.
  */
 function onPhoneInput(e: Event) {
-  const el = e.target as HTMLInputElement
-  const masked = formatPhone(el.value)
-  draft.phone = masked
-  el.value = masked
+  draft.phone = applyPhoneMask(e.target as HTMLInputElement)
 }
 
 async function onSubmit() {
-  // Клиентская валидация
-  // Согласие подтверждается нажатием кнопки (подпись под ней).
+  if (status.value === 'submitting') return
+  // Согласие — само нажатие кнопки (подпись со ссылкой под ней).
   draft.consent = true
   const v = validateLeadForm(draft)
   errors.value = v
@@ -76,7 +74,6 @@ async function onSubmit() {
 }
 
 function resetForm() {
-  draft.parentName = ''
   draft.phone = ''
   draft.consent = false
   errors.value = {}
@@ -93,8 +90,8 @@ function resetForm() {
       <div class="lform__state-icon">✓</div>
       <h3 class="lform__state-title">Заявка отправлена!</h3>
       <p class="lform__state-desc">
-        Спасибо, <strong>{{ draft.parentName }}</strong>! Тренер перезвонит вам
-        по указанному номеру. Номер заявки: <code>{{ leadId }}</code>
+        Спасибо! Тренер перезвонит вам по указанному номеру.
+        Номер заявки: <code>{{ leadId }}</code>
       </p>
       <BaseButton variant="outline" @click="resetForm">Отправить ещё одну</BaseButton>
     </div>
@@ -115,19 +112,6 @@ function resetForm() {
     <!-- Form -->
     <form v-else class="lform__form" @submit.prevent="onSubmit">
       <label class="lform__field">
-        <span class="lform__label">Как вас зовут <span class="lform__req">*</span></span>
-        <input
-          v-model="draft.parentName"
-          type="text"
-          class="lform__input"
-          :class="{ 'lform__input--error': errors.parentName }"
-          placeholder="Сергей"
-          autocomplete="name"
-        />
-        <span v-if="errors.parentName" class="lform__error">{{ errors.parentName }}</span>
-      </label>
-
-      <label class="lform__field">
         <span class="lform__label">Телефон <span class="lform__req">*</span></span>
         <input
           :value="draft.phone"
@@ -142,7 +126,7 @@ function resetForm() {
         <span v-if="errors.phone" class="lform__error">{{ errors.phone }}</span>
       </label>
 
-      <div v-if="status === 'error' && submitError" class="lform__server-error">
+      <div v-if="status === 'error' && submitError" class="lform__server-error" role="alert">
         {{ submitError }}
       </div>
 
@@ -157,9 +141,7 @@ function resetForm() {
         >
           {{ status === 'submitting' ? 'Отправляем...' : 'Записаться на бесплатную пробную' }}
         </BaseButton>
-        <p class="lform__hint">
-          Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
-        </p>
+        <ConsentNote button="Записаться на бесплатную пробную" />
       </div>
     </form>
   </div>
@@ -220,7 +202,9 @@ function resetForm() {
   border-radius: $radius-md;
   background: $color-white;
   font-family: $font-family-sans;
-  font-size: $font-size-sm;
+  // 16px, не меньше: iOS Safari увеличивает страницу при фокусе на поле
+  // с шрифтом мельче 16px, и форма уезжает за край экрана.
+  font-size: $font-size-base;
   color: $color-fg-strong;
   transition: border-color $transition-base, box-shadow $transition-base;
 
@@ -270,13 +254,6 @@ function resetForm() {
   border-radius: $radius-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-}
-
-.lform__hint {
-  margin: $space-3 0 0;
-  font-size: $font-size-xs;
-  color: $color-fg-muted;
-  text-align: center;
 }
 
 .lform__actions {

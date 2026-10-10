@@ -5,6 +5,8 @@ import App from './App.vue'
 import { router } from './router'
 import { apolloClient } from './app/providers/apollo'
 import { apolloProvider } from './app/providers/apollo-provider'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/manrope'
 import './app/styles/global.scss'
 // Версия для слабовидящих — отдельным файлом после global, перекрывает компоненты.
 import './app/styles/bvi.scss'

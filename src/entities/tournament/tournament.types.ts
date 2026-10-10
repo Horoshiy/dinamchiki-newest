@@ -98,10 +98,10 @@ export const TOURNAMENT_STATUS_LABELS: Readonly<Record<TournamentStatus, string>
   finished: 'Завершён',
 }
 
-/** Цвет бейджа статуса. */
+/** Цвет бейджа статуса: белый текст на нём не ниже 4.5:1 (WCAG AA). */
 export const TOURNAMENT_STATUS_COLORS: Readonly<Record<TournamentStatus, string>> = {
-  upcoming: '#5180f4',
-  live:     '#16a34a',
+  upcoming: '#1a45bf',
+  live:     '#15803d',
   finished: '#5a6478',
 }
 

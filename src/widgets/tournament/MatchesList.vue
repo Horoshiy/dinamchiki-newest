@@ -10,6 +10,7 @@ import type { TournamentMatch, TournamentTeam, MatchKind } from '@/entities/tour
 import { MATCH_KIND_LABELS } from '@/entities/tournament/tournament.types'
 import IconClock from '@/shared/ui/icons/IconClock.vue'
 import IconLocation from '@/shared/ui/icons/IconLocation.vue'
+import { formatDayShort, formatTime } from '@/shared/lib/date'
 
 const props = defineProps<{
   matches: ReadonlyArray<TournamentMatch>
@@ -46,14 +47,8 @@ const visibleMatches = computed<ReadonlyArray<TournamentMatch>>(() => {
   return list
 })
 
-const TZ = 'Europe/Moscow'
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', timeZone: TZ })
-}
-function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
-}
+const fmtDate = formatDayShort
+const fmtTime = formatTime
 
 /** Цвет бейджа типа матча. */
 function kindColor(k: MatchKind): string {

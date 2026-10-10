@@ -16,17 +16,14 @@ import IconLocation from '@/shared/ui/icons/IconLocation.vue'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
+import { formatRange } from '@/shared/lib/date'
 
 const props = defineProps<{ tournament: Tournament }>()
 
 const statusLabel = computed(() => TOURNAMENT_STATUS_LABELS[props.tournament.status])
 const statusColor = computed(() => TOURNAMENT_STATUS_COLORS[props.tournament.status])
 
-const dateRange = computed(() => {
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' })
-  return `${fmt(props.tournament.startDate)} — ${fmt(props.tournament.endDate)}`
-})
+const dateRange = computed(() => formatRange(props.tournament.startDate, props.tournament.endDate))
 </script>
 
 <template>

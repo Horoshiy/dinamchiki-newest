@@ -97,3 +97,32 @@ ul, ol {
   white-space: nowrap;
   border: 0;
 }
+
+// Ссылка «К содержимому»: первая по Tab, видна только в фокусе.
+.skip-link {
+  position: absolute;
+  left: $space-4;
+  top: -100px;
+  z-index: 100;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  background: $color-brand-600;
+  color: $color-white;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+
+  &:focus { top: $space-3; }
+}
+
+// Системная настройка «Уменьшить движение»: пульсация «Идёт сейчас»,
+// мерцание скелетонов и плавные прокрутки отключаются (WCAG 2.2.2, 2.3.3).
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

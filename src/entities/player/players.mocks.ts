@@ -1,6 +1,8 @@
 // =============================================================================
-// Mock-данные игроков. До подключения GraphQL (Этап 11).
-// Структура 1-в-1 с будущим ответом players query.
+// Mock-данные игроков: ВЫМЫШЛЕННЫЕ дети — только для тестов и режима
+// USE_MOCKS_ONLY. На проде как запасные данные не используются (см.
+// shared/api/composables.ts): при сбое API показывается ошибка, а не они.
+// Команды и тренеры — настоящие id из teams.mocks / coaches.mocks.
 //
 // Аватары — градиент + инициалы (без внешнего пакета).
 // Галерея — 6 плейсхолдеров на каждый профиль (разные соотношения сторон).
@@ -17,7 +19,7 @@ const galleryFor = (seed: string): ReadonlyArray<{ id: string; url: string; capt
 ]
 
 export const playersMock: ReadonlyArray<Player> = [
-  // 1. Вратарь U-12 Academy
+  // 1. Вратарь
   {
     id: 'arseniy-zaytsev',
     fullName: 'Арсений Зайцев',
@@ -26,8 +28,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'GK',
     bio: 'Вратарь с пугающе спокойным характером. Лучший по проценту отбитых пенальти в клубе (4 из 5 за сезон).',
     avatarGradient: 'linear-gradient(135deg, #5180f4 0%, #143494 100%)',
-    team: { id: 'u12-academy', name: 'Динамчики U-12 Academy', ageLabel: '11–14 лет', color: '#0d2b6e' },
-    coach: { id: 'dmitry-sokolov', fullName: 'Дмитрий Соколов', role: 'Тренер вратарей' },
+    team: { id: 'g6', name: 'Юг 2014-2015', ageLabel: '11–12 лет', color: '#1e50d8' },
+    coach: { id: 'dmitry-tretyakov', fullName: 'Третьяков Дмитрий Михайлович', role: 'Старший тренер-преподаватель, спортивный директор' },
     stats: { matchesPlayed: 18, goals: 0, assists: 1, minutesPlayed: 1620, yellowCards: 1, redCards: 0 },
     gallery: galleryFor('arseniy'),
     achievements: [
@@ -45,8 +47,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'DEF',
     bio: 'Центральный защитник. Не пропускает мимо себя никого — лучший в клубе по перехватам.',
     avatarGradient: 'linear-gradient(135deg, #1e50d8 0%, #143494 100%)',
-    team: { id: 'u12-blue', name: 'Динамчики U-12', ageLabel: '11–14 лет', color: '#143494' },
-    coach: { id: 'alexey-ivanov', fullName: 'Алексей Иванов', role: 'Главный тренер' },
+    team: { id: 'g5', name: 'Юг 2014-2015 (2 подгруппа)', ageLabel: '11–12 лет', color: '#1e50d8' },
+    coach: { id: 'andrey-kopylov', fullName: 'Копылов Андрей Николаевич', role: 'Тренер-преподаватель' },
     stats: { matchesPlayed: 22, goals: 3, assists: 2, minutesPlayed: 1980, yellowCards: 2, redCards: 0 },
     gallery: galleryFor('kirill'),
     achievements: [
@@ -63,8 +65,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'MID',
     bio: 'Плеймейкер команды U-10. Видит поле на два хода вперёд, отдаёт передачи с закрытыми глазами.',
     avatarGradient: 'linear-gradient(135deg, #5180f4 0%, #1e50d8 100%)',
-    team: { id: 'u10-blue', name: 'Динамчики U-10', ageLabel: '8–10 лет', color: '#1e50d8' },
-    coach: { id: 'alexey-ivanov', fullName: 'Алексей Иванов', role: 'Главный тренер' },
+    team: { id: 'g10', name: 'Центр 2017-2016', ageLabel: '9–10 лет', color: '#1e50d8' },
+    coach: { id: 'andrey-kopylov', fullName: 'Копылов Андрей Николаевич', role: 'Тренер-преподаватель' },
     stats: { matchesPlayed: 20, goals: 12, assists: 14, minutesPlayed: 1780, yellowCards: 1, redCards: 0 },
     gallery: galleryFor('misha'),
     achievements: [
@@ -82,8 +84,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'FWD',
     bio: 'Лучший бомбардир клуба за последние два сезона. Забивает и правой, и левой, и головой.',
     avatarGradient: 'linear-gradient(135deg, #dc2626 0%, #1e50d8 100%)',
-    team: { id: 'u12-blue', name: 'Динамчики U-12', ageLabel: '11–14 лет', color: '#143494' },
-    coach: { id: 'alexey-ivanov', fullName: 'Алексей Иванов', role: 'Главный тренер' },
+    team: { id: 'g5', name: 'Юг 2014-2015 (2 подгруппа)', ageLabel: '11–12 лет', color: '#1e50d8' },
+    coach: { id: 'andrey-kopylov', fullName: 'Копылов Андрей Николаевич', role: 'Тренер-преподаватель' },
     stats: { matchesPlayed: 24, goals: 28, assists: 9, minutesPlayed: 2050, yellowCards: 3, redCards: 0 },
     gallery: galleryFor('dima'),
     achievements: [
@@ -101,8 +103,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'DEF',
     bio: 'Самый юный игрок основного состава U-10. Бегает быстрее всех и никогда не сдаётся.',
     avatarGradient: 'linear-gradient(135deg, #143494 0%, #5180f4 100%)',
-    team: { id: 'u10-blue', name: 'Динамчики U-10', ageLabel: '8–10 лет', color: '#1e50d8' },
-    coach: { id: 'alexey-ivanov', fullName: 'Алексей Иванов', role: 'Главный тренер' },
+    team: { id: 'g10', name: 'Центр 2017-2016', ageLabel: '9–10 лет', color: '#1e50d8' },
+    coach: { id: 'andrey-kopylov', fullName: 'Копылов Андрей Николаевич', role: 'Тренер-преподаватель' },
     stats: { matchesPlayed: 16, goals: 2, assists: 5, minutesPlayed: 1280, yellowCards: 2, redCards: 0 },
     gallery: galleryFor('petya'),
     achievements: [
@@ -119,8 +121,8 @@ export const playersMock: ReadonlyArray<Player> = [
     position: 'FWD',
     bio: 'Нападающий младшей группы. Забил больше всех голов за свою короткую карьеру в клубе — 23 мяча.',
     avatarGradient: 'linear-gradient(135deg, #ca8a04 0%, #1e50d8 100%)',
-    team: { id: 'u8-blue', name: 'Динамчики U-8', ageLabel: '5–7 лет', color: '#1e50d8' },
-    coach: { id: 'maria-petrova', fullName: 'Мария Петрова', role: 'Тренер младших' },
+    team: { id: 'g54', name: 'Центр 2018-2019', ageLabel: '7–8 лет', color: '#1e50d8' },
+    coach: { id: 'roman-manuylo', fullName: 'Мануйло Роман Евгеньевич', role: 'Тренер-преподаватель' },
     stats: { matchesPlayed: 14, goals: 23, assists: 7, minutesPlayed: 980, yellowCards: 0, redCards: 0 },
     gallery: galleryFor('gosha'),
     achievements: [

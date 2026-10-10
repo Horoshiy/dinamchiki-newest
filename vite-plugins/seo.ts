@@ -26,7 +26,15 @@ export function seoPlugin(env: Record<string, string>): Plugin {
     apply: 'build',
     generateBundle() {
       const robots = allowIndexing
-        ? ['User-agent: *', 'Allow: /', '', `Sitemap: ${siteUrl}/sitemap.xml`, ''].join('\n')
+        ? [
+            'User-agent: *',
+            'Allow: /',
+            // Карточки детей в поиск не отдаём.
+            'Disallow: /player/',
+            '',
+            `Sitemap: ${siteUrl}/sitemap.xml`,
+            '',
+          ].join('\n')
         : [
             '# Бета-окружение — индексация запрещена.',
             '# Включается через VITE_ALLOW_INDEXING=true в боевой сборке.',

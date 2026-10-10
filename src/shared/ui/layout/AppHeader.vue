@@ -10,7 +10,7 @@
  * Активный пункт подсвечивается синим жирным шрифтом.
  * Под header — тонкая нижняя граница (как в мокапах).
  */
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import LogoMark from '@/shared/ui/icons/LogoMark.vue'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
@@ -75,6 +75,16 @@ function isActive(item: NavItem): boolean {
 const { phoneDisplay, phoneHref } = useClubContacts()
 
 const mobileMenuClasses = computed(() => ['mobile-menu', { 'mobile-menu--open': ui.isMobileMenuOpen }])
+
+// Меню закрывается при любом переходе (в т.ч. «Назад» в браузере),
+// а не только по клику на свой пункт.
+watch(() => route.fullPath, () => ui.closeMobileMenu())
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && ui.isMobileMenuOpen) ui.closeMobileMenu()
+}
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -127,7 +137,9 @@ const mobileMenuClasses = computed(() => ['mobile-menu', { 'mobile-menu--open': 
     </div>
 
     <!-- Мобильное меню -->
-    <div id="mobile-menu" :class="mobileMenuClasses">
+    <!-- inert в закрытом виде: иначе семь невидимых ссылок ловили Tab
+         и читались скринридером. -->
+    <div id="mobile-menu" :class="mobileMenuClasses" :inert="!ui.isMobileMenuOpen">
       <nav class="mobile-menu__nav" aria-label="Мобильное меню">
         <RouterLink
           v-for="item in NAV"
@@ -165,6 +177,13 @@ const mobileMenuClasses = computed(() => ['mobile-menu', { 'mobile-menu--open': 
   align-items: center;
   gap: $space-6;
   min-height: 88px;
+
+  // На 320–399px логотип с подписью, BVI и бургер не помещались в строку:
+  // бургер уезжал за правый край, а страница прокручивалась вбок.
+  @media (max-width: 399px) {
+    gap: $space-3;
+    min-height: 72px;
+  }
 }
 
 // ---- Бренд ----------------------------------------------------------------
@@ -197,6 +216,10 @@ const mobileMenuClasses = computed(() => ['mobile-menu', { 'mobile-menu--open': 
   font-size: $font-size-xs;
   color: $color-fg-muted;
   margin-top: 2px;
+
+  @media (max-width: 399px) {
+    display: none;
+  }
 }
 
 // ---- Навигация ------------------------------------------------------------

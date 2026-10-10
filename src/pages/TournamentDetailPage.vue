@@ -2,7 +2,7 @@
 /**
  * Детальная страница турнира (`/tournament/:id`).
  */
-import { computed, ref, toRef, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/shared/ui/base/Breadcrumbs.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -24,6 +24,10 @@ import {
 import type { Tournament } from '@/entities/tournament/tournament.types'
 import { useTournamentQuery, usePlayersQuery } from '@/shared/api/composables'
 import type { Player } from '@/entities/player/player.types'
+import { LOAD_ERROR_HINT } from '@/shared/config/club'
+import { NOT_FOUND_META, usePageMeta } from '@/shared/lib/page-meta'
+import { formatRangeFull } from '@/shared/lib/date'
+import { withPlural } from '@/shared/lib/plural'
 
 const props = defineProps<{ id: string }>()
 
@@ -69,8 +73,6 @@ const hasDetails = computed(() => {
   return t.teams.length > 0 || t.matches.length > 0 || t.standings.length > 0
 })
 
-watch(error, (e) => { if (e) console.warn('[TournamentDetailPage]', e.message) })
-
 const crumbs = computed(() => [
   { label: 'Главная',   to: '/' },
   { label: 'Турниры',   to: '/tournaments' },
@@ -80,11 +82,19 @@ const crumbs = computed(() => [
 const statusLabel = computed(() => tournament.value ? TOURNAMENT_STATUS_LABELS[tournament.value.status] : '')
 const statusColor = computed(() => tournament.value ? TOURNAMENT_STATUS_COLORS[tournament.value.status] : '#5180f4')
 
-const dateRange = computed(() => {
-  if (!tournament.value) return ''
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' })
-  return `${fmt(tournament.value.startDate)} — ${fmt(tournament.value.endDate)}`
+const dateRange = computed(() =>
+  tournament.value ? formatRangeFull(tournament.value.startDate, tournament.value.endDate) : '',
+)
+
+// Без своей меты у всех турниров был одинаковый заголовок «Турнир».
+usePageMeta(() => {
+  if (loading.value) return null
+  const t = tournament.value
+  if (!t) return NOT_FOUND_META
+  return {
+    title: `${t.name} — турнир с участием «Динамчиков»`,
+    description: `${t.name}: ${dateRange.value}${t.venue ? `, ${t.venue}` : ''}. Команды, матчи и таблица турнира.`,
+  }
 })
 
 const playedMatches = computed(() =>
@@ -108,7 +118,7 @@ const upcomingMatches = computed(() =>
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить турнир"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconBall"
         variant="card"
       />
@@ -193,7 +203,7 @@ const upcomingMatches = computed(() =>
       <section v-if="!hasDetails" class="container">
         <EmptyState
           title="Подробности турнира не сохранились"
-          :description="`По турниру «${tournament.name}» в архиве осталась только общая информация: ${tournament.teamsCount} команд, ${tournament.venue}.`"
+          :description="`По турниру «${tournament.name}» в архиве осталась только общая информация: ${withPlural(tournament.teamsCount, ['команда', 'команды', 'команд'])}, ${tournament.venue}.`"
         />
       </section>
 

@@ -19,6 +19,8 @@ const PlayerPage      = () => import('@/pages/PlayerPage.vue')
 const GalleryPage     = () => import('@/pages/GalleryPage.vue')
 const ContactsPage    = () => import('@/pages/ContactsPage.vue')
 const NotFoundPage    = () => import('@/pages/NotFoundPage.vue')
+const PrivacyPage     = () => import('@/pages/legal/PrivacyPage.vue')
+const ConsentPage     = () => import('@/pages/legal/ConsentPage.vue')
 
 // Раздел «Сведения об образовательной организации» — обязательный по ст. 29
 // Федерального закона № 273-ФЗ. Грузится отдельными чанками, как и остальное.
@@ -157,6 +159,26 @@ const routes: RouteRecordRaw[] = [
           title: 'Контакты',
           description: 'Контакты ДФК «Динамчики»: телефоны, мессенджеры, адреса площадок в Ставрополе — Юг, Центр и 204 квартал. Запись на бесплатную пробную тренировку.',
           ogImage: '/og/dinamchiki-contacts.png',
+        },
+      },
+
+      // ---- Документы по 152-ФЗ: ссылки из подвала и из форм заявки ---------
+      {
+        path: 'privacy',
+        name: 'privacy',
+        component: PrivacyPage,
+        meta: {
+          title: 'Политика обработки персональных данных',
+          description: 'Как ДФК «Динамчики» обрабатывает и защищает персональные данные посетителей сайта и родителей.',
+        },
+      },
+      {
+        path: 'consent',
+        name: 'consent',
+        component: ConsentPage,
+        meta: {
+          title: 'Согласие на обработку персональных данных',
+          description: 'Текст согласия на обработку персональных данных при записи на пробную тренировку в ДФК «Динамчики».',
         },
       },
 
@@ -334,12 +356,19 @@ function waitForElement(selector: string, timeoutMs = 1500): Promise<boolean> {
   return new Promise((resolve) => {
     const started = performance.now()
     const tick = () => {
-      if (document.querySelector(selector)) return resolve(true)
+      // Хэш вида «#1abc» — невалидный CSS-селектор: querySelector бросает.
+      let found: Element | null = null
+      try { found = document.querySelector(selector) } catch { return resolve(false) }
+      if (found) return resolve(true)
       if (performance.now() - started > timeoutMs) return resolve(false)
       requestAnimationFrame(tick)
     }
     tick()
   })
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 export const router = createRouter({
@@ -349,7 +378,7 @@ export const router = createRouter({
     if (saved) return saved
     if (to.hash) {
       const found = await waitForElement(to.hash)
-      if (found) return { el: to.hash, behavior: 'smooth', top: HEADER_OFFSET }
+      if (found) return { el: to.hash, behavior: prefersReducedMotion() ? 'auto' : 'smooth', top: HEADER_OFFSET }
       return { top: 0 }
     }
     return { top: 0 }
@@ -380,4 +409,27 @@ router.afterEach((to) => {
   setMeta('robots', noIndex ? 'noindex, nofollow' : 'index, follow')
 
   trackPageView(to.fullPath)
+})
+
+/**
+ * После деплоя (rsync --delete) старых чанков на сервере нет: у вкладки,
+ * открытой до выкладки, следующий переход падает на import() молча.
+ * Перезагружаем страницу по целевому адресу — один раз, чтобы не уйти
+ * в цикл, если чанк битый и в новой сборке.
+ */
+const CHUNK_RELOAD_KEY = 'dinamchiki-chunk-reload'
+router.onError((err, to) => {
+  const msg = String((err as Error)?.message ?? err)
+  if (!/dynamically imported module|Importing a module script failed|Failed to fetch dynamically/i.test(msg)) return
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === to.fullPath) return
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, to.fullPath)
+  } catch {
+    // Без sessionStorage защиты от цикла нет — не перезагружаем.
+    return
+  }
+  location.assign(to.fullPath)
+})
+router.afterEach(() => {
+  try { sessionStorage.removeItem(CHUNK_RELOAD_KEY) } catch { /* приватный режим */ }
 })

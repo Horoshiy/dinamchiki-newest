@@ -60,7 +60,6 @@ describe('слой данных: списки', () => {
     ['coaches', useCoachesQuery, 'coaches'],
     ['tournaments', useTournamentsQuery, 'tournaments'],
     ['albums', useAlbumsQuery, 'albums'],
-    ['reviews', useReviewsQuery, 'reviews'],
   ] as const)('%s отдаёт непустой список и снимает loading', async (_n, hook, key) => {
     const { data, loading, error } = await run(hook as () => ReturnType<typeof useTeamsQuery>)
     expect(loading.value).toBe(false)
@@ -68,6 +67,15 @@ describe('слой данных: списки', () => {
     const list = (data.value as Record<string, unknown>)[key]
     expect(Array.isArray(list)).toBe(true)
     expect((list as unknown[]).length).toBeGreaterThan(0)
+  })
+
+  // Тестовые отзывы клуб попросил убрать (reviewsMock = []): проверяем
+  // только, что запрос отрабатывает и отдаёт массив.
+  it('reviews отдаёт массив и снимает loading', async () => {
+    const { data, loading, error } = await run(useReviewsQuery)
+    expect(loading.value).toBe(false)
+    expect(error.value).toBeNull()
+    expect(Array.isArray((data.value as { reviews?: unknown })?.reviews)).toBe(true)
   })
 
   it('loading в начале true — UI успевает показать скелетон', () => {

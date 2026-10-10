@@ -13,7 +13,7 @@ import type {
 // =============================================================================
 
 const autumn2026Teams = [
-  { id: 'u10-blue',   name: 'Динамчики U-10',          shortName: 'ДИН', isOurTeam: true,  color: '#1e50d8' },
+  { id: 'g10',   name: 'Динамчики U-10',          shortName: 'ДИН', isOurTeam: true,  color: '#1e50d8' },
   { id: 'spartak',    name: 'Спартак Ставрополь U-10', shortName: 'СПК', isOurTeam: false, color: '#dc2626' },
   { id: 'cska',       name: 'ЦСКА Ставрополь U-10',    shortName: 'ЦСК', isOurTeam: false, color: '#0d2b6e' },
   { id: 'krasnodar',  name: 'Краснодар-2009 U-10',     shortName: 'КРД', isOurTeam: false, color: '#16a34a' },
@@ -23,15 +23,15 @@ const autumn2026Teams = [
 
 const autumn2026Matches: ReadonlyArray<TournamentMatch> = [
   // Сыгранные
-  { id: 'a26-m1', kind: 'group', date: '2026-08-20T17:00:00', homeTeamId: 'u10-blue', awayTeamId: 'spartak',   score: { home: 3, away: 1 }, venue: 'Стадион «Динамо»' },
+  { id: 'a26-m1', kind: 'group', date: '2026-08-20T17:00:00', homeTeamId: 'g10', awayTeamId: 'spartak',   score: { home: 3, away: 1 }, venue: 'Стадион «Динамо»' },
   { id: 'a26-m2', kind: 'group', date: '2026-08-20T18:30:00', homeTeamId: 'cska',     awayTeamId: 'krasnodar', score: { home: 2, away: 2 }, venue: 'Стадион «Динамо»' },
   { id: 'a26-m3', kind: 'group', date: '2026-08-21T17:00:00', homeTeamId: 'zenit',    awayTeamId: 'akademiya', score: { home: 0, away: 1 }, venue: 'Манеж «Динамо»' },
-  { id: 'a26-m4', kind: 'group', date: '2026-08-22T17:00:00', homeTeamId: 'u10-blue', awayTeamId: 'cska',      score: { home: 4, away: 0 }, venue: 'Стадион «Динамо»' },
+  { id: 'a26-m4', kind: 'group', date: '2026-08-22T17:00:00', homeTeamId: 'g10', awayTeamId: 'cska',      score: { home: 4, away: 0 }, venue: 'Стадион «Динамо»' },
   { id: 'a26-m5', kind: 'group', date: '2026-08-22T18:30:00', homeTeamId: 'spartak',  awayTeamId: 'zenit',     score: { home: 2, away: 2 }, venue: 'Стадион «Динамо»' },
   // Предстоящие (null score)
-  { id: 'a26-m6', kind: 'group', date: '2026-08-26T17:00:00', homeTeamId: 'krasnodar', awayTeamId: 'u10-blue', score: null, venue: 'Стадион «Динамо»' },
+  { id: 'a26-m6', kind: 'group', date: '2026-08-26T17:00:00', homeTeamId: 'krasnodar', awayTeamId: 'g10', score: null, venue: 'Стадион «Динамо»' },
   { id: 'a26-m7', kind: 'group', date: '2026-08-26T18:30:00', homeTeamId: 'akademiya', awayTeamId: 'spartak',  score: null, venue: 'Стадион «Динамо»' },
-  { id: 'a26-m8', kind: 'semi',  date: '2026-08-30T17:00:00', homeTeamId: 'u10-blue', awayTeamId: 'cska',      score: null, venue: 'Стадион «Динамо»' },
+  { id: 'a26-m8', kind: 'semi',  date: '2026-08-30T17:00:00', homeTeamId: 'g10', awayTeamId: 'cska',      score: null, venue: 'Стадион «Динамо»' },
   { id: 'a26-m9', kind: 'final', date: '2026-09-02T15:00:00', homeTeamId: 'tbd',      awayTeamId: 'tbd',       score: null, venue: 'Стадион «Динамо»' },
 ]
 
@@ -96,7 +96,7 @@ const autumn2026: Tournament = {
 // =============================================================================
 
 const winter2026Teams = [
-  { id: 'u12-blue', name: 'Динамчики U-12', shortName: 'ДИН', isOurTeam: true, color: '#143494' },
+  { id: 'g5', name: 'Динамчики U-12', shortName: 'ДИН', isOurTeam: true, color: '#143494' },
   { id: 'rostov',   name: 'Ростов U-12',    shortName: 'РСТ', isOurTeam: false, color: '#f59e0b' },
   { id: 'kuban',    name: 'Кубань U-12',    shortName: 'КБН', isOurTeam: false, color: '#16a34a' },
   { id: 'loko',     name: 'Локомотив U-12', shortName: 'ЛКМ', isOurTeam: false, color: '#dc2626' },
@@ -116,7 +116,7 @@ const winter2026: Tournament = {
   startDate: '2026-12-05',
   endDate: '2026-12-15',
   venue: 'Манеж «Динамо», г. Ставрополь',
-  prizeFund: '300 000 �',
+  prizeFund: '300 000 ₽',
   teamsCount: 8,
   teams: winter2026Teams,
   matches: [],
@@ -128,17 +128,17 @@ const winter2026: Tournament = {
 // =============================================================================
 
 const spring2026Teams = [
-  { id: 'u10-blue',  name: 'Динамчики U-10',          shortName: 'ДИН', isOurTeam: true,  color: '#1e50d8' },
+  { id: 'g10',  name: 'Динамчики U-10',          shortName: 'ДИН', isOurTeam: true,  color: '#1e50d8' },
   { id: 'spartak',   name: 'Спартак Ставрополь U-10', shortName: 'СПК', isOurTeam: false, color: '#dc2626' },
   { id: 'cska',      name: 'ЦСКА Ставрополь U-10',    shortName: 'ЦСК', isOurTeam: false, color: '#0d2b6e' },
   { id: 'krasnodar', name: 'Краснодар-2009 U-10',     shortName: 'КРД', isOurTeam: false, color: '#16a34a' },
 ]
 
 const spring2026Matches: ReadonlyArray<TournamentMatch> = [
-  { id: 's26-m1', kind: 'group', date: '2026-04-15T17:00:00', homeTeamId: 'u10-blue', awayTeamId: 'spartak',   score: { home: 2, away: 1 }, venue: 'Стадион «Динамо»' },
+  { id: 's26-m1', kind: 'group', date: '2026-04-15T17:00:00', homeTeamId: 'g10', awayTeamId: 'spartak',   score: { home: 2, away: 1 }, venue: 'Стадион «Динамо»' },
   { id: 's26-m2', kind: 'group', date: '2026-04-16T17:00:00', homeTeamId: 'cska',     awayTeamId: 'krasnodar', score: { home: 1, away: 1 }, venue: 'Стадион «Динамо»' },
-  { id: 's26-m3', kind: 'semi',  date: '2026-04-20T17:00:00', homeTeamId: 'u10-blue', awayTeamId: 'cska',      score: { home: 3, away: 0 }, venue: 'Стадион «Динамо»' },
-  { id: 's26-m4', kind: 'final', date: '2026-04-25T15:00:00', homeTeamId: 'u10-blue', awayTeamId: 'spartak',   score: { home: 2, away: 0 }, venue: 'Стадион «Динамо»' },
+  { id: 's26-m3', kind: 'semi',  date: '2026-04-20T17:00:00', homeTeamId: 'g10', awayTeamId: 'cska',      score: { home: 3, away: 0 }, venue: 'Стадион «Динамо»' },
+  { id: 's26-m4', kind: 'final', date: '2026-04-25T15:00:00', homeTeamId: 'g10', awayTeamId: 'spartak',   score: { home: 2, away: 0 }, venue: 'Стадион «Динамо»' },
 ]
 
 const spring2026Standings = computeStandings(spring2026Teams, spring2026Matches)

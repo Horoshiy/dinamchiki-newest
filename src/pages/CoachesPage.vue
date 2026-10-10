@@ -4,7 +4,7 @@
  *
  * Данные из GraphQL через useCoachesQuery (с mock-fallback).
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref} from 'vue'
 import { plural } from '@/shared/lib/plural'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
@@ -65,7 +65,6 @@ const filteredCoaches = computed<ReadonlyArray<Coach>>(() => {
   })
 })
 
-watch(error, (e) => { if (e) console.warn('[CoachesPage]', e.message) })
 
 // «Безопасная среда» обещала наблюдение медицинского работника — раздел
 // «Сведения» на этом же сайте говорит другое: допуск по справке, аптечка,

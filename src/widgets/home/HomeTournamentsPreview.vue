@@ -11,7 +11,7 @@
  * в этом файле — иначе главная жила бы своей жизнью и расходилась
  * со страницей /tournaments.
  */
-import { computed, watch } from 'vue'
+import { computed} from 'vue'
 import { RouterLink } from 'vue-router'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -22,7 +22,7 @@ import IconShieldCheck from '@/shared/ui/icons/IconShieldCheck.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useCurrentTournamentQuery } from '@/shared/api/composables'
-import { formatRange, formatDay } from '@/shared/lib/date'
+import { formatRange, formatDay, formatTime } from '@/shared/lib/date'
 import type { Tournament } from '@/entities/tournament/tournament.types'
 
 /** Сколько строк таблицы и матчей показываем в превью. */
@@ -31,7 +31,6 @@ const MATCHES_LIMIT = 4
 
 const { data, loading, error } = useCurrentTournamentQuery()
 
-watch(error, (e) => { if (e) console.warn('[HomeTournamentsPreview]', e.message) })
 
 const tournament = computed<Tournament | null>(() => {
   const d = data.value as { currentTournament?: Tournament | null } | null
@@ -60,12 +59,6 @@ const teamShortById = computed(() => {
   return m
 })
 
-/** «13:00» по московскому времени — турниры играются в России. */
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow',
-  })
-}
 
 const tableRows = computed(() =>
   [...(tournament.value?.standings ?? [])]

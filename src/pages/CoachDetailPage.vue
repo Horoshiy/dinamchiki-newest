@@ -5,7 +5,7 @@
  * Данные из GraphQL через useCoachQuery (с mock-fallback).
  */
 import { withPlural } from '@/shared/lib/plural'
-import { computed, ref, toRef, watch } from 'vue'
+import { computed, ref, toRef} from 'vue'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/shared/ui/base/Breadcrumbs.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -27,8 +27,8 @@ import type { Component } from 'vue'
 import type { Coach, CoachAchievement, CoachSpec } from '@/entities/coach/coach.types'
 import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
 import { useCoachQuery } from '@/shared/api/composables'
-import { SIGNUP_ROUTE } from '@/shared/config/club'
-import { usePageMeta } from '@/shared/lib/page-meta'
+import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
+import { NOT_FOUND_META, usePageMeta } from '@/shared/lib/page-meta'
 
 const props = defineProps<{ id: string }>()
 
@@ -41,8 +41,9 @@ const coach = computed<Coach | null>(() => {
 })
 
 usePageMeta(() => {
+  if (loading.value) return null
   const c = coach.value
-  if (!c) return null
+  if (!c) return NOT_FOUND_META
   const about = c.description.trim()
   return {
     title: `${c.fullName} — тренер по футболу`,
@@ -52,7 +53,6 @@ usePageMeta(() => {
   }
 })
 
-watch(error, (e) => { if (e) console.warn('[CoachDetailPage]', e.message) })
 
 const crumbs = computed(() => [
   { label: 'Главная',   to: '/' },
@@ -104,7 +104,7 @@ const achievementIcons: Readonly<Record<CoachAchievement['iconKey'], Component>>
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить тренера"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconBall"
         variant="card"
       />

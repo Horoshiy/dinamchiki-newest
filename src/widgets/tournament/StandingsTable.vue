@@ -31,9 +31,8 @@
           <td class="standings__col-num">{{ row.draws }}</td>
           <td class="standings__col-num">{{ row.losses }}</td>
           <td class="standings__col-num standings__col-goals">
-            <!-- nobr, чтобы «5-5» не переносилось на две строки и не тянуло
-                 высоту строки таблицы вдвое. -->
-            <nobr>{{ row.goalsFor }}-{{ row.goalsAgainst }}</nobr>
+            <!-- Перенос «5-5» на две строки запрещён в .standings__col-goals. -->
+            {{ row.goalsFor }}-{{ row.goalsAgainst }}
           </td>
           <td v-if="showForm" class="standings__col-form">
             <span v-for="(res, i) in row.lastFive" :key="i" :class="['standings__dot', `standings__dot--${res}`]">
@@ -266,27 +265,6 @@ const rows = computed(() =>
 .standings__team-name {
   font-weight: $font-weight-semibold;
   color: $color-fg;
-}
-
-.standings__gd {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-
-  &.is-pos {
-    color: $color-success-fg;
-    background: $color-success-bg;
-  }
-  &.is-neg {
-    color: $color-error-fg;
-    background: $color-error-bg;
-  }
-  &.is-zero {
-    color: $color-fg-muted;
-    background: $color-bg-soft;
-  }
 }
 
 .standings__dot {

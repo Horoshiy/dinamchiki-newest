@@ -56,19 +56,23 @@ describe('LeadForm — форма заявки на /contacts', () => {
     return w
   }
 
-  /** Заполняем по placeholder — единственный однозначный признак в разметке. */
+  /**
+   * Форма с 09.10.2026 — только телефон; как зовут и про ребёнка тренер
+   * спрашивает при звонке. Согласие даётся нажатием кнопки.
+   */
   async function fillValid(w: Awaited<ReturnType<typeof form>>) {
-    await w.find('input[placeholder="Иван Иванов"]').setValue('Ваня')
-    await w.find('input[placeholder="7 лет"]').setValue('8')
-    await w.find('input[placeholder="Сергей Иванов"]').setValue('Анна')
-    await w.find('input[placeholder="+7 (___) ___-__-__"]').setValue('+7 999 123-45-67')
-    await w.find('input[type="checkbox"]').setValue(true)
+    await w.find('input[type="tel"]').setValue('8 999 123-45-67')
   }
 
   it('изначально показывает форму, а не результат', async () => {
     const w = await form()
     expect(w.find('form').exists()).toBe(true)
     expect(w.find('.lform__state').exists()).toBe(false)
+  })
+
+  it('спрашивает только телефон', async () => {
+    const w = await form()
+    expect(w.findAll('input').map((i) => i.attributes('type'))).toEqual(['tel'])
   })
 
   it('пустая отправка показывает ошибки валидации и не уходит с формы', async () => {
@@ -101,10 +105,18 @@ describe('LeadForm — форма заявки на /contacts', () => {
     await fillValid(w)
     await w.find('form').trigger('submit')
     await settle()
-    expect(submittedLeads[0].childName).toBe('Ваня')
-    expect(submittedLeads[0].parentName).toBe('Анна')
-    expect(submittedLeads[0].phone).toContain('999')
+    expect(submittedLeads[0].parentName ?? '').toBe('')
+    // В бэкенд уходит каноничный номер, а не то, что видно в поле.
+    expect(submittedLeads[0].phone).toBe('+79991234567')
     expect(submittedLeads[0].consent).toBe(true)
+  })
+
+  /** Согласие по нажатию информированное, только если подпись ведёт на его текст. */
+  it('под кнопкой подпись со ссылками на согласие и политику', async () => {
+    const w = await form()
+    expect(w.find('.consent-note').text()).toContain('Записаться на бесплатную пробную')
+    expect(w.find('.consent-note a[href="/consent"]').exists()).toBe(true)
+    expect(w.find('.consent-note a[href="/privacy"]').exists()).toBe(true)
   })
 
   /**
@@ -151,12 +163,15 @@ describe('HomeCta — компактная форма на главной', () =
     return w
   }
 
-  it('рендерит три поля по мокапу', async () => {
+  it('рендерит только телефон и подпись о согласии со ссылкой', async () => {
     const w = await cta()
-    expect(w.find('#lead-name').exists()).toBe(true)
-    expect(w.find('#lead-phone').exists()).toBe(true)
-    expect(w.find('#lead-age').exists()).toBe(true)
+    expect(w.findAll('form input').map((i) => i.attributes('id'))).toEqual(['lead-phone'])
+    expect(w.find('.consent-note a[href="/consent"]').exists()).toBe(true)
   })
+
+  async function fillCta(w: Awaited<ReturnType<typeof cta>>) {
+    await w.find('#lead-phone').setValue('+7 999 123-45-67')
+  }
 
   /**
    * Раньше onSubmit просто ставил submitted=true и через 3.5 с очищал форму:
@@ -164,20 +179,17 @@ describe('HomeCta — компактная форма на главной', () =
    */
   it('отправка доходит до бэкенда', async () => {
     const w = await cta()
-    await w.find('#lead-name').setValue('Ваня')
-    await w.find('#lead-phone').setValue('+7 999 123-45-67')
-    await w.find('#lead-age').setValue('8-10')
+    await fillCta(w)
     await w.find('form').trigger('submit')
     await settle()
     expect(submittedLeads).toHaveLength(1)
+    expect(submittedLeads[0].consent).toBe(true)
     expect(w.text()).toContain('Спасибо')
   })
 
   it('заявка с главной помечается источником', async () => {
     const w = await cta()
-    await w.find('#lead-name').setValue('Ваня')
-    await w.find('#lead-phone').setValue('+7 999 123-45-67')
-    await w.find('#lead-age').setValue('8-10')
+    await fillCta(w)
     await w.find('form').trigger('submit')
     await settle()
     expect(submittedLeads[0].message).toContain('главной')
@@ -186,9 +198,7 @@ describe('HomeCta — компактная форма на главной', () =
   it('ошибка сервера не выдаётся за успех', async () => {
     setSubmitBehavior('server-error')
     const w = await cta()
-    await w.find('#lead-name').setValue('Ваня')
-    await w.find('#lead-phone').setValue('+7 999 123-45-67')
-    await w.find('#lead-age').setValue('8-10')
+    await fillCta(w)
     await w.find('form').trigger('submit')
     await settle()
     expect(w.text()).not.toContain('Заявка отправлена')

@@ -12,6 +12,7 @@ import {
   GALLERY_CATEGORY_COLORS,
 } from '@/entities/gallery/gallery.types'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
+import { formatShort } from '@/shared/lib/date'
 
 const props = defineProps<{
   album: GalleryAlbum
@@ -22,9 +23,7 @@ const emit = defineEmits<{ (e: 'open', id: string): void }>()
 const cover = computed(() => props.album.photos.find((p) => p.id === props.album.coverPhotoId) ?? props.album.photos[0])
 const categoryLabel = computed(() => GALLERY_CATEGORY_LABELS[props.album.category])
 const categoryColor = computed(() => GALLERY_CATEGORY_COLORS[props.album.category])
-const dateFmt = computed(() =>
-  new Date(props.album.date).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' }),
-)
+const dateFmt = computed(() => formatShort(props.album.date))
 
 /** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
 function isRealPhoto(url: string): boolean {
@@ -33,10 +32,11 @@ function isRealPhoto(url: string): boolean {
 </script>
 
 <template>
+  <!-- Открывает альбом кнопка в заголовке, растянутая на всю карточку
+       (::after): <article @click> не получал фокус и не открывался с клавиатуры. -->
   <article
     class="album"
     :style="{ '--album-color': categoryColor }"
-    @click="emit('open', album.id)"
   >
     <div
       class="album__cover"
@@ -55,7 +55,9 @@ function isRealPhoto(url: string): boolean {
     </div>
 
     <div class="album__body">
-      <h3 class="album__title">{{ album.title }}</h3>
+      <h3 class="album__title">
+        <button type="button" class="album__open" @click="emit('open', album.id)">{{ album.title }}</button>
+      </h3>
       <p class="album__date">
         <IconCalendar :size="14" />
         {{ dateFmt }} · {{ album.venue }}
@@ -67,6 +69,7 @@ function isRealPhoto(url: string): boolean {
 
 <style scoped lang="scss">
 .album {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -166,5 +169,31 @@ function isRealPhoto(url: string): boolean {
   color: $color-fg-muted;
   line-height: $line-height-base;
   margin: 0;
+}
+
+.album__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      outline: 3px solid $color-brand-500;
+      outline-offset: 2px;
+    }
+  }
 }
 </style>

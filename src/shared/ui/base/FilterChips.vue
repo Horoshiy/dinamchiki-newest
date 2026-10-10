@@ -64,7 +64,7 @@ defineEmits<{
   }
 
   &:focus-visible {
-    outline: 2px solid $color-brand-300;
+    outline: 2px solid $color-brand-500;
     outline-offset: 2px;
   }
 

@@ -98,5 +98,15 @@
     "path": "/sveden/catering",
     "changefreq": "monthly",
     "priority": "0.6"
+  },
+  {
+    "path": "/privacy",
+    "changefreq": "yearly",
+    "priority": "0.2"
+  },
+  {
+    "path": "/consent",
+    "changefreq": "yearly",
+    "priority": "0.2"
   }
 ]

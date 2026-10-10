@@ -2,7 +2,7 @@
 /**
  * Страница «Контакты» (`/contacts`).
  */
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
@@ -15,12 +15,11 @@ import VenueCard from '@/widgets/contact/VenueCard.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useContactInfoQuery, useVenuesQuery } from '@/shared/api/composables'
 import type { ContactInfo, Venue } from '@/entities/contact/contact.types'
+import { LOAD_ERROR_HINT } from '@/shared/config/club'
 
 const { data: contactData, loading: contactLoading, error: contactError } = useContactInfoQuery()
 const { data: venuesData,  loading: venuesLoading,  error: venuesError  } = useVenuesQuery()
 
-const loading = computed(() => contactLoading.value || venuesLoading.value)
-const error   = computed<Error | null>(() => contactError.value ?? venuesError.value)
 
 const contact = computed<ContactInfo | null>(() => {
   const d = contactData.value as { contactInfo?: ContactInfo } | null
@@ -31,8 +30,6 @@ const venues = computed<ReadonlyArray<Venue>>(() => {
   const d = venuesData.value as { venues?: ReadonlyArray<Venue> } | null
   return d?.venues ?? []
 })
-
-watch(error, (e) => { if (e) console.warn('[ContactsPage]', e.message) })
 </script>
 
 <template>
@@ -45,39 +42,36 @@ watch(error, (e) => { if (e) console.warn('[ContactsPage]', e.message) })
       />
     </section>
 
-    <section v-if="loading" class="container">
-      <LoadingSkeleton variant="block" height="400px" />
-    </section>
-
-    <section v-else-if="error" class="container">
-      <EmptyState
-        title="Не удалось загрузить контакты"
-        :description="error.message"
-        :icon="IconBall"
-        variant="card"
-      />
-    </section>
-
-    <template v-else-if="contact">
-      <section class="container">
-        <div class="contacts-grid">
-          <div>
-            <SectionTitle eyebrow="Связь" title="Контактная информация" />
-            <ContactInfoBlock :contact="contact" />
-          </div>
-          <div>
-            <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на бесплатную пробную" />
-            <LeadForm />
-          </div>
+    <!-- Форма заявки не зависит от загрузки контактов: если API лёг,
+         главное действие страницы всё равно доступно. -->
+    <section class="container">
+      <div class="contacts-grid">
+        <div>
+          <SectionTitle eyebrow="Связь" title="Контактная информация" />
+          <LoadingSkeleton v-if="contactLoading" variant="block" height="400px" />
+          <EmptyState
+            v-else-if="contactError || !contact"
+            title="Не удалось загрузить контакты"
+            :description="LOAD_ERROR_HINT"
+            :icon="IconBall"
+            variant="card"
+          />
+          <ContactInfoBlock v-else :contact="contact" />
         </div>
-      </section>
+        <div>
+          <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на бесплатную пробную" />
+          <LeadForm />
+        </div>
+      </div>
+    </section>
 
-      <section v-if="venues.length" class="container">
+    <template v-if="!venuesLoading && !venuesError && venues.length">
+      <section class="container">
         <SectionTitle eyebrow="Как добраться" title="Площадки на карте" />
         <MapEmbed :venues="venues" />
       </section>
 
-      <section v-if="venues.length" class="container">
+      <section class="container">
         <SectionTitle eyebrow="Филиалы" title="Все площадки клуба" />
         <div class="contacts-venues">
           <VenueCard

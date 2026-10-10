@@ -1,4 +1,5 @@
 import { watchEffect } from 'vue'
+import { appConfig } from '@/app/config/app.config'
 
 /**
  * Мета-теги страницы: <title>, description, og:*, twitter:*.
@@ -16,11 +17,32 @@ export interface PageMeta {
   title?: string
   description: string
   ogImage?: string
+  /** Закрыть страницу от индексации (несуществующая группа, тренер и т.п.). */
+  noIndex?: boolean
 }
 
-export function applyPageMeta({ title, description, ogImage }: PageMeta) {
+/**
+ * Мета для «не найдено» на детальных страницах. Без noindex адрес
+ * /team/xyz отдавал 200 с «index, follow» — поисковик считал его
+ * настоящей страницей (soft 404).
+ */
+export const NOT_FOUND_META: PageMeta = {
+  title: 'Страница не найдена',
+  description: 'Такой страницы на сайте детского футбольного клуба «Динамчики» нет.',
+  noIndex: true,
+}
+
+/**
+ * ВКонтакте и Telegram не подставляют картинку превью по относительному
+ * пути — нужен полный адрес. База — канонический домен из env.
+ */
+function absoluteUrl(path: string): string {
+  return /^https?:\/\//.test(path) ? path : `${appConfig.siteUrl}${path}`
+}
+
+export function applyPageMeta({ title, description, ogImage, noIndex }: PageMeta) {
   const fullTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME
-  const image = ogImage ?? '/og/dinamchiki-cover.png'
+  const image = absoluteUrl(ogImage ?? '/og/dinamchiki-cover.png')
 
   document.title = fullTitle
   setMeta('description', description)
@@ -30,6 +52,7 @@ export function applyPageMeta({ title, description, ogImage }: PageMeta) {
   setMeta('twitter:title', fullTitle)
   setMeta('twitter:description', description)
   setMeta('twitter:image', image)
+  if (noIndex) setMeta('robots', 'noindex, nofollow')
 }
 
 /** Мета из данных страницы: срабатывает, когда getter вернул не null. */

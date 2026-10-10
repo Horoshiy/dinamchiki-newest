@@ -126,9 +126,11 @@ function isRealPhoto(url: string): boolean {
     }
   }
 
+  // Белое кольцо на белой странице не видно — двойное: синее снаружи.
   &:focus-visible {
-    outline: 2px solid $color-white;
+    outline: 3px solid $color-brand-500;
     outline-offset: 2px;
+    box-shadow: 0 0 0 2px $color-white;
   }
 }
 

@@ -4,13 +4,13 @@
  *
  * Данные из GraphQL через useCurrent/Upcoming/FinishedTournamentQuery.
  */
-import { computed, watch } from 'vue'
+import { computed} from 'vue'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import EmptyState from '@/shared/ui/base/EmptyState.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
-import { SIGNUP_ROUTE } from '@/shared/config/club'
+import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
 import LoadingSkeleton from '@/shared/ui/base/LoadingSkeleton.vue'
 import TournamentCard from '@/widgets/tournament/TournamentCard.vue'
 import StandingsTable from '@/widgets/tournament/StandingsTable.vue'
@@ -24,6 +24,8 @@ import {
   useFinishedTournamentsQuery,
 } from '@/shared/api/composables'
 import type { Tournament } from '@/entities/tournament/tournament.types'
+import { formatFull } from '@/shared/lib/date'
+import { withPlural } from '@/shared/lib/plural'
 
 const { data: curData,   loading: curLoading,   error: curError   } = useCurrentTournamentQuery()
 const { data: upData,    loading: upLoading,    error: upError    } = useUpcomingTournamentsQuery()
@@ -68,7 +70,6 @@ const clubStats = computed(() => {
   }
 })
 
-watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
 </script>
 
 <template>
@@ -90,7 +91,7 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить турниры"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconTrophy"
         variant="card"
       />
@@ -168,10 +169,10 @@ watch(error, (e) => { if (e) console.warn('[TournamentsPage]', e.message) })
           >
             <div class="tournaments-upcoming__head">
               <IconCalendar :size="20" />
-              <span>{{ new Date(t.startDate).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' }) }}</span>
+              <span>{{ formatFull(t.startDate) }}</span>
             </div>
             <h3 class="tournaments-upcoming__name">{{ t.name }}</h3>
-            <p class="tournaments-upcoming__age">{{ t.ageGroup }} · {{ t.teamsCount }} команд</p>
+            <p class="tournaments-upcoming__age">{{ t.ageGroup }} · {{ withPlural(t.teamsCount, ['команда', 'команды', 'команд']) }}</p>
             <p class="tournaments-upcoming__desc">{{ t.description }}</p>
           </div>
         </div>

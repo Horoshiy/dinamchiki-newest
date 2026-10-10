@@ -4,7 +4,7 @@
  *
  * Данные из GraphQL через useTeamQuery (с mock-fallback).
  */
-import { computed, toRef, watch } from 'vue'
+import { computed, toRef} from 'vue'
 import { RouterLink } from 'vue-router'
 import Breadcrumbs from '@/shared/ui/base/Breadcrumbs.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -19,8 +19,8 @@ import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useTeamQuery, usePlayersQuery } from '@/shared/api/composables'
 import type { Team } from '@/entities/team/team.types'
 import type { Player } from '@/entities/player/player.types'
-import { SIGNUP_ROUTE } from '@/shared/config/club'
-import { usePageMeta } from '@/shared/lib/page-meta'
+import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
+import { NOT_FOUND_META, usePageMeta } from '@/shared/lib/page-meta'
 
 const props = defineProps<{ id: string }>()
 
@@ -41,13 +41,13 @@ const roster = computed<ReadonlyArray<Player>>(() => {
   return d?.players ?? []
 })
 
-watch(error, (e) => { if (e) console.warn('[TeamDetailPage]', e.message) })
 
 // Заголовок и описание из данных группы: иначе у всех групп одинаковый
 // «Команда — ДФК «Динамчики»», и поисковик видит дубли.
 usePageMeta(() => {
+  if (loading.value) return null
   const t = team.value
-  if (!t) return null
+  if (!t) return NOT_FOUND_META
   const days = t.schedule.map((slot) => `${slot.day} ${slot.time}`).join(', ')
   return {
     title: `${t.name}: футбол для детей ${t.ageLabel} в Ставрополе`,
@@ -79,7 +79,7 @@ const crumbs = computed(() => [
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить команду"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconBall"
         variant="card"
       />

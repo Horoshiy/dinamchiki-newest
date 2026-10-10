@@ -9,17 +9,20 @@ import AppHeader from '@/shared/ui/layout/AppHeader.vue'
 import AppFooter from '@/shared/ui/layout/AppFooter.vue'
 import BviPanel from '@/features/bvi/BviPanel.vue'
 import MobileContactBar from '@/shared/ui/layout/MobileContactBar.vue'
+import CookieNotice from '@/shared/ui/layout/CookieNotice.vue'
 </script>
 
 <template>
   <div class="layout">
+    <a href="#main" class="skip-link">К содержимому</a>
     <BviPanel />
     <AppHeader />
-    <main class="layout-main">
+    <main id="main" class="layout-main" tabindex="-1">
       <RouterView />
     </main>
     <AppFooter />
     <MobileContactBar />
+    <CookieNotice />
   </div>
 </template>
 
@@ -37,6 +40,7 @@ import MobileContactBar from '@/shared/ui/layout/MobileContactBar.vue'
 
 .layout-main {
   flex: 1 1 auto;
+  outline: none;
   display: flex;
   flex-direction: column;
   min-height: 0;

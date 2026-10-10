@@ -9,12 +9,12 @@ import { RouterLink } from 'vue-router'
 import type { Tournament } from '@/entities/tournament/tournament.types'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
+import { formatShort, formatYear } from '@/shared/lib/date'
+import { withPlural } from '@/shared/lib/plural'
 
 defineProps<{ tournaments: ReadonlyArray<Tournament> }>()
 
-function fmt(d: string): string {
-  return new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+const fmt = formatShort
 </script>
 
 <template>
@@ -26,7 +26,7 @@ function fmt(d: string): string {
       class="archive__card"
     >
       <div class="archive__head">
-        <span class="archive__year">{{ new Date(t.startDate).getFullYear() }}</span>
+        <span class="archive__year">{{ formatYear(t.startDate) }}</span>
         <span class="archive__status">Завершён</span>
       </div>
       <h3 class="archive__name">{{ t.name }}</h3>
@@ -34,7 +34,7 @@ function fmt(d: string): string {
         <IconCalendar :size="14" />
         {{ fmt(t.startDate) }} — {{ fmt(t.endDate) }}
       </p>
-      <p v-if="t.ageGroup" class="archive__age">{{ t.ageGroup }} · {{ t.teamsCount }} команд</p>
+      <p v-if="t.ageGroup" class="archive__age">{{ t.ageGroup }} · {{ withPlural(t.teamsCount, ['команда', 'команды', 'команд']) }}</p>
       <span class="archive__link">
         Результаты
         <IconArrowRight :size="14" />

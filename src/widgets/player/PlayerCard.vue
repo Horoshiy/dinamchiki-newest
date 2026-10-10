@@ -10,6 +10,7 @@ import { RouterLink } from 'vue-router'
 import type { Player } from '@/entities/player/player.types'
 import { POSITION_LABELS } from '@/entities/player/player.types'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
+import { withPlural } from '@/shared/lib/plural'
 
 const props = defineProps<{ player: Player }>()
 
@@ -29,7 +30,7 @@ const initials = computed<string>(() => {
     </div>
 
     <h3 class="p-card__name">{{ player.fullName }}</h3>
-    <p class="p-card__pos">{{ POSITION_LABELS[player.position] }} · {{ player.age }} лет</p>
+    <p class="p-card__pos">{{ POSITION_LABELS[player.position] }} · {{ withPlural(player.age, ['год', 'года', 'лет']) }}</p>
     <p class="p-card__team">{{ player.team.name }}</p>
 
     <span class="p-card__link">

@@ -3,32 +3,33 @@
  * Финальный CTA главной: форма заявки на пробную тренировку + контактный блок.
  *
  * По мокапу (скрин 8):
- *   - Слева: форма с 3 полями (имя, телефон, возраст ребёнка) + submit
+ *   - Слева: форма с одним полем (телефон) + submit
  *   - Справа: 3 карточки контактов (телефон, WhatsApp, Telegram)
  *   - Внизу справа: трофей/щит с надписью
  */
 import { computed, ref } from 'vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
+import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
-import IconUsers from '@/shared/ui/icons/IconUsers.vue'
 import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
 import { useSubmitApplicationMutation } from '@/shared/api/composables'
 import { useClubContacts } from '@/entities/contact/useClubContacts'
-import { formatPhone, normalizePhone, isPhoneComplete } from '@/shared/lib/phone'
+import { applyPhoneMask, normalizePhone, isPhoneComplete } from '@/shared/lib/phone'
 import IconMax from '@/shared/ui/icons/IconMax.vue'
+import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
+import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
 
 // Контакты — из базы, единым источником с шапкой и «Контактами».
 const { phoneDisplay, phoneHref, whatsappHref, telegramHandle, telegramHref, maxHref, email, emailHref } =
   useClubContacts()
 
 interface FormState {
-  name: string
   phone: string
 }
 
-const form = ref<FormState>({ name: '', phone: '' })
+const form = ref<FormState>({ phone: '' })
 
 /**
  * 'unavailable' — сервер заявок не подключён.
@@ -44,14 +45,12 @@ const isSubmitting = computed(() => status.value === 'submitting')
 
 /** Та же маска, что и в форме на «Контактах»: только +7 и десять цифр. */
 function onPhoneInput(e: Event) {
-  const el = e.target as HTMLInputElement
-  const masked = formatPhone(el.value)
-  form.value.phone = masked
-  el.value = masked
+  form.value.phone = applyPhoneMask(e.target as HTMLInputElement)
 }
 
 async function onSubmit(event: Event) {
   event.preventDefault()
+  if (isSubmitting.value) return
   if (!isPhoneComplete(form.value.phone)) {
     status.value = 'error'
     submitError.value = 'Введите номер полностью: +7 и 10 цифр'
@@ -60,11 +59,10 @@ async function onSubmit(event: Event) {
   status.value = 'submitting'
   submitError.value = null
 
-  // Форма собирает только имя звонящего и телефон; согласие на ПДн
-  // подтверждается самим нажатием кнопки (см. подпись под формой).
-  // Имя ребёнка, возраст и группу тренер уточняет при звонке.
+  // Форма собирает только телефон; согласие на ПДн даётся нажатием
+  // кнопки (подпись со ссылкой под ней). Как зовут, возраст ребёнка
+  // и группу тренер уточняет при звонке.
   const result = await doSubmit({
-    parentName: form.value.name,
     phone: normalizePhone(form.value.phone),
     email: '',
     preferredTime: '',
@@ -74,7 +72,7 @@ async function onSubmit(event: Event) {
 
   if (result.ok) {
     status.value = 'success'
-    form.value = { name: '', phone: '' }
+    form.value = { phone: '' }
   } else if (result.notDelivered) {
     status.value = 'unavailable'
   } else {
@@ -101,23 +99,12 @@ function backToForm() {
             <span class="cta__title-accent">на бесплатную пробную</span>
           </h2>
           <p class="cta__lead">
-            Имя и&nbsp;телефон — тренер перезвонит, подберёт группу
+            Оставьте телефон — тренер перезвонит, подберёт группу
             и&nbsp;удобное время. Первая тренировка бесплатная
             и&nbsp;ни&nbsp;к&nbsp;чему не&nbsp;обязывает.
           </p>
 
           <form v-if="status !== 'success' && status !== 'unavailable'" class="form" @submit="onSubmit">
-            <div class="form__field">
-              <label for="lead-name">Как вас зовут</label>
-              <input
-                id="lead-name"
-                v-model="form.name"
-                type="text"
-                placeholder="Сергей"
-                required
-                autocomplete="name"
-              />
-            </div>
             <div class="form__field">
               <label for="lead-phone">Телефон</label>
               <input
@@ -143,9 +130,7 @@ function backToForm() {
               {{ isSubmitting ? 'Отправляем…' : 'Записаться на тренировку' }}
             </BaseButton>
             <p v-if="submitError" class="form__server-error" role="alert">{{ submitError }}</p>
-            <p class="form__hint">
-              Нажимая кнопку, вы соглашаетесь с&nbsp;обработкой персональных данных.
-            </p>
+            <ConsentNote button="Записаться на тренировку" />
           </form>
 
           <div v-else-if="status === 'success'" class="form-success" role="status">
@@ -181,7 +166,7 @@ function backToForm() {
             </li>
             <li class="contact">
               <span class="contact__icon contact__icon--green">
-                <IconUsers :size="22" color="#ffffff" />
+                <IconWhatsApp :size="22" color="#ffffff" />
               </span>
               <div class="contact__body">
                 <p class="contact__label">WhatsApp</p>
@@ -190,7 +175,7 @@ function backToForm() {
             </li>
             <li class="contact">
               <span class="contact__icon contact__icon--sky">
-                <IconCalendar :size="22" color="#ffffff" />
+                <IconTelegram :size="22" color="#ffffff" />
               </span>
               <div class="contact__body">
                 <p class="contact__label">Telegram</p>
@@ -357,13 +342,6 @@ function backToForm() {
     background-position: right 16px center;
     padding-right: $space-10;
   }
-}
-
-.form__hint {
-  font-size: $font-size-xs;
-  color: $color-fg-muted;
-  margin: 0;
-  line-height: 1.5;
 }
 
 .form-success {

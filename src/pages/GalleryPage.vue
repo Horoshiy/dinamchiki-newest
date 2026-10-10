@@ -2,7 +2,7 @@
 /**
  * Страница «Галерея» (`/gallery`).
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref} from 'vue'
 import PageHeader from '@/shared/ui/layout/PageHeader.vue'
 import PageContainer from '@/shared/ui/layout/PageContainer.vue'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
@@ -15,6 +15,7 @@ import LightboxModal from '@/widgets/gallery/LightboxModal.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
 import { useAlbumsQuery, useAllPhotosQuery } from '@/shared/api/composables'
 import type { GalleryAlbum, GalleryPhoto } from '@/entities/gallery/gallery.types'
+import { LOAD_ERROR_HINT } from '@/shared/config/club'
 
 const { data: albumsData, loading: albumsLoading, error: albumsError } = useAlbumsQuery()
 const { data: photosData, loading: photosLoading, error: photosError } = useAllPhotosQuery()
@@ -32,7 +33,6 @@ const photos = computed<ReadonlyArray<GalleryPhoto>>(() => {
   return d?.allPhotos ?? []
 })
 
-watch(error, (e) => { if (e) console.warn('[GalleryPage]', e.message) })
 
 const albumOptions = computed(() => [
   { value: 'all', label: 'Все альбомы' },
@@ -87,7 +87,7 @@ function openAlbum(albumId: string) {
     <section v-else-if="error" class="container">
       <EmptyState
         title="Не удалось загрузить галерею"
-        :description="error.message"
+        :description="LOAD_ERROR_HINT"
         :icon="IconBall"
         variant="card"
       />

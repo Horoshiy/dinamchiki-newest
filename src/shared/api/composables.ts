@@ -4,7 +4,16 @@
 // Стратегия:
 //   - Пытаемся сделать запрос через Apollo Client
 //   - Если USE_MOCKS_ONLY = true → сразу возвращаем мок
-//   - Иначе если запрос упал (network/timeout/GraphQL errors) → fallback на мок
+//   - Если запрос упал и данных нет совсем:
+//       · справочные данные (контакты, площадки, тексты главной, тренеры) —
+//         резервная копия, она совпадает с реальной;
+//       · всё остальное (группы, турниры, дети, галерея) — честная ошибка.
+//     Раньше мок подставлялся всегда, и при сбое API родители видели
+//     выдуманный турнир «Идёт сейчас» и несуществующих детей — те самые
+//     записи, которые клуб скрыл в админке.
+//   - Частичный ответ (data + errors[]) реальные данные НЕ затирает.
+//   - Моки грузятся динамическим import(): в прод-бандл посетителя они
+//     попадают отдельным чанком и скачиваются только при сбое.
 //   - Возвращаем ref-объект { data, loading, error }, идентичный useQuery
 //
 // Использование:
@@ -17,18 +26,6 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import type { DocumentNode } from 'graphql'
-import { teamsMock } from '@/entities/team/teams.mocks'
-import { coachesMock } from '@/entities/coach/coaches.mocks'
-import {
-  tournamentsMock,
-  getCurrentTournament,
-  getUpcomingTournaments,
-  getFinishedTournaments,
-} from '@/entities/tournament/tournaments.mocks'
-import { playersMock } from '@/entities/player/players.mocks'
-import { galleryMock, photosOfAlbum } from '@/entities/gallery/gallery.mocks'
-import { contactInfoMock, venuesMock } from '@/entities/contact/contacts.mocks'
-import { homeContentMock, reviewsMock } from '@/entities/content/content.mocks'
 import { USE_MOCKS_ONLY } from './config'
 import {
   TEAMS_QUERY,
@@ -92,6 +89,13 @@ function useGraphQLWithFallback<TResult>(opts: {
   query: DocumentNode
   variables?: () => Record<string, unknown>
   mockFn: () => TResult | Promise<TResult>
+  /**
+   * Подставлять мок, если бэкенд недоступен. Только для данных, у которых
+   * резервная копия совпадает с реальной (контакты, площадки, тексты, тренеры).
+   */
+  fallbackToMock?: boolean
+  /** Не делать запрос, пока false (например, id ещё не известен). */
+  enabled?: () => boolean
 }) {
   const data    = ref<TResult | null>(null) as Ref<TResult | null>
   const loading = ref(true)
@@ -99,7 +103,8 @@ function useGraphQLWithFallback<TResult>(opts: {
 
   /**
    * Гонка ответов: если переменные сменились, пока предыдущий mockFn ещё
-   * резолвился, устаревший результат не должен затирать свежий.
+   * резолвился, устаревший результат не должен затирать свежий — ни мок,
+   * ни ответ сервера.
    */
   let requestId = 0
 
@@ -128,30 +133,48 @@ function useGraphQLWithFallback<TResult>(opts: {
       watch(() => opts.variables!(), runMock, { deep: true })
     }
   } else {
-    // Пытаемся GraphQL, при ошибке — мок
     const { onResult, onError, loading: gqlLoading } = useQuery<TResult>(
       opts.query,
       () => opts.variables?.() ?? {},
-      { fetchPolicy: 'cache-and-network', errorPolicy: 'all' },
+      () => ({
+        fetchPolicy: 'cache-and-network',
+        errorPolicy: 'all',
+        enabled: opts.enabled?.() ?? true,
+      }),
     )
+
+    // Выключенный запрос не ответит никогда — не держим скелетон вечно.
+    if (opts.enabled) {
+      watch(opts.enabled, (on) => { if (!on) loading.value = false }, { immediate: true })
+    }
 
     onResult((result) => {
       if (result.data) {
+        ++requestId
         data.value = result.data as TResult
+        error.value = null
         loading.value = false
       }
     })
 
     onError((err) => {
-      // Мок-fallback при ошибке. Флаг на window — чтобы e2e отличал
-      // «данные с бэкенда» от «бэкенд лёг, показываем запасные моки»:
-      // визуально это неразличимо, а разница принципиальная.
-      console.warn('[GraphQL → mock fallback]', err.message)
-      ;(window as unknown as { __gqlFellBack?: boolean }).__gqlFellBack = true
-      runMock()
+      if (import.meta.env.DEV) console.warn('[GraphQL]', err.message)
+      // Частичный ответ: onResult уже отдал реальные данные — их и оставляем.
+      if (data.value != null) return
+      if (opts.fallbackToMock) {
+        // Флаг на window — чтобы e2e отличал «данные с бэкенда» от
+        // «бэкенд лёг, показываем резервную копию».
+        ;(window as unknown as { __gqlFellBack?: boolean }).__gqlFellBack = true
+        runMock()
+        return
+      }
+      error.value = err
+      loading.value = false
     })
 
-    watch(gqlLoading, (v) => { loading.value = v })
+    // Снимает loading onResult/onError; здесь — только включение при refetch
+    // (сменились переменные), иначе мок-fallback и ошибка гонялись бы с ним.
+    watch(gqlLoading, (v) => { if (v) loading.value = true })
   }
 
   return { data, loading, error }
@@ -166,7 +189,7 @@ export function useTeamsQuery() {
     query: TEAMS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 60))
-      return { teams: teamsMock }
+      return { teams: (await import('@/entities/team/teams.mocks')).teamsMock }
     },
   })
 }
@@ -177,7 +200,7 @@ export function useTeamQuery(id: Ref<string>) {
     variables: () => ({ id: id.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { team: teamsMock.find((t) => t.id === id.value) ?? null }
+      return { team: (await import('@/entities/team/teams.mocks')).teamsMock.find((t) => t.id === id.value) ?? null }
     },
   })
 }
@@ -185,9 +208,10 @@ export function useTeamQuery(id: Ref<string>) {
 export function useCoachesQuery() {
   return useGraphQLWithFallback({
     query: COACHES_QUERY,
+    fallbackToMock: true,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 60))
-      return { coaches: coachesMock }
+      return { coaches: (await import('@/entities/coach/coaches.mocks')).coachesMock }
     },
   })
 }
@@ -195,10 +219,11 @@ export function useCoachesQuery() {
 export function useCoachQuery(id: Ref<string>) {
   return useGraphQLWithFallback({
     query: COACH_QUERY,
+    fallbackToMock: true,
     variables: () => ({ id: id.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { coach: coachesMock.find((c) => c.id === id.value) ?? null }
+      return { coach: (await import('@/entities/coach/coaches.mocks')).coachesMock.find((c) => c.id === id.value) ?? null }
     },
   })
 }
@@ -208,7 +233,7 @@ export function useTournamentsQuery() {
     query: TOURNAMENTS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 60))
-      return { tournaments: tournamentsMock }
+      return { tournaments: (await import('@/entities/tournament/tournaments.mocks')).tournamentsMock }
     },
   })
 }
@@ -219,7 +244,7 @@ export function useTournamentQuery(id: Ref<string>) {
     variables: () => ({ id: id.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { tournament: tournamentsMock.find((t) => t.id === id.value) ?? null }
+      return { tournament: (await import('@/entities/tournament/tournaments.mocks')).tournamentsMock.find((t) => t.id === id.value) ?? null }
     },
   })
 }
@@ -229,7 +254,7 @@ export function useCurrentTournamentQuery() {
     query: CURRENT_TOURNAMENT_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 30))
-      return { currentTournament: getCurrentTournament() ?? null }
+      return { currentTournament: (await import('@/entities/tournament/tournaments.mocks')).getCurrentTournament() ?? null }
     },
   })
 }
@@ -239,7 +264,7 @@ export function useUpcomingTournamentsQuery() {
     query: UPCOMING_TOURNAMENTS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 30))
-      return { upcomingTournaments: getUpcomingTournaments() }
+      return { upcomingTournaments: (await import('@/entities/tournament/tournaments.mocks')).getUpcomingTournaments() }
     },
   })
 }
@@ -249,7 +274,7 @@ export function useFinishedTournamentsQuery() {
     query: FINISHED_TOURNAMENTS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 30))
-      return { finishedTournaments: getFinishedTournaments() }
+      return { finishedTournaments: (await import('@/entities/tournament/tournaments.mocks')).getFinishedTournaments() }
     },
   })
 }
@@ -258,9 +283,13 @@ export function usePlayersQuery(teamId?: Ref<string | null>) {
   return useGraphQLWithFallback({
     query: PLAYERS_QUERY,
     variables: () => (teamId ? { teamId: teamId.value } : {}),
+    // Пустой id (турнир ещё грузится) означал бы players(teamId:"") —
+    // запрос всех детей клуба. Ждём настоящий id.
+    enabled: teamId ? () => !!teamId.value : undefined,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 60))
       const id = teamId?.value
+      const { playersMock } = await import('@/entities/player/players.mocks')
       return { players: id ? playersMock.filter((p) => p.team.id === id) : playersMock }
     },
   })
@@ -272,7 +301,7 @@ export function usePlayerQuery(id: Ref<string>) {
     variables: () => ({ id: id.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { player: playersMock.find((p) => p.id === id.value) ?? null }
+      return { player: (await import('@/entities/player/players.mocks')).playersMock.find((p) => p.id === id.value) ?? null }
     },
   })
 }
@@ -282,7 +311,7 @@ export function useAlbumsQuery() {
     query: ALBUMS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 60))
-      return { albums: galleryMock }
+      return { albums: (await import('@/entities/gallery/gallery.mocks')).galleryMock }
     },
   })
 }
@@ -293,7 +322,7 @@ export function useAlbumQuery(id: Ref<string>) {
     variables: () => ({ id: id.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { album: galleryMock.find((a) => a.id === id.value) ?? null }
+      return { album: (await import('@/entities/gallery/gallery.mocks')).galleryMock.find((a) => a.id === id.value) ?? null }
     },
   })
 }
@@ -304,7 +333,7 @@ export function useAlbumPhotosQuery(albumId: Ref<string>) {
     variables: () => ({ albumId: albumId.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 30))
-      return { albumPhotos: photosOfAlbum(albumId.value) }
+      return { albumPhotos: (await import('@/entities/gallery/gallery.mocks')).photosOfAlbum(albumId.value) }
     },
   })
 }
@@ -314,7 +343,7 @@ export function useAllPhotosQuery() {
     query: ALL_PHOTOS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 50))
-      return { allPhotos: galleryMock.flatMap((a) => a.photos) }
+      return { allPhotos: (await import('@/entities/gallery/gallery.mocks')).galleryMock.flatMap((a) => a.photos) }
     },
   })
 }
@@ -322,9 +351,10 @@ export function useAllPhotosQuery() {
 export function useContactInfoQuery() {
   return useGraphQLWithFallback({
     query: CONTACT_INFO_QUERY,
+    fallbackToMock: true,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 50))
-      return { contactInfo: contactInfoMock }
+      return { contactInfo: (await import('@/entities/contact/contacts.mocks')).contactInfoMock }
     },
   })
 }
@@ -332,9 +362,10 @@ export function useContactInfoQuery() {
 export function useVenuesQuery() {
   return useGraphQLWithFallback({
     query: VENUES_QUERY,
+    fallbackToMock: true,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 50))
-      return { venues: venuesMock }
+      return { venues: (await import('@/entities/contact/contacts.mocks')).venuesMock }
     },
   })
 }
@@ -342,9 +373,10 @@ export function useVenuesQuery() {
 export function useHomeContentQuery() {
   return useGraphQLWithFallback({
     query: HOME_CONTENT_QUERY,
+    fallbackToMock: true,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { pageContent: homeContentMock }
+      return { pageContent: (await import('@/entities/content/content.mocks')).homeContentMock }
     },
   })
 }
@@ -360,6 +392,7 @@ export function usePageLayoutQuery(route: Ref<string> | string) {
   const routeRef = typeof route === 'string' ? ref(route) : route
   return useGraphQLWithFallback<{ pageLayout: PageLayout | null }>({
     query: PAGE_LAYOUT_QUERY,
+    fallbackToMock: true,
     variables: () => ({ route: routeRef.value }),
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 30))
@@ -373,7 +406,7 @@ export function useReviewsQuery() {
     query: REVIEWS_QUERY,
     mockFn: async () => {
       await new Promise((r) => setTimeout(r, 40))
-      return { reviews: reviewsMock }
+      return { reviews: (await import('@/entities/content/content.mocks')).reviewsMock }
     },
   })
 }

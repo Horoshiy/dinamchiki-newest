@@ -1,64 +1,75 @@
 # =============================================================================
 # Эталонный vhost для БЕТЫ — flowise.dinamchiki.ru.
-# Боевые имена будут назначены при раскатке через CI/CD.
 #
-# Бета обслуживается Caddy (сервер отвечает `server: Caddy`),
-# а не nginx из docker-compose. Раньше README, scripts/deploy.sh и
-# docker/nginx.conf описывали три разных способа деплоя, ни один из которых
-# не совпадал с реальностью.
+# Повторяет живой /etc/caddy/addons/flowise.conf (09.10.2026) без basicauth
+# и раздела /audit. Раньше здесь лежал конфиг для SPA без пререндера: он
+# отдавал главную страницу на /teams и 404 на весь раздел /sveden.
+#
+# Сборка пререндерена (npm run build:static): у страниц есть готовый HTML
+# в {path}/index.html. Раздача повторяет боевой nginx
+# (docker/nginx.dinamchiki.ru.conf).
 #
 # Проверка: caddy validate --config docker/Caddyfile.example --adapter caddyfile
 # =============================================================================
 
 flowise.dinamchiki.ru {
-	root * /srv/dinamchiki-newest/dist
-	encode gzip zstd
+	encode gzip
 
-	# ВНИМАНИЕ: connect-src перечисляет бета-API. При переходе на прод
-	# заменить на боевой домен API — иначе браузер заблокирует запросы,
-	# и сайт молча останется без данных.
+	# connect-src перечисляет бета-API. При переходе на прод заменить на
+	# боевой домен API — иначе браузер заблокирует запросы.
+	# img-src minio — фото галереи из CRM, frame-src yandex — карта площадок.
 	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://mc.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://mc.yandex.ru; connect-src 'self' https://apigql.dinamchiki.ru wss://apigql.dinamchiki.ru https://mc.yandex.ru; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://mc.yandex.ru https://yastatic.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://mc.yandex.ru https://minio.dinamchiki.ru; frame-src https://yandex.ru https://*.yandex.ru; connect-src 'self' https://apigql.dinamchiki.ru https://mc.yandex.ru; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		X-Frame-Options "DENY"
 		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
 		# Бета не должна попадать в индекс, даже если robots.txt отдали неверно.
-		# На проде этот заголовок убрать.
 		X-Robots-Tag "noindex, nofollow"
 		-Server
 	}
 
-	# Хешированные ассеты Vite иммутабельны.
-	@assets path /assets/*
-	header @assets Cache-Control "public, max-age=31536000, immutable"
+	# Старые адреса раздела «Сведения».
+	redir /sveden/leadership /sveden/managers 301
+	redir /sveden/paid-edu /sveden/paid_edu 301
+	redir /sveden/meals /sveden/catering 301
 
-	# Известные маршруты SPA отдаём с 200.
-	@known path / /teams /coaches /tournaments /gallery /contacts
-	@knownDetail path /team/* /coach/* /tournament/* /player/*
-	handle @known {
-		rewrite * /index.html
-		file_server
-	}
-	handle @knownDetail {
-		rewrite * /index.html
-		file_server
-	}
+	# Хвостовой слэш — дубль страницы.
+	@trailing path_regexp trailing ^(.+)/$
+	redir @trailing {re.trailing.1} 301
 
-	# Реальные файлы: favicon, og-картинки, robots.txt, sitemap.xml.
 	handle {
-		file_server
+		root * /srv/dynamost-flowise
+
+		# Детальные страницы, которых нет в пререндере (игроки, турниры,
+		# новые группы), открывает SPA.
+		@dynamic path_regexp ^/(team|coach|player|tournament)/[^/]+$
+		handle @dynamic {
+			try_files {path}/index.html /spa.html
+			file_server
+		}
+
+		# Остальное — только готовые файлы; чего нет, то 404.
+		handle {
+			try_files {path} {path}/index.html
+			file_server
+		}
+
+		@html not path /assets/* /og/* /favicon/* /images/* /logo/*
+		header @html Cache-Control "no-cache"
+
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
 	}
 
-	# Всё остальное — честный 404 со страницей SPA.
-	# Раньше SPA-fallback отдавал 200 на любой мусорный URL (soft-404),
-	# и поисковик индексировал несуществующие адреса.
 	handle_errors {
-		@notFound expression {err.status_code} == 404
-		handle @notFound {
-			rewrite * /index.html
+		@notfound expression {err.status_code} == 404
+		handle @notfound {
+			# Иначе 404 на /assets/* унаследует «кэшировать год».
+			header Cache-Control "no-cache"
+			root * /srv/dynamost-flowise
+			rewrite * /404.html
 			file_server
-			header Cache-Control "no-store"
 		}
 	}
 }

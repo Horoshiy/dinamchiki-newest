@@ -104,9 +104,9 @@ const year = new Date().getFullYear()
       <div class="footer__bottom">
         <p class="footer__copy">© {{ year }} ДФК «Динамчики». Все права защищены.</p>
         <p class="footer__legal">
-          <a href="#" class="footer__link footer__link--muted">Политика конфиденциальности</a>
+          <RouterLink to="/privacy" class="footer__link footer__link--muted">Политика конфиденциальности</RouterLink>
           <span class="footer__sep" aria-hidden="true">·</span>
-          <a href="#" class="footer__link footer__link--muted">Согласие на обработку данных</a>
+          <RouterLink to="/consent" class="footer__link footer__link--muted">Согласие на обработку данных</RouterLink>
           <span class="footer__sep" aria-hidden="true">·</span>
           <!--
             Указание на версию для слабовидящих размечается атрибутом

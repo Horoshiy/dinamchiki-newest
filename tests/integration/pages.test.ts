@@ -189,10 +189,18 @@ describe('TournamentDetailPage', () => {
     expect(w.findAll('.tournament-detail__roster .p-card')).toHaveLength(expected.length)
   })
 
-  it('участники ведут на страницы команд', async () => {
+  /**
+   * Участники турнира — чужие клубы, страниц у них на сайте нет: ссылки
+   * вели бы в «Команда не найдена». Поэтому это карточки без ссылок,
+   * а наша команда помечена бейджем.
+   */
+  it('участники перечислены, наша команда помечена', async () => {
     const w = await render(TournamentDetailPage, { id: live.id })
-    const hrefs = w.findAll('a').map((a) => a.attributes('href'))
-    expect(hrefs).toContain(`/team/${live.teams[0].id}`)
+    const cards = w.findAll('.tournament-detail__team-card')
+    expect(cards).toHaveLength(live.teams.length)
+    expect(w.findAll('.tournament-detail__team-card--ours')).toHaveLength(
+      live.teams.filter((t) => t.isOurTeam).length,
+    )
   })
 
   /** Архивная запись без детализации раньше давала страницу из одного hero. */

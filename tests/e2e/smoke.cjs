@@ -6,23 +6,33 @@
  *
  *   npm run build && npm run preview &
  *   npm run e2e                     # по умолчанию http://127.0.0.1:4173
- *   BASE_URL=https://flowise.dinamchiki.ru npm run e2e
+ *   BASE_URL=https://flowise.dinamchiki.ru BASIC_AUTH=dev:<пароль> npm run e2e
  *
  * Playwright ставится отдельно (npx playwright install chromium) — в
  * devDependencies его нет, чтобы не тянуть браузеры в обычную установку.
  */
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:4173'
 
+/** Бета закрыта basic auth: BASIC_AUTH=логин:пароль. */
+const [AUTH_USER, ...AUTH_REST] = (process.env.BASIC_AUTH || '').split(':')
+const HTTP_CREDENTIALS = AUTH_USER ? { username: AUTH_USER, password: AUTH_REST.join(':') } : undefined
+
+// id — из реальных данных (группы из CRM, тренеры клуба). Карточки детей
+// скрыты в админке, поэтому /player/* здесь нет.
 const ROUTES = [
-  '/', '/teams', '/team/u12-blue', '/coaches', '/coach/maria-petrova',
-  '/tournaments', '/tournament/autumn-cup-2026', '/player/misha-orlov',
-  '/gallery', '/contacts', '/заведомо-несуществующая-страница',
+  '/', '/teams', '/team/crm-team-13', '/coaches', '/coach/roman-manuylo',
+  '/tournaments', '/tournament/bzsm-2026-final-2018',
+  '/gallery', '/contacts', '/privacy', '/consent', '/sveden',
+  '/заведомо-несуществующая-страница',
 ]
+const NOT_FOUND_ROUTE = '/заведомо-несуществующая-страница'
 
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 1000 },
   { name: 'tablet', width: 820, height: 1180 },
   { name: 'mobile', width: 390, height: 844, isMobile: true },
+  // iPhone SE 1-го поколения и бюджетные Android: на 320px бургер уезжал за край.
+  { name: 'mobile-320', width: 320, height: 640, isMobile: true },
   // Увеличенный размер шрифта в системе — обычная настройка на Android.
   // Заголовки переносятся, блоки растут, и вёрстка ломается там, где при
   // стандартном шрифте всё сходилось впритык.
@@ -71,6 +81,9 @@ async function findOverlaps(page) {
       if (el.closest('[aria-hidden="true"]')) return false
       // Элементы, намеренно лежащие поверх фона (подписи на фото и т.п.).
       if (el.closest('.lightbox, .hero__photo-inner')) return false
+      // Липкая панель «Позвонить / WhatsApp» по замыслу лежит поверх
+      // прокручиваемого контента; конец страницы освобождает под неё место.
+      if (el.closest('.mcb')) return false
       const r = el.getBoundingClientRect()
       if (r.width < 8 || r.height < 8) return false
       if (clippedByAncestor(el)) return false
@@ -91,10 +104,20 @@ async function findOverlaps(page) {
         const b = nodes[j]
         if (a.contains(b) || b.contains(a)) continue
 
-        const ra = a.getBoundingClientRect()
-        const rb = b.getBoundingClientRect()
-        const overlapW = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left)
-        const overlapH = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top)
+        // Строчный элемент, перенесённый на две строки, описывается
+        // прямоугольником во всю ширину абзаца — и «перекрывает» соседнюю
+        // ссылку в том же абзаце. Сравниваем по строкам (getClientRects).
+        const boxes = (el) =>
+          getComputedStyle(el).display === 'inline' ? Array.from(el.getClientRects()) : [el.getBoundingClientRect()]
+        let overlapW = 0
+        let overlapH = 0
+        for (const ra of boxes(a)) {
+          for (const rb of boxes(b)) {
+            const w = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left)
+            const h = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top)
+            if (w > 2 && h > 2 && w * h > overlapW * overlapH) { overlapW = w; overlapH = h }
+          }
+        }
         if (overlapW <= 2 || overlapH <= 2) continue
 
         // Порог в абсолютной площади, а не в доле.
@@ -232,6 +255,7 @@ function loadPlaywright() {
       viewport: { width: vp.width, height: vp.height },
       isMobile: !!vp.isMobile,
       hasTouch: !!vp.isMobile,
+      httpCredentials: HTTP_CREDENTIALS,
     })
     const page = await ctx.newPage()
     if (vp.fontScale) {
@@ -242,11 +266,16 @@ function loadPlaywright() {
       }, vp.fontScale)
     }
     page.on('pageerror', (e) => problems.push(`[${vp.name}] pageerror: ${e.message}`))
+    let currentRoute = ''
     page.on('console', (m) => {
-      if (m.type() === 'error') problems.push(`[${vp.name}] console.error: ${m.text()}`)
+      if (m.type() !== 'error') return
+      // Честный 404 несуществующей страницы браузер пишет в консоль — это норма.
+      if (currentRoute === NOT_FOUND_ROUTE && /status of 404/.test(m.text())) return
+      problems.push(`[${vp.name}] console.error: ${m.text()}`)
     })
 
     for (const route of ROUTES) {
+      currentRoute = route
       const resp = await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 30000 })
       await page.waitForTimeout(300)
 

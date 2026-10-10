@@ -29,6 +29,14 @@ export const CLUB_PHONE_DISPLAY = '+7 (928) 320-04-94'
 /** href для кнопки звонка. */
 export const CLUB_PHONE_HREF = `tel:${CLUB_PHONE_E164}`
 
+/**
+ * Текст для посетителя, когда сайт не смог получить данные. Технический
+ * error.message («Failed to fetch», «Response not successful…») родителю
+ * ничего не говорит — а телефон даёт выход.
+ */
+export const LOAD_ERROR_HINT =
+  `Сайт временно не получает данные. Обновите страницу через минуту или позвоните нам: ${CLUB_PHONE_DISPLAY.replace(/ /g, '\u00A0')}.`
+
 /** Telegram для связи (username без @ используется в ссылке). */
 export const CLUB_TELEGRAM = '@Dinamchiki_DFC'
 export const CLUB_TELEGRAM_HREF = `https://t.me/${CLUB_TELEGRAM.replace('@', '')}`

@@ -71,7 +71,8 @@ import { ORG, LICENSE } from '@/entities/sveden/sveden.data'
   margin: $space-8 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  // min() — иначе колонка 320px не влезает в экран 320px за вычетом отступов.
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: $space-4;
 }
 

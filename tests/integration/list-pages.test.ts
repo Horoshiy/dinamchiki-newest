@@ -162,7 +162,7 @@ describe('ContactsPage', () => {
 
   it('карта ведёт на внешний сервис безопасно', async () => {
     const w = await render(ContactsPage)
-    const map = w.find('.map')
+    const map = w.find('.map__open')
     expect(map.attributes('href')).toContain('yandex')
     expect(map.attributes('rel')).toContain('noopener')
   })
