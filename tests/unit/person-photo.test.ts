@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { initials } from '@/shared/lib/person'
+import { givenName, initials } from '@/shared/lib/person'
 import { isRealPhoto } from '@/shared/lib/photo'
 
 describe('initials', () => {
@@ -18,5 +18,14 @@ describe('isRealPhoto', () => {
     expect(isRealPhoto('https://minio.dinamchiki.ru/a.jpg')).toBe(true)
     expect(isRealPhoto('placeholder://album-1')).toBe(false)
     expect(isRealPhoto(null)).toBe(false)
+  })
+})
+
+describe('givenName', () => {
+  it('ФИО фамилией вперёд → имя и отчество', () => {
+    expect(givenName('Третьяков Дмитрий Михайлович')).toBe('Дмитрий Михайлович')
+  })
+  it('не три слова — как есть', () => {
+    expect(givenName('Дмитрий Третьяков')).toBe('Дмитрий Третьяков')
   })
 })

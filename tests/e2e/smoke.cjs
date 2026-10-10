@@ -29,6 +29,9 @@ const NOT_FOUND_ROUTE = '/заведомо-несуществующая-стра
 
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 1000 },
+  // Ноутбуки: на 1024–1279px шапка была шире окна, «Записаться» обрезалась.
+  { name: 'laptop-1280', width: 1280, height: 800 },
+  { name: 'laptop-1024', width: 1024, height: 768 },
   { name: 'tablet', width: 820, height: 1180 },
   { name: 'mobile', width: 390, height: 844, isMobile: true },
   // iPhone SE 1-го поколения и бюджетные Android: на 320px бургер уезжал за край.

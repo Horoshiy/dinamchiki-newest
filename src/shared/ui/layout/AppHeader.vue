@@ -223,13 +223,16 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 
 // ---- Навигация ------------------------------------------------------------
+// Семь пунктов, телефон и кнопка в одну строку влезают только с 1280px:
+// на 1024–1279 строка была шире окна (1291px) и страница ездила вбок,
+// а «Записаться» обрезалась. Ниже 1280 меню — в бургере.
 .header__nav {
   display: none;
   flex: 1;
   justify-content: center;
   gap: $space-2;
 
-  @media (min-width: $bp-lg) {
+  @media (min-width: $bp-xl) {
     display: flex;
   }
 }
@@ -280,8 +283,21 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   &:hover { color: $color-brand-500; }
 
-  @media (min-width: $bp-lg) {
+  @media (min-width: $bp-xl) {
     display: inline-flex;
+  }
+}
+
+// Номер текстом — только на широких экранах; на 1280–1439 остаётся значок
+// (ссылка подписана aria-label), иначе строка снова не помещается.
+.header__phone-num {
+  @media (max-width: $bp-2xl - 1px) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 
@@ -309,7 +325,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
   &:hover { background: $color-brand-50; }
 
-  @media (min-width: $bp-lg) {
+  @media (min-width: $bp-xl) {
     display: none;
   }
 }
@@ -335,7 +351,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
     pointer-events: auto;
   }
 
-  @media (min-width: $bp-lg) {
+  @media (min-width: $bp-xl) {
     display: none;
   }
 }
