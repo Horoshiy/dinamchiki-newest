@@ -325,8 +325,11 @@ function loadPlaywright() {
       const stats = await page.$$eval('.stat-card', (els) => els.length)
       if (stats === 0) problems.push('[данные] блок «клуб в цифрах» пуст')
 
+      // Таблица нужна, только когда турнир идёт: иначе главная честно
+      // пишет «Сейчас активных турниров нет».
+      const noLive = await page.$('.tournaments-preview__empty')
       const rows = await page.$$eval('.standings tbody tr', (els) => els.length)
-      if (rows === 0) problems.push('[данные] турнирная таблица на главной пуста')
+      if (!noLive && rows === 0) problems.push('[данные] турнирная таблица на главной пуста')
     }
 
     console.log(`${vp.name}: пройдено маршрутов ${ROUTES.length}`)
