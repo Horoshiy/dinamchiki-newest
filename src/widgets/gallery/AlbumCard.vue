@@ -13,6 +13,7 @@ import {
 } from '@/entities/gallery/gallery.types'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import { formatShort } from '@/shared/lib/date'
+import { isRealPhoto } from '@/shared/lib/photo'
 
 const props = defineProps<{
   album: GalleryAlbum
@@ -24,11 +25,6 @@ const cover = computed(() => props.album.photos.find((p) => p.id === props.album
 const categoryLabel = computed(() => GALLERY_CATEGORY_LABELS[props.album.category])
 const categoryColor = computed(() => GALLERY_CATEGORY_COLORS[props.album.category])
 const dateFmt = computed(() => formatShort(props.album.date))
-
-/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
-function isRealPhoto(url: string): boolean {
-  return /^https?:\/\//i.test(url)
-}
 </script>
 
 <template>

@@ -6,6 +6,7 @@
  * По клику открывает LightboxModal (через emit).
  */
 import type { GalleryPhoto } from '@/entities/gallery/gallery.types'
+import { isRealPhoto } from '@/shared/lib/photo'
 
 defineProps<{
   photos: ReadonlyArray<GalleryPhoto>
@@ -16,11 +17,6 @@ const emit = defineEmits<{
 }>()
 
 function open(i: number) { emit('open', i) }
-
-/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
-function isRealPhoto(url: string): boolean {
-  return /^https?:\/\//i.test(url)
-}
 </script>
 
 <template>

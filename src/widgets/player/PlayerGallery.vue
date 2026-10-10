@@ -8,18 +8,14 @@
  */
 import { computed } from 'vue'
 import type { PlayerPhoto, Player } from '@/entities/player/player.types'
+import { initials as initialsOf } from '@/shared/lib/person'
 
 const props = defineProps<{
   gallery: ReadonlyArray<PlayerPhoto>
   player: Player
 }>()
 
-const initials = computed<string>(() => {
-  const parts = props.player.fullName.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[1]?.[0] ?? ''
-  return (first + last).toUpperCase()
-})
+const initials = computed(() => initialsOf(props.player.fullName))
 
 /** Цвет плейсхолдера — на основе gradient. */
 const bgColor = computed(() => props.player.avatarGradient)

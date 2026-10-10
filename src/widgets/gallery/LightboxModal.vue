@@ -13,6 +13,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { GalleryPhoto } from '@/entities/gallery/gallery.types'
 import IconClose from '@/shared/ui/icons/IconClose.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
+import { isRealPhoto } from '@/shared/lib/photo'
 
 const props = defineProps<{
   photos: ReadonlyArray<GalleryPhoto>
@@ -117,11 +118,6 @@ onBeforeUnmount(() => {
   lockScroll(false)
   document.removeEventListener('keydown', onKey)
 })
-
-/** «placeholder://…» — не адрес картинки, а заглушка из старого демо-контента. */
-function isRealPhoto(url: string): boolean {
-  return /^https?:\/\//i.test(url)
-}
 </script>
 
 <template>

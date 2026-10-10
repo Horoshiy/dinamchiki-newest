@@ -11,15 +11,11 @@ import type { Player } from '@/entities/player/player.types'
 import { POSITION_LABELS } from '@/entities/player/player.types'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 import { withPlural } from '@/shared/lib/plural'
+import { initials as initialsOf } from '@/shared/lib/person'
 
 const props = defineProps<{ player: Player }>()
 
-const initials = computed<string>(() => {
-  const parts = props.player.fullName.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[1]?.[0] ?? ''
-  return (first + last).toUpperCase()
-})
+const initials = computed(() => initialsOf(props.player.fullName))
 </script>
 
 <template>

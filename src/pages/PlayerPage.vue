@@ -22,6 +22,7 @@ import { POSITION_LABELS } from '@/entities/player/player.types'
 import { usePlayerQuery } from '@/shared/api/composables'
 import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
 import { withPlural } from '@/shared/lib/plural'
+import { initials as initialsOf } from '@/shared/lib/person'
 
 const props = defineProps<{ id: string }>()
 
@@ -34,13 +35,7 @@ const player = computed<Player | null>(() => {
 })
 
 
-const initials = computed<string>(() => {
-  if (!player.value) return ''
-  const parts = player.value.fullName.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[1]?.[0] ?? ''
-  return (first + last).toUpperCase()
-})
+const initials = computed(() => initialsOf(player.value?.fullName))
 
 const crumbs = computed(() => [
   { label: 'Главная', to: '/' },

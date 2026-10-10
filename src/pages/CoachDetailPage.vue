@@ -29,6 +29,7 @@ import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
 import { useCoachQuery } from '@/shared/api/composables'
 import { SIGNUP_ROUTE, LOAD_ERROR_HINT } from '@/shared/config/club'
 import { NOT_FOUND_META, usePageMeta } from '@/shared/lib/page-meta'
+import { initials as initialsOf } from '@/shared/lib/person'
 
 const props = defineProps<{ id: string }>()
 
@@ -69,13 +70,7 @@ function openLightbox(index: number) {
   lightboxOpen.value = true
 }
 
-const initials = computed<string>(() => {
-  if (!coach.value) return ''
-  const parts = coach.value.fullName.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[1]?.[0] ?? ''
-  return (first + last).toUpperCase()
-})
+const initials = computed(() => initialsOf(coach.value?.fullName))
 
 const primarySpecLabel = computed<string>(() => {
   if (!coach.value || coach.value.specialization.length === 0) return ''

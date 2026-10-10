@@ -13,16 +13,12 @@ import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
 import IconAward from '@/shared/ui/icons/IconAward.vue'
 import IconUsers from '@/shared/ui/icons/IconUsers.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
+import { initials as initialsOf } from '@/shared/lib/person'
 
 const props = defineProps<{ coach: Coach }>()
 
 /** Инициалы из ФИО для аватара-плейсхолдера. */
-const initials = computed<string>(() => {
-  const parts = props.coach.fullName.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[1]?.[0] ?? ''
-  return (first + last).toUpperCase()
-})
+const initials = computed(() => initialsOf(props.coach.fullName))
 
 const specLabels = computed(() =>
   props.coach.specialization.map((s) => COACH_SPEC_LABELS[s]),
