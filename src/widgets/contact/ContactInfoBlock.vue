@@ -6,14 +6,12 @@
  */
 import { computed } from 'vue'
 import type { ContactInfo } from '@/entities/contact/contact.types'
-import { formatRuPhone, telegramUsername } from '@/entities/contact/useClubContacts'
+import { resolveContacts } from '@/entities/contact/useClubContacts'
+import { CHANNEL_ICONS } from '@/widgets/contact/channel-icons'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
-import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
-import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
 import IconMail from '@/shared/ui/icons/IconMail.vue'
 import IconLocation from '@/shared/ui/icons/IconLocation.vue'
 import IconClock from '@/shared/ui/icons/IconClock.vue'
-import IconMax from '@/shared/ui/icons/IconMax.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 
 const props = defineProps<{ contact: ContactInfo }>()
@@ -24,13 +22,11 @@ const innLabel = computed(() => {
   return /^ИНН/i.test(v) ? v : `ИНН ${v}`
 })
 
-const whatsappUrl  = computed(() => `https://wa.me/${props.contact.whatsapp.replace(/\D/g, '')}`)
-const telegramUrl  = computed(() => `https://t.me/${telegramUsername(props.contact.telegram)}`)
-
-const telegramHandle = computed(() => `@${telegramUsername(props.contact.telegram)}`)
-/** MAX — второй мессенджер клуба. Нет ссылки в базе — блок не показываем. */
-const maxUrl = computed(() => props.contact.socials?.max?.trim() || '')
-const whatsappDisplay = computed(() => formatRuPhone(props.contact.whatsapp))
+// Ссылки и подписи — той же функцией, что в шапке и подвале.
+const contacts = computed(() => resolveContacts(props.contact))
+const messengers = computed(() =>
+  contacts.value.channels.filter((c) => ['whatsapp', 'telegram', 'max'].includes(c.id)),
+)
 
 /**
  * Часы работы приходят из базы одной строкой. Раньше здесь было
@@ -39,62 +35,47 @@ const whatsappDisplay = computed(() => formatRuPhone(props.contact.whatsapp))
  */
 const workingHours = computed(() => props.contact.workingHours?.trim() || null)
 
-const phoneHref   = computed(() => `tel:${props.contact.phone.replace(/[^\d+]/g, '')}`)
-const emailHref   = computed(() => `mailto:${props.contact.email}`)
 </script>
 
 <template>
   <div class="cinfo">
-    <a :href="phoneHref" class="cinfo__item cinfo__item--primary">
+    <a :href="contacts.phoneHref" class="cinfo__item cinfo__item--primary">
       <div class="cinfo__icon">
         <IconPhone :size="22" />
       </div>
       <div class="cinfo__body">
         <span class="cinfo__label">Телефон</span>
-        <strong class="cinfo__value">{{ contact.phoneFormatted }}</strong>
+        <strong class="cinfo__value">{{ contacts.phoneDisplay }}</strong>
       </div>
       <IconArrowRight :size="18" class="cinfo__arrow" />
     </a>
 
     <div class="cinfo__row">
-      <a :href="whatsappUrl" target="_blank" rel="noopener" class="cinfo__item">
-        <div class="cinfo__icon cinfo__icon--whatsapp">
-          <IconWhatsApp :size="22" />
+      <a
+        v-for="c in messengers"
+        :key="c.id"
+        :href="c.href"
+        target="_blank"
+        rel="noopener"
+        class="cinfo__item"
+      >
+        <div class="cinfo__icon" :class="`cinfo__icon--${c.id}`">
+          <component :is="CHANNEL_ICONS[c.id]" :size="22" />
         </div>
         <div class="cinfo__body">
-          <span class="cinfo__label">WhatsApp</span>
-          <strong class="cinfo__value">{{ whatsappDisplay }}</strong>
-        </div>
-      </a>
-
-      <a :href="telegramUrl" target="_blank" rel="noopener" class="cinfo__item">
-        <div class="cinfo__icon cinfo__icon--telegram">
-          <IconTelegram :size="22" />
-        </div>
-        <div class="cinfo__body">
-          <span class="cinfo__label">Telegram</span>
-          <strong class="cinfo__value">{{ telegramHandle }}</strong>
-        </div>
-      </a>
-
-      <a v-if="maxUrl" :href="maxUrl" target="_blank" rel="noopener" class="cinfo__item">
-        <div class="cinfo__icon cinfo__icon--max">
-          <IconMax :size="22" />
-        </div>
-        <div class="cinfo__body">
-          <span class="cinfo__label">MAX</span>
-          <strong class="cinfo__value">Написать в MAX</strong>
+          <span class="cinfo__label">{{ c.label }}</span>
+          <strong class="cinfo__value">{{ c.value }}</strong>
         </div>
       </a>
     </div>
 
-    <a :href="emailHref" class="cinfo__item">
+    <a :href="contacts.emailHref" class="cinfo__item">
       <div class="cinfo__icon cinfo__icon--mail">
         <IconMail :size="22" />
       </div>
       <div class="cinfo__body">
         <span class="cinfo__label">Email</span>
-        <strong class="cinfo__value">{{ contact.email }}</strong>
+        <strong class="cinfo__value">{{ contacts.email }}</strong>
       </div>
     </a>
 

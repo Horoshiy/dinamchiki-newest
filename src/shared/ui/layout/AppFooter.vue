@@ -17,13 +17,25 @@ import { useClubContacts } from '@/entities/contact/useClubContacts'
 // Телефон, почта, WhatsApp и Telegram — из базы. Канал в Telegram
 // (t.me/dinamchiki) остаётся константой: это публикации, а не переписка,
 // и в contactInfo он лежит отдельным полем socials, которого фолбэк не знает.
-const { phoneDisplay, phoneHref, email, emailHref, telegramHref, whatsappHref, maxHref } =
-  useClubContacts()
+const { phoneDisplay, phoneHref, channels } = useClubContacts()
 
 interface FooterColumn {
   title: string
-  links: Array<{ label: string; to?: string; href?: string }>
+  links: Array<{ label: string; to?: string; href?: string; external?: boolean }>
 }
+
+/** Телефон и почту показываем как есть, мессенджеры — «Telegram — написать». */
+const contactLinks = computed(() => {
+  const links = channels.value.map((c) => ({
+    label: c.external ? `${c.label} — написать` : c.value,
+    href: c.href,
+    external: c.external,
+  }))
+  // Канал — сразу после переписки в Telegram.
+  const tg = links.findIndex((l) => l.href.includes('t.me/'))
+  links.splice(tg + 1, 0, { label: 'Telegram-канал', href: CLUB_TELEGRAM_CHANNEL_HREF, external: true })
+  return links
+})
 
 const columns = computed<ReadonlyArray<FooterColumn>>(() => [
   {
@@ -52,14 +64,7 @@ const columns = computed<ReadonlyArray<FooterColumn>>(() => [
   },
   {
     title: 'Контакты',
-    links: [
-      { label: phoneDisplay.value, href: phoneHref.value },
-      { label: email.value,        href: emailHref.value },
-      { label: 'Telegram — написать', href: telegramHref.value },
-      { label: 'Telegram-канал',      href: CLUB_TELEGRAM_CHANNEL_HREF },
-      { label: 'MAX — написать',      href: maxHref.value },
-      { label: 'WhatsApp',            href: whatsappHref.value },
-    ],
+    links: contactLinks.value,
   },
 ])
 
@@ -95,7 +100,12 @@ const year = new Date().getFullYear()
           <ul class="footer__list">
             <li v-for="link in col.links" :key="link.label">
               <RouterLink v-if="link.to" :to="link.to" class="footer__link">{{ link.label }}</RouterLink>
-              <a v-else :href="link.href" class="footer__link">{{ link.label }}</a>
+              <a
+                v-else
+                :href="link.href"
+                class="footer__link"
+                v-bind="link.external ? { target: '_blank', rel: 'noopener' } : {}"
+              >{{ link.label }}</a>
             </li>
           </ul>
         </div>

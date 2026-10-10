@@ -7,21 +7,20 @@
  *   - Справа: 3 карточки контактов (телефон, WhatsApp, Telegram)
  *   - Внизу справа: трофей/щит с надписью
  */
+import { computed } from 'vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
-import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
 import { useClubContacts } from '@/entities/contact/useClubContacts'
 import { useLeadForm } from '@/features/lead-form/useLeadForm'
-import IconMax from '@/shared/ui/icons/IconMax.vue'
-import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
-import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
+import { CHANNEL_ICONS } from '@/widgets/contact/channel-icons'
 
 // Контакты — из базы, единым источником с шапкой и «Контактами».
-const { phoneDisplay, phoneHref, whatsappHref, telegramHandle, telegramHref, maxHref, email, emailHref } =
-  useClubContacts()
+// Почта в этом блоке не нужна: здесь — способы связаться быстро.
+const { channels } = useClubContacts()
+const ctaChannels = computed(() => channels.value.filter((c) => c.id !== 'email'))
 
 // Логика общая с формой на «Контактах»; пометка — для менеджера в воронке.
 const {
@@ -109,40 +108,17 @@ const {
           <h3 class="cta__contacts-title">Наши контакты</h3>
 
           <ul class="contacts">
-            <li class="contact">
-              <span class="contact__icon contact__icon--blue">
-                <IconPhone :size="22" color="#ffffff" />
+            <li v-for="c in ctaChannels" :key="c.id" class="contact">
+              <span class="contact__icon" :class="`contact__icon--${c.id}`">
+                <component :is="CHANNEL_ICONS[c.id]" :size="22" color="#ffffff" />
               </span>
               <div class="contact__body">
-                <p class="contact__label">Телефон</p>
-                <a :href="phoneHref" class="contact__value">{{ phoneDisplay }}</a>
-              </div>
-            </li>
-            <li class="contact">
-              <span class="contact__icon contact__icon--green">
-                <IconWhatsApp :size="22" color="#ffffff" />
-              </span>
-              <div class="contact__body">
-                <p class="contact__label">WhatsApp</p>
-                <a :href="whatsappHref" target="_blank" rel="noopener" class="contact__value">Написать в WhatsApp</a>
-              </div>
-            </li>
-            <li class="contact">
-              <span class="contact__icon contact__icon--sky">
-                <IconTelegram :size="22" color="#ffffff" />
-              </span>
-              <div class="contact__body">
-                <p class="contact__label">Telegram</p>
-                <a :href="telegramHref" target="_blank" rel="noopener" class="contact__value">{{ telegramHandle }}</a>
-              </div>
-            </li>
-            <li v-if="maxHref" class="contact">
-              <span class="contact__icon contact__icon--sky">
-                <IconMax :size="22" />
-              </span>
-              <div class="contact__body">
-                <p class="contact__label">MAX</p>
-                <a :href="maxHref" target="_blank" rel="noopener" class="contact__value">Написать в MAX</a>
+                <p class="contact__label">{{ c.label }}</p>
+                <a
+                  :href="c.href"
+                  class="contact__value"
+                  v-bind="c.external ? { target: '_blank', rel: 'noopener' } : {}"
+                >{{ c.value }}</a>
               </div>
             </li>
           </ul>
@@ -371,9 +347,10 @@ const {
   justify-content: center;
   border-radius: $radius-md;
 
-  &--blue { background: linear-gradient(135deg, $color-brand-400 0%, $color-brand-600 100%); }
-  &--green { background: linear-gradient(135deg, #25d366 0%, #128c7e 100%); }
-  &--sky   { background: linear-gradient(135deg, #29b6f6 0%, #0288d1 100%); }
+  &--phone    { background: linear-gradient(135deg, $color-brand-400 0%, $color-brand-600 100%); }
+  &--whatsapp { background: linear-gradient(135deg, #25d366 0%, #128c7e 100%); }
+  &--telegram,
+  &--max      { background: linear-gradient(135deg, #29b6f6 0%, #0288d1 100%); }
 }
 
 .contact__body { display: flex; flex-direction: column; gap: 2px; }
