@@ -207,6 +207,17 @@ describe('HomeCta — компактная форма на главной', () =
     expect(w.text()).toContain('Спасибо')
   })
 
+  it('неполный номер не уходит и помечает поле для читалки экрана', async () => {
+    const w = await cta()
+    await w.find('#lead-phone').setValue('+7 999 12')
+    await w.find('form').trigger('submit')
+    await settle()
+    expect(submittedLeads).toHaveLength(0)
+    const input = w.find('#lead-phone')
+    expect(input.attributes('aria-invalid')).toBe('true')
+    expect(w.find(`[id="${input.attributes('aria-describedby')}"]`).text()).toContain('+7 и 10 цифр')
+  })
+
   it('заявка с главной помечается источником', async () => {
     const w = await cta()
     await fillCta(w)

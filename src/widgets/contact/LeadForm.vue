@@ -1,101 +1,32 @@
 <script setup lang="ts">
 /**
- * Форма заявки на пробную тренировку.
+ * Форма заявки на пробную тренировку (`/contacts`).
  *
  * Одно поле — телефон. Согласие на обработку данных даётся нажатием
- * кнопки — подпись под ней ведёт на текст согласия.
- * Как зовут, возраст ребёнка, группу и удобное время тренер уточняет
- * при звонке — каждое лишнее поле удлиняло путь до кнопки.
+ * кнопки — подпись под ней ведёт на текст согласия. Логика общая
+ * с формой на главной — см. features/lead-form/useLeadForm.
  *
- * Состояния: idle / submitting / success / error.
+ * Состояния: idle / submitting / success / error / unavailable.
  */
-import { nextTick, reactive, ref, useId } from 'vue'
-import type { LeadFormDraft, LeadFormErrors } from '@/entities/contact/contact.types'
-import { validateLeadForm } from '@/entities/contact/lead.validation'
-import { applyPhoneMask, normalizePhone } from '@/shared/lib/phone'
-import { useSubmitApplicationMutation } from '@/shared/api/composables'
+import { useLeadForm } from '@/features/lead-form/useLeadForm'
 import IconSend from '@/shared/ui/icons/IconSend.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
 import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 
-
-const draft = reactive<LeadFormDraft>({
-  phone: '',
-  consent: false,
-})
-
-const errors = ref<LeadFormErrors>({})
-/**
- * 'unavailable' — сервер заявок не подключён. Отдельное состояние нужно,
- * чтобы не показывать «Заявка отправлена» там, где заявка никуда не ушла.
- */
-const status = ref<'idle' | 'submitting' | 'success' | 'error' | 'unavailable'>('idle')
-const submitError = ref<string | null>(null)
-const leadId = ref<string | null>(null)
-
-const { submit: doSubmit } = useSubmitApplicationMutation()
-
-const phoneErrorId = useId()
-
-/**
- * Форма целиком сменяется результатом, и фокус с кнопки пропадал в никуда:
- * читалка экрана молчала, и с клавиатуры приходилось начинать с начала
- * страницы. Переводим фокус на заголовок результата — его и зачитают.
- */
-const stateTitle = ref<HTMLElement | null>(null)
-async function focusResult() {
-  await nextTick()
-  stateTitle.value?.focus()
-}
-
-/**
- * Маска ввода: что бы ни набрали — «8 928…», «7928…», «+7 928…» — в поле
- * останется «+7 (928) 320-04-94». Ввод чего-то другого просто не появится.
- */
-function onPhoneInput(e: Event) {
-  draft.phone = applyPhoneMask(e.target as HTMLInputElement)
-}
-
-async function onSubmit() {
-  if (status.value === 'submitting') return
-  // Согласие — само нажатие кнопки (подпись со ссылкой под ней).
-  draft.consent = true
-  const v = validateLeadForm(draft)
-  errors.value = v
-  if (Object.keys(v).length > 0) return
-
-  status.value = 'submitting'
-  submitError.value = null
-  try {
-    // В бэкенд уходит каноничный «+79283200494», а не то, что видно в поле.
-    const result = await doSubmit({ ...draft, phone: normalizePhone(draft.phone) })
-    if (result.ok) {
-      status.value = 'success'
-      leadId.value = result.leadId ?? null
-      void focusResult()
-    } else if (result.notDelivered) {
-      status.value = 'unavailable'
-      submitError.value = null
-      void focusResult()
-    } else {
-      status.value = 'error'
-      submitError.value = result.error ?? 'Что-то пошло не так'
-    }
-  } catch (e) {
-    status.value = 'error'
-    submitError.value = (e as Error).message
-  }
-}
-
-function resetForm() {
-  draft.phone = ''
-  draft.consent = false
-  errors.value = {}
-  status.value = 'idle'
-  submitError.value = null
-  leadId.value = null
-}
+const {
+  phone,
+  errors,
+  status,
+  submitError,
+  leadId,
+  isSubmitting,
+  phoneErrorId,
+  resultEl,
+  onPhoneInput,
+  onSubmit,
+  reset,
+} = useLeadForm()
 </script>
 
 <template>
@@ -103,25 +34,25 @@ function resetForm() {
     <!-- Success state -->
     <div v-if="status === 'success'" class="lform__state lform__state--success">
       <div class="lform__state-icon">✓</div>
-      <h3 ref="stateTitle" class="lform__state-title" tabindex="-1">Заявка отправлена!</h3>
+      <h3 ref="resultEl" class="lform__state-title" tabindex="-1">Заявка отправлена!</h3>
       <p class="lform__state-desc">
         Спасибо! Тренер перезвонит вам по указанному номеру.
         Номер заявки: <code>{{ leadId }}</code>
       </p>
-      <BaseButton variant="outline" @click="resetForm">Отправить ещё одну</BaseButton>
+      <BaseButton variant="outline" @click="reset">Отправить ещё одну</BaseButton>
     </div>
 
     <!-- Сервер заявок не подключён: честно говорим и даём прямые контакты -->
     <div v-else-if="status === 'unavailable'" class="lform__state lform__state--unavailable">
       <div class="lform__state-icon">!</div>
-      <h3 ref="stateTitle" class="lform__state-title" tabindex="-1">Онлайн-заявка пока не работает</h3>
+      <h3 ref="resultEl" class="lform__state-title" tabindex="-1">Онлайн-заявка пока не работает</h3>
       <p class="lform__state-desc">
         Мы ещё подключаем приём заявок с сайта, поэтому эта форма не отправит
         ваше сообщение. Чтобы записаться на пробную тренировку, свяжитесь
         с нами напрямую — ответим в тот же день.
       </p>
       <DirectContacts class="lform__direct" />
-      <BaseButton variant="outline" @click="resetForm">Вернуться к форме</BaseButton>
+      <BaseButton variant="outline" @click="reset">Вернуться к форме</BaseButton>
     </div>
 
     <!-- Form -->
@@ -129,7 +60,7 @@ function resetForm() {
       <label class="lform__field">
         <span class="lform__label">Телефон <span class="lform__req">*</span></span>
         <input
-          :value="draft.phone"
+          :value="phone"
           type="tel"
           inputmode="tel"
           autocomplete="tel"
@@ -154,10 +85,10 @@ function resetForm() {
           size="lg"
           variant="solid"
           :icon-right="IconSend"
-          :loading="status === 'submitting'"
+          :loading="isSubmitting"
           block
         >
-          {{ status === 'submitting' ? 'Отправляем...' : 'Записаться на бесплатную пробную' }}
+          {{ isSubmitting ? 'Отправляем...' : 'Записаться на бесплатную пробную' }}
         </BaseButton>
         <ConsentNote button="Записаться на бесплатную пробную" />
       </div>

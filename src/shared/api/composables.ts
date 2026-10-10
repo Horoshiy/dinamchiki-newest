@@ -423,7 +423,7 @@ export function useReviewsQuery() {
 import { useMutation } from '@vue/apollo-composable'
 import { SUBMIT_APPLICATION_MUTATION } from './graphql/queries'
 import { validateLeadForm } from '@/entities/contact/lead.validation'
-import type { LeadSubmitResult } from '@/entities/contact/contact.types'
+import type { LeadFormDraft, LeadSubmitResult } from '@/entities/contact/contact.types'
 
 export function useSubmitApplicationMutation() {
   const submitting = ref(false)
@@ -433,7 +433,7 @@ export function useSubmitApplicationMutation() {
   // вызывался внутри async submit() после await, вне жизненного цикла.
   const { mutate } = useMutation(SUBMIT_APPLICATION_MUTATION)
 
-  async function submit(draft: Parameters<typeof validateLeadForm>[0]): Promise<LeadSubmitResult> {
+  async function submit(draft: LeadFormDraft & { message?: string }): Promise<LeadSubmitResult> {
     submitting.value = true
     result.value = null
     try {

@@ -7,16 +7,14 @@
  *   - Справа: 3 карточки контактов (телефон, WhatsApp, Telegram)
  *   - Внизу справа: трофей/щит с надписью
  */
-import { computed, nextTick, ref, useId } from 'vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
 import ConsentNote from '@/widgets/contact/ConsentNote.vue'
 import DirectContacts from '@/widgets/contact/DirectContacts.vue'
 import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import IconPhone from '@/shared/ui/icons/IconPhone.vue'
 import IconTrophy from '@/shared/ui/icons/IconTrophy.vue'
-import { useSubmitApplicationMutation } from '@/shared/api/composables'
 import { useClubContacts } from '@/entities/contact/useClubContacts'
-import { applyPhoneMask, normalizePhone, isPhoneComplete } from '@/shared/lib/phone'
+import { useLeadForm } from '@/features/lead-form/useLeadForm'
 import IconMax from '@/shared/ui/icons/IconMax.vue'
 import IconWhatsApp from '@/shared/ui/icons/IconWhatsApp.vue'
 import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
@@ -25,81 +23,19 @@ import IconTelegram from '@/shared/ui/icons/IconTelegram.vue'
 const { phoneDisplay, phoneHref, whatsappHref, telegramHandle, telegramHref, maxHref, email, emailHref } =
   useClubContacts()
 
-interface FormState {
-  phone: string
-}
-
-const form = ref<FormState>({ phone: '' })
-
-/**
- * 'unavailable' — сервер заявок не подключён.
- * Раньше здесь стоял submitted=true с текстом «Заявка отправлена», хотя
- * форма никуда ничего не отправляла.
- */
-const status = ref<'idle' | 'submitting' | 'success' | 'error' | 'unavailable'>('idle')
-const submitError = ref<string | null>(null)
-
-const { submit: doSubmit } = useSubmitApplicationMutation()
-
-const isSubmitting = computed(() => status.value === 'submitting')
-
-/** Ошибка относится к полю телефона — тогда поле помечается невалидным. */
-const phoneInvalid = ref(false)
-const errorId = useId()
-
-/** Форма сменяется результатом — переносим фокус на него (см. LeadForm). */
-const resultEl = ref<HTMLElement | null>(null)
-async function focusResult() {
-  await nextTick()
-  resultEl.value?.focus()
-}
-
-/** Та же маска, что и в форме на «Контактах»: только +7 и десять цифр. */
-function onPhoneInput(e: Event) {
-  form.value.phone = applyPhoneMask(e.target as HTMLInputElement)
-}
-
-async function onSubmit(event: Event) {
-  event.preventDefault()
-  if (isSubmitting.value) return
-  if (!isPhoneComplete(form.value.phone)) {
-    status.value = 'error'
-    submitError.value = 'Введите номер полностью: +7 и 10 цифр'
-    phoneInvalid.value = true
-    return
-  }
-  phoneInvalid.value = false
-  status.value = 'submitting'
-  submitError.value = null
-
-  // Форма собирает только телефон; согласие на ПДн даётся нажатием
-  // кнопки (подпись со ссылкой под ней). Как зовут, возраст ребёнка
-  // и группу тренер уточняет при звонке.
-  const result = await doSubmit({
-    phone: normalizePhone(form.value.phone),
-    email: '',
-    preferredTime: '',
-    message: 'Заявка с главной страницы',
-    consent: true,
-  })
-
-  if (result.ok) {
-    status.value = 'success'
-    form.value = { phone: '' }
-    void focusResult()
-  } else if (result.notDelivered) {
-    status.value = 'unavailable'
-    void focusResult()
-  } else {
-    status.value = 'error'
-    submitError.value = result.error ?? 'Что-то пошло не так'
-  }
-}
-
-function backToForm() {
-  status.value = 'idle'
-  submitError.value = null
-}
+// Логика общая с формой на «Контактах»; пометка — для менеджера в воронке.
+const {
+  phone,
+  errors,
+  status,
+  submitError,
+  isSubmitting,
+  phoneErrorId,
+  resultEl,
+  onPhoneInput,
+  onSubmit,
+  reset,
+} = useLeadForm({ message: 'Заявка с главной страницы' })
 </script>
 
 <template>
@@ -119,19 +55,19 @@ function backToForm() {
             и&nbsp;ни&nbsp;к&nbsp;чему не&nbsp;обязывает.
           </p>
 
-          <form v-if="status !== 'success' && status !== 'unavailable'" class="form" @submit="onSubmit">
+          <form v-if="status !== 'success' && status !== 'unavailable'" class="form" @submit.prevent="onSubmit">
             <div class="form__field">
               <label for="lead-phone">Телефон</label>
               <input
                 id="lead-phone"
-                :value="form.phone"
+                :value="phone"
                 type="tel"
                 inputmode="tel"
                 placeholder="+7 (___) ___-__-__"
                 required
                 autocomplete="tel"
-                :aria-invalid="phoneInvalid ? 'true' : undefined"
-                :aria-describedby="submitError ? errorId : undefined"
+                :aria-invalid="errors.phone ? 'true' : undefined"
+                :aria-describedby="errors.phone ? phoneErrorId : undefined"
                 @input="onPhoneInput"
               />
             </div>
@@ -146,7 +82,8 @@ function backToForm() {
             >
               {{ isSubmitting ? 'Отправляем…' : 'Записаться на тренировку' }}
             </BaseButton>
-            <p v-if="submitError" :id="errorId" class="form__server-error" role="alert">{{ submitError }}</p>
+            <p v-if="errors.phone" :id="phoneErrorId" class="form__server-error" role="alert">{{ errors.phone }}</p>
+            <p v-else-if="status === 'error' && submitError" class="form__server-error" role="alert">{{ submitError }}</p>
             <ConsentNote button="Записаться на тренировку" />
           </form>
 
@@ -162,7 +99,7 @@ function backToForm() {
               ваше сообщение. Напишите или позвоните нам — ответим в тот же день.
             </p>
             <DirectContacts class="form-unavailable__direct" />
-            <BaseButton variant="outline" @click="backToForm">Вернуться к форме</BaseButton>
+            <BaseButton variant="outline" @click="reset">Вернуться к форме</BaseButton>
           </div>
         </div>
 
