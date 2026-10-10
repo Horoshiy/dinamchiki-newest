@@ -21,6 +21,7 @@ import IconCalendar from '@/shared/ui/icons/IconCalendar.vue'
 import IconShieldCheck from '@/shared/ui/icons/IconShieldCheck.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 import IconBall from '@/shared/ui/icons/IconBall.vue'
+import StandingsTable from '@/widgets/tournament/StandingsTable.vue'
 import { useCurrentTournamentQuery } from '@/shared/api/composables'
 import { formatRange, formatDay, formatTime } from '@/shared/lib/date'
 import type { Tournament } from '@/entities/tournament/tournament.types'
@@ -31,7 +32,6 @@ const MATCHES_LIMIT = 4
 
 const { data, loading, error } = useCurrentTournamentQuery()
 
-
 const tournament = computed<Tournament | null>(() => {
   const d = data.value as { currentTournament?: Tournament | null } | null
   return d?.currentTournament ?? null
@@ -40,13 +40,6 @@ const tournament = computed<Tournament | null>(() => {
 const dateRange = computed(() =>
   tournament.value ? formatRange(tournament.value.startDate, tournament.value.endDate) : '',
 )
-
-/** Имя команды по id — таблица и матчи хранят только teamId. */
-const teamNameById = computed(() => {
-  const m = new Map<string, string>()
-  for (const t of tournament.value?.teams ?? []) m.set(t.id, t.name)
-  return m
-})
 
 /**
  * Короткое имя для карточки матчей: полные названия вроде
@@ -58,22 +51,6 @@ const teamShortById = computed(() => {
   for (const t of tournament.value?.teams ?? []) m.set(t.id, t.shortName || t.name)
   return m
 })
-
-
-const tableRows = computed(() =>
-  [...(tournament.value?.standings ?? [])]
-    .sort((a, b) => a.position - b.position)
-    .slice(0, TABLE_LIMIT)
-    .map((row) => ({
-      pos: row.position,
-      team: teamNameById.value.get(row.teamId) ?? row.teamId,
-      played: row.played,
-      won: row.wins,
-      drawn: row.draws,
-      lost: row.losses,
-      points: row.points,
-    })),
-)
 
 const upcomingMatches = computed(() =>
   [...(tournament.value?.matches ?? [])]
@@ -155,33 +132,12 @@ const recentMatches = computed(() =>
             <IconShieldCheck :size="20" />
             Турнирная таблица
           </h3>
-          <div class="table-card__scroll">
-            <table v-if="tableRows.length" class="standings">
-              <thead>
-                <tr>
-                  <th class="standings__pos">#</th>
-                  <th class="standings__team">Команда</th>
-                  <th>И</th>
-                  <th>В</th>
-                  <th>Н</th>
-                  <th>П</th>
-                  <th class="standings__pts">О</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in tableRows" :key="row.pos">
-                  <td class="standings__pos">{{ row.pos }}</td>
-                  <td class="standings__team">{{ row.team }}</td>
-                  <td>{{ row.played }}</td>
-                  <td>{{ row.won }}</td>
-                  <td>{{ row.drawn }}</td>
-                  <td>{{ row.lost }}</td>
-                  <td class="standings__pts"><strong>{{ row.points }}</strong></td>
-                </tr>
-              </tbody>
-            </table>
-            <p v-else class="table-card__empty">Таблица появится после первых матчей.</p>
-          </div>
+          <StandingsTable
+            compact
+            :limit="TABLE_LIMIT"
+            :standings="tournament.standings"
+            :teams="tournament.teams"
+          />
           <RouterLink :to="`/tournament/${tournament.id}`" class="table-card__link">
             Полная таблица
             <IconArrowRight :size="14" />
@@ -198,9 +154,9 @@ const recentMatches = computed(() =>
             <li v-for="m in (recentMatches.length ? recentMatches : upcomingMatches)" :key="m.id" class="match">
               <span class="match__date">{{ m.date }}</span>
               <div class="match__teams">
-                <span class="match__team">{{ m.home }}</span>
+                <span class="match__team" :title="m.home">{{ m.home }}</span>
                 <span class="match__score">{{ m.score }}</span>
-                <span class="match__team">{{ m.away }}</span>
+                <span class="match__team" :title="m.away">{{ m.away }}</span>
               </div>
             </li>
           </ul>
@@ -358,63 +314,6 @@ const recentMatches = computed(() =>
   margin: 0;
 }
 
-.table-card__scroll {
-  overflow-x: auto;
-  min-width: 0;
-  margin: 0 (-$space-4);
-  padding: 0 $space-4;
-  -webkit-overflow-scrolling: touch;
-}
-
-.standings__team {
-  // Длинные названия соперников не должны растягивать таблицу.
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.standings {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
-
-  th, td {
-    padding: $space-2 $space-2;
-    text-align: center;
-    border-bottom: 1px solid $color-border;
-  }
-
-  th {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: $color-fg-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  tbody tr:last-child td { border-bottom: none; }
-}
-
-.standings__pos {
-  width: 32px;
-  color: $color-brand-500;
-  font-weight: $font-weight-bold;
-}
-
-.standings__team {
-  text-align: left;
-  font-weight: $font-weight-semibold;
-  color: $color-fg-strong;
-  white-space: nowrap;
-}
-
-.standings__pts {
-  color: $color-brand-500;
-
-  strong { font-weight: $font-weight-extrabold; font-size: $font-size-base; }
-}
-
 .table-card__link {
   display: inline-flex;
   align-items: center;
@@ -439,11 +338,13 @@ const recentMatches = computed(() =>
   list-style: none;
 }
 
+// Дата — над строкой, команды — сеткой «хозяева | счёт | гости».
+// Раньше всё стояло в одну flex-строку с переносом, и гости уезжали
+// на вторую строку даже на десктопе.
 .match {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $space-4;
+  flex-direction: column;
+  gap: $space-1;
   padding: $space-3;
   background: $color-bg-soft;
   border-radius: $radius-md;
@@ -458,18 +359,21 @@ const recentMatches = computed(() =>
 }
 
 .match__teams {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: $space-3;
-  flex: 1;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  gap: $space-2;
 }
 
 .match__team {
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $color-fg-strong;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:first-child { text-align: right; }
 }
 
 .match__score {
@@ -480,5 +384,12 @@ const recentMatches = computed(() =>
   padding: 0 $space-3;
   background: $color-white;
   border-radius: $radius-md;
+  white-space: nowrap;
+}
+
+// В карточке на телефоне ~250px: отдаём место названиям команд.
+@media (max-width: $bp-sm) {
+  .match__teams { gap: $space-1; }
+  .match__score { padding: 0 $space-2; }
 }
 </style>

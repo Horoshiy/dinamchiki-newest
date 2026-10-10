@@ -1,5 +1,8 @@
 <template>
-  <div class="standings-wrap" :class="{ 'standings-wrap--empty': !rows.length }">
+  <div
+    class="standings-wrap"
+    :class="{ 'standings-wrap--empty': !rows.length, 'standings-wrap--compact': compact }"
+  >
     <table v-if="rows.length" class="standings">
       <thead>
         <tr>
@@ -9,8 +12,8 @@
           <th class="standings__col-num">В</th>
           <th class="standings__col-num">Н</th>
           <th class="standings__col-num">П</th>
-          <th class="standings__col-num standings__col-goals">Мячи</th>
-          <th v-if="showForm" class="standings__col-form">Форма</th>
+          <th v-if="!compact" class="standings__col-num standings__col-goals">Мячи</th>
+          <th v-if="showForm && !compact" class="standings__col-form">Форма</th>
           <th class="standings__col-num standings__col-points">О</th>
         </tr>
       </thead>
@@ -30,11 +33,11 @@
           <td class="standings__col-num">{{ row.wins }}</td>
           <td class="standings__col-num">{{ row.draws }}</td>
           <td class="standings__col-num">{{ row.losses }}</td>
-          <td class="standings__col-num standings__col-goals">
+          <td v-if="!compact" class="standings__col-num standings__col-goals">
             <!-- Перенос «5-5» на две строки запрещён в .standings__col-goals. -->
             {{ row.goalsFor }}-{{ row.goalsAgainst }}
           </td>
-          <td v-if="showForm" class="standings__col-form">
+          <td v-if="showForm && !compact" class="standings__col-form">
             <span v-for="(res, i) in row.lastFive" :key="i" :class="['standings__dot', `standings__dot--${res}`]">
               {{ res === 'win' ? 'В' : res === 'draw' ? 'Н' : 'П' }}
             </span>
@@ -74,8 +77,16 @@ const props = withDefaults(
     teams: ReadonlyArray<TournamentTeam>
     /** Матчи нужны, чтобы посчитать колонку «Форма». Без них колонка скрыта. */
     matches?: ReadonlyArray<TournamentMatch>
+    /** Сколько верхних строк показать; по умолчанию — все. */
+    limit?: number
+    /**
+     * Узкий вид для превью на главной: без «Мячей» и «Формы», без своей
+     * рамки — таблица стоит внутри карточки. Раньше превью держало
+     * собственную копию таблицы со своей вёрсткой.
+     */
+    compact?: boolean
   }>(),
-  { matches: () => [] },
+  { matches: () => [], limit: undefined, compact: false },
 )
 
 type MatchResult = 'win' | 'draw' | 'loss'
@@ -108,6 +119,7 @@ const showForm = computed(() => props.matches.some((m) => m.score !== null))
 const rows = computed(() =>
   [...props.standings]
     .sort((a, b) => a.position - b.position)
+    .slice(0, props.limit)
     .map((row) => {
       const team = teamById.value.get(row.teamId)
       return {
@@ -183,6 +195,49 @@ const rows = computed(() =>
   &::-webkit-scrollbar-thumb {
     background: $color-border;
     border-radius: $radius-pill;
+  }
+}
+
+.standings-wrap--compact {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
+  .standings {
+    min-width: 0;
+  }
+
+  // Метка цвета и название — одной строкой, иначе метка отрывается вверх.
+  .standings__col-team {
+    white-space: nowrap;
+  }
+
+  .standings__team-name {
+    // Длинные названия соперников не должны растягивать карточку превью.
+    display: inline-block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+
+  .standings-wrap__empty {
+    padding: $space-4 0;
+  }
+
+  // На телефоне карточка ~280px: ужимаем название и поля, чтобы «О» влезали
+  // без горизонтальной прокрутки.
+  @media (max-width: $bp-sm) {
+    .standings th,
+    .standings td {
+      padding: $space-2 $space-1;
+    }
+
+    .standings__team-name {
+      max-width: 96px;
+    }
   }
 }
 
