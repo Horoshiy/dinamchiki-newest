@@ -8,12 +8,19 @@
  *
  * Iframe грузится лениво и получает `title` — без него скринридер объявляет
  * его как безымянный фрейм.
+ *
+ * При пререндере iframe не вставляем: с конца октября 2026 виджет Яндекса
+ * не даёт headless-Chrome закончить страницу (виртуальное время не истекает),
+ * и /contacts выпадал из сборки. Посетители получают карту как обычно.
  */
 import { computed } from 'vue'
 import type { Venue } from '@/entities/contact/contact.types'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
+import { PRERENDER_UA_MARK } from '@/shared/lib/metrika'
 
 const props = defineProps<{ venues: ReadonlyArray<Venue> }>()
+
+const isPrerender = typeof navigator !== 'undefined' && navigator.userAgent.includes(PRERENDER_UA_MARK)
 
 /** Площадки, у которых есть координаты: только их можно поставить на карту. */
 const points = computed(() =>
@@ -46,7 +53,7 @@ const primary = computed(() => props.venues.find((v) => v.isPrimary) ?? props.ve
 <template>
   <div class="map">
     <iframe
-      v-if="src"
+      v-if="src && !isPrerender"
       class="map__frame"
       :src="src"
       title="Карта площадок ДФК «Динамчики» в Ставрополе"
