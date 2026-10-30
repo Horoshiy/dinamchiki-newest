@@ -14,7 +14,7 @@
 import { computed, nextTick, ref, useId } from 'vue'
 import type { LeadFormErrors } from '@/entities/contact/contact.types'
 import { validateLeadForm } from '@/entities/contact/lead.validation'
-import { applyPhoneMask, normalizePhone } from '@/shared/lib/phone'
+import { applyPhoneMask, normalizePhone, onPhoneBlur as maskBlur, onPhoneFocus as maskFocus, placePhoneCaret } from '@/shared/lib/phone'
 import { useSubmitApplicationMutation } from '@/shared/api/composables'
 
 /**
@@ -46,6 +46,20 @@ export function useLeadForm(options: UseLeadFormOptions = {}) {
    */
   function onPhoneInput(e: Event) {
     phone.value = applyPhoneMask(e.target as HTMLInputElement)
+  }
+
+  /** Фокус: сразу «+7 (» и курсор на месте первой цифры. */
+  function onPhoneFocus(e: FocusEvent) {
+    phone.value = maskFocus(e.target as HTMLInputElement)
+  }
+
+  function onPhoneBlur(e: FocusEvent) {
+    phone.value = maskBlur(e.target as HTMLInputElement)
+  }
+
+  /** Клик по «+7 (» уводит курсор к месту следующей цифры. */
+  function onPhoneClick(e: MouseEvent) {
+    placePhoneCaret(e.target as HTMLInputElement)
   }
 
   /**
@@ -111,6 +125,9 @@ export function useLeadForm(options: UseLeadFormOptions = {}) {
     phoneErrorId,
     resultEl,
     onPhoneInput,
+    onPhoneFocus,
+    onPhoneBlur,
+    onPhoneClick,
     onSubmit,
     reset,
   }

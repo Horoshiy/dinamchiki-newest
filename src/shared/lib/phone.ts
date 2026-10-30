@@ -51,8 +51,11 @@ export function formatPhone(raw: string): string {
   return out
 }
 
+/** Начало маски: его показываем сразу при фокусе, чтобы набирать только цифры. */
+export const PHONE_PREFIX = '+7 ('
+
 /** Позиция, с которой в маске начинаются цифры номера (после «+7 (»). */
-const MASK_PREFIX = 4
+const MASK_PREFIX = PHONE_PREFIX.length
 
 /**
  * Применить маску к полю ввода и сохранить позицию курсора.
@@ -65,10 +68,13 @@ export function applyPhoneMask(el: HTMLInputElement): string {
   const raw = el.value
   const caret = el.selectionStart ?? raw.length
   const digitsAfter = raw.slice(caret).replace(/\D/g, '').length
-  const masked = formatPhone(raw)
+  const focused = typeof document !== 'undefined' && document.activeElement === el
+  // Пока поле в фокусе, «+7 (» не стираем: иначе после Backspace курсор
+  // опять оказывается в начале пустого поля.
+  const masked = formatPhone(raw) || (focused ? PHONE_PREFIX : '')
   el.value = masked
 
-  if (typeof document !== 'undefined' && document.activeElement === el) {
+  if (focused) {
     let pos = masked.length
     if (digitsAfter > 0) {
       pos = Math.min(MASK_PREFIX, masked.length)
@@ -80,6 +86,44 @@ export function applyPhoneMask(el: HTMLInputElement): string {
     el.setSelectionRange(pos, pos)
   }
   return masked
+}
+
+/**
+ * Поставить курсор туда, куда пойдёт следующая цифра, если он оказался
+ * внутри «+7 (» (например, клик по началу поля).
+ * Клик в середину набранного номера и выделение мышью не трогаем —
+ * там правят цифры. `collapse` дополнительно снимает выделение: при
+ * переходе по Tab браузер выделяет всё поле.
+ */
+export function placePhoneCaret(el: HTMLInputElement, collapse = false): void {
+  const start = el.selectionStart ?? 0
+  const end = el.selectionEnd ?? start
+  const caretInPrefix = start === end && start < MASK_PREFIX
+  if (caretInPrefix || (collapse && start !== end)) {
+    el.setSelectionRange(el.value.length, el.value.length)
+  }
+}
+
+/**
+ * Фокус на поле телефона: в пустом поле сразу появляется «+7 (»,
+ * а курсор встаёт после него — набирать можно с первой цифры номера.
+ *
+ * Курсор ставим и сразу, и на следующем кадре: при клике мышью браузер
+ * расставляет его уже после события focus и перебил бы нашу позицию.
+ */
+export function onPhoneFocus(el: HTMLInputElement): string {
+  if (!phoneDigits(el.value)) el.value = PHONE_PREFIX
+  placePhoneCaret(el, true)
+  setTimeout(() => {
+    if (typeof document !== 'undefined' && document.activeElement === el) placePhoneCaret(el, true)
+  }, 0)
+  return el.value
+}
+
+/** Ушли из поля, так и не набрав цифр, — убираем «+7 (», снова видна подсказка. */
+export function onPhoneBlur(el: HTMLInputElement): string {
+  if (!phoneDigits(el.value)) el.value = ''
+  return el.value
 }
 
 /** Номер введён полностью. */

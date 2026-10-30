@@ -32,6 +32,9 @@ const {
   phoneErrorId,
   resultEl,
   onPhoneInput,
+  onPhoneFocus,
+  onPhoneBlur,
+  onPhoneClick,
   onSubmit,
   reset,
 } = useLeadForm({ message: 'Заявка с главной страницы' })
@@ -68,6 +71,9 @@ const {
                 :aria-invalid="errors.phone ? 'true' : undefined"
                 :aria-describedby="errors.phone ? phoneErrorId : undefined"
                 @input="onPhoneInput"
+                @focus="onPhoneFocus"
+                @blur="onPhoneBlur"
+                @click="onPhoneClick"
               />
             </div>
             <BaseButton

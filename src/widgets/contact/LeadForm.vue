@@ -24,6 +24,9 @@ const {
   phoneErrorId,
   resultEl,
   onPhoneInput,
+  onPhoneFocus,
+  onPhoneBlur,
+  onPhoneClick,
   onSubmit,
   reset,
 } = useLeadForm()
@@ -71,6 +74,9 @@ const {
           :aria-invalid="errors.phone ? 'true' : undefined"
           :aria-describedby="errors.phone ? phoneErrorId : undefined"
           @input="onPhoneInput"
+          @focus="onPhoneFocus"
+          @blur="onPhoneBlur"
+          @click="onPhoneClick"
         />
         <span v-if="errors.phone" :id="phoneErrorId" class="lform__error" role="alert">{{ errors.phone }}</span>
       </label>
