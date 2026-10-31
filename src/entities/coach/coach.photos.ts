@@ -3,7 +3,7 @@
 // здесь показывается заглушкой (градиент + инициалы).
 // Исходники и скрипт: ~/Pictures/coaches-photos (scripts/headshot.py) на бете.
 
-const WITH_PHOTO = new Set(['sergey-ushakov', 'roman-manuylo', 'andrey-kopylov', 'rolan-chadaev'])
+const WITH_PHOTO = new Set(['sergey-ushakov', 'roman-manuylo', 'dmitry-tretyakov', 'andrey-kopylov', 'rolan-chadaev'])
 
 export interface CoachPhoto {
   /** jpg 600×600 — запасной src */
