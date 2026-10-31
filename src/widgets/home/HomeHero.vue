@@ -62,33 +62,25 @@ const hero = computed<HeroContent | null>(() => {
       <!-- Правая колонка — визуал -->
       <div class="hero__visual" aria-hidden="true">
         <div class="hero__photo">
-          <!-- Плейсхолдер: имитация фото тренировки до появления реальных снимков. -->
-          <div class="hero__photo-inner">
-            <div class="hero__photo-bg"></div>
-            <svg class="hero__photo-art" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-              <!-- поле -->
-              <rect x="0" y="380" width="400" height="120" fill="rgba(255,255,255,0.08)"/>
-              <line x1="0" y1="380" x2="400" y2="380" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-              <circle cx="200" cy="440" r="30" stroke="rgba(255,255,255,0.4)" stroke-width="2" fill="none"/>
-              <!-- силуэты игроков -->
-              <g fill="rgba(255,255,255,0.18)">
-                <circle cx="80" cy="240" r="22"/>
-                <rect x="62" y="265" width="36" height="80" rx="10"/>
-                <circle cx="180" cy="200" r="22"/>
-                <rect x="162" y="225" width="36" height="80" rx="10"/>
-                <circle cx="280" cy="245" r="22"/>
-                <rect x="262" y="270" width="36" height="80" rx="10"/>
-                <circle cx="350" cy="210" r="22"/>
-                <rect x="332" y="235" width="36" height="80" rx="10"/>
-              </g>
-              <!-- мяч в воздухе -->
-              <g transform="translate(220 130)">
-                <circle r="22" fill="rgba(255,255,255,0.5)"/>
-                <path d="M-22 0 L22 0 M-15 -15 L15 15 M-15 15 L15 -15" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" fill="none"/>
-              </g>
-            </svg>
-            <div class="hero__photo-caption">Тренировка · ул. Розы Люксембург, 59</div>
-          </div>
+          <!-- Иллюстрация (не фото): дети в форме клуба на вечернем стадионе. -->
+          <picture class="hero__photo-inner">
+            <source
+              type="image/webp"
+              srcset="/images/hero/hero-kids-480.webp 480w, /images/hero/hero-kids-864.webp 864w"
+              sizes="(max-width: 480px) 100vw, 480px"
+            />
+            <img
+              class="hero__photo-img"
+              src="/images/hero/hero-kids-864.jpg"
+              srcset="/images/hero/hero-kids-480.jpg 480w, /images/hero/hero-kids-864.jpg 864w"
+              sizes="(max-width: 480px) 100vw, 480px"
+              width="864"
+              height="1080"
+              alt=""
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
         </div>
         <div class="hero__float hero__float--top">
           <span class="hero__float-num">{{ years }}</span>
@@ -225,6 +217,8 @@ const hero = computed<HeroContent | null>(() => {
   border-radius: $radius-xl;
   overflow: hidden;
   box-shadow: $shadow-lg;
+  // пока грузится иллюстрация — фирменный градиент
+  background: linear-gradient(135deg, $color-brand-500 0%, #143494 100%);
   // диагональный срез слева — как на мокапах
   clip-path: polygon(0 0, 100% 5%, 100% 95%, 0 100%);
 }
@@ -236,36 +230,14 @@ const hero = computed<HeroContent | null>(() => {
   height: 100%;
 }
 
-.hero__photo-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
-    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.12) 0%, transparent 60%),
-    linear-gradient(135deg, $color-brand-500 0%, $color-brand-700 60%, #143494 100%);
-}
 
-.hero__photo-art {
-  position: absolute;
-  inset: 0;
+.hero__photo-img {
+  display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
-.hero__photo-caption {
-  position: absolute;
-  bottom: $space-4;
-  left: $space-4;
-  right: $space-4;
-  padding: $space-2 $space-3;
-  background: rgba(255, 255, 255, 0.92);
-  color: $color-fg-strong;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0.02em;
-  border-radius: $radius-md;
-  backdrop-filter: blur(4px);
-}
 
 .hero__float {
   position: absolute;
