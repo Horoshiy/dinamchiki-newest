@@ -31,3 +31,4 @@ dist-ssr/
 coverage/
 .shots/
 documents-src/out/
+!.env.production

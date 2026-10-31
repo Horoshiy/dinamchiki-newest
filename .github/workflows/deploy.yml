@@ -1,0 +1,97 @@
+name: Deploy dinamchiki.ru
+
+# push в main = выкладка на боевой dinamchiki.ru.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dinamchiki-site
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Тесты
+        run: npm test
+
+      # Сборка берёт адреса из .env.production (API, домен, Метрика).
+      # Пререндер открывает страницы в Chrome раннера и ходит в боевой API.
+      - name: Сборка и пререндер
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: npm run build:static
+
+      - name: Архив сборки
+        run: tar -czf site.tgz -C dist .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site.tgz
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/deploy
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+
+      - name: SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CFG
+          Host prod
+            HostName ${{ secrets.SERVER_HOST }}
+            Port ${{ secrets.SERVER_PORT }}
+            User ${{ secrets.SERVER_USER }}
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            ServerAliveInterval 15
+          CFG
+
+      - name: Выкладка
+        run: |
+          SHA=${GITHUB_SHA::12}
+          ssh prod 'mkdir -p /var/www/dinamchiki.ru/releases'
+          scp -q site.tgz prod:/var/www/dinamchiki.ru/releases/$SHA.tgz
+          ssh prod 'bash -s' -- "$SHA" < .github/deploy/release.sh
+
+      - name: Проверка
+        run: |
+          SHA=${GITHUB_SHA::12}
+          for i in 1 2 3; do
+            got=$(curl -fsS https://dinamchiki.ru/version.txt || true)
+            [ "$got" = "$SHA" ] && break
+            sleep 5
+          done
+          [ "$got" = "$SHA" ] || { echo "на сайте версия '$got', ждали $SHA"; exit 1; }
+          curl -fsS -o /dev/null https://dinamchiki.ru/
+          curl -fsS -o /dev/null https://dinamchiki.ru/teams
+          echo "dinamchiki.ru: $SHA"
