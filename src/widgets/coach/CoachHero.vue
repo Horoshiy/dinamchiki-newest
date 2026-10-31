@@ -8,10 +8,12 @@ import { COACH_SPEC_LABELS } from '@/entities/coach/coach.types'
 import { SIGNUP_ROUTE } from '@/shared/config/club'
 import { withPlural } from '@/shared/lib/plural'
 import { initials as initialsOf } from '@/shared/lib/person'
+import { coachPhoto } from '@/entities/coach/coach.photos'
 
 const props = defineProps<{ coach: Coach }>()
 
 const initials = computed(() => initialsOf(props.coach.fullName))
+const photo = computed(() => coachPhoto(props.coach.id))
 const primarySpecLabel = computed(() => {
   const first = props.coach.specialization[0]
   return first ? COACH_SPEC_LABELS[first] : ''
@@ -23,8 +25,12 @@ const primarySpecLabel = computed(() => {
     class="container coach-detail__hero"
     :style="{ '--avatar-gradient': coach.avatarGradient }"
   >
-    <div class="coach-detail__hero-photo" aria-hidden="true">
-      <span class="coach-detail__initials">{{ initials }}</span>
+    <div class="coach-detail__hero-photo" :class="{ 'coach-detail__hero-photo--img': photo }">
+      <picture v-if="photo">
+        <source type="image/webp" :srcset="photo.srcsetWebp" sizes="(max-width: 1024px) 90vw, 480px" />
+        <img class="coach-detail__img" :src="photo.src" :srcset="photo.srcsetJpg" sizes="(max-width: 1024px) 90vw, 480px" width="600" height="600" :alt="coach.fullName" fetchpriority="high" decoding="async" />
+      </picture>
+      <span v-else class="coach-detail__initials" aria-hidden="true">{{ initials }}</span>
     </div>
 
     <div class="coach-detail__hero-body">
@@ -93,6 +99,20 @@ const primarySpecLabel = computed(() => {
   justify-content: center;
   color: $color-white;
   box-shadow: $shadow-lg;
+}
+
+.coach-detail__hero-photo--img {
+  overflow: hidden;
+
+  picture {
+    display: contents;
+  }
+}
+
+.coach-detail__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .coach-detail__initials {

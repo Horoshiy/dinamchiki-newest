@@ -14,11 +14,13 @@ import IconAward from '@/shared/ui/icons/IconAward.vue'
 import IconUsers from '@/shared/ui/icons/IconUsers.vue'
 import IconArrowRight from '@/shared/ui/icons/IconArrowRight.vue'
 import { initials as initialsOf } from '@/shared/lib/person'
+import { coachPhoto } from '@/entities/coach/coach.photos'
 
 const props = defineProps<{ coach: Coach }>()
 
 /** Инициалы из ФИО для аватара-плейсхолдера. */
 const initials = computed(() => initialsOf(props.coach.fullName))
+const photo = computed(() => coachPhoto(props.coach.id))
 
 const specLabels = computed(() =>
   props.coach.specialization.map((s) => COACH_SPEC_LABELS[s]),
@@ -32,7 +34,11 @@ const teamsSummary = computed(() =>
 <template>
   <article class="coach-card" :style="{ '--avatar-gradient': coach.avatarGradient }">
     <div class="coach-card__avatar" aria-hidden="true">
-      <span class="coach-card__initials">{{ initials }}</span>
+      <picture v-if="photo">
+        <source type="image/webp" :srcset="photo.srcsetWebp" sizes="96px" />
+        <img class="coach-card__img" :src="photo.src" :srcset="photo.srcsetJpg" sizes="96px" width="96" height="96" alt="" loading="lazy" decoding="async" />
+      </picture>
+      <span v-else class="coach-card__initials">{{ initials }}</span>
     </div>
 
     <h3 class="coach-card__name">{{ coach.fullName }}</h3>
@@ -100,6 +106,17 @@ const teamsSummary = computed(() =>
   color: $color-white;
   box-shadow: $shadow-md;
   margin-bottom: $space-2;
+}
+
+.coach-card__avatar picture {
+  display: contents;
+}
+
+.coach-card__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .coach-card__initials {

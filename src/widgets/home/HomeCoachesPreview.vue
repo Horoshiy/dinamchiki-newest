@@ -17,6 +17,7 @@ import { useCoachesQuery } from '@/shared/api/composables'
 import { COACH_AGE_LABELS } from '@/entities/coach/coach.types'
 import type { Coach } from '@/entities/coach/coach.types'
 import { withPlural } from '@/shared/lib/plural'
+import { coachPhoto } from '@/entities/coach/coach.photos'
 
 /** Сколько тренеров показываем в превью. */
 const PREVIEW_LIMIT = 3
@@ -32,6 +33,7 @@ const coaches = computed(() => {
     experience: c.experienceYears > 0 ? `Опыт: ${withPlural(c.experienceYears, ['год', 'года', 'лет'])}` : '',
     ages: `Группы: ${c.ageGroups.map((a) => COACH_AGE_LABELS[a]).join(', ')}`,
     badge: c.fullName.charAt(0),
+    photo: coachPhoto(c.id),
   }))
 })
 </script>
@@ -56,7 +58,11 @@ const coaches = computed(() => {
       <ul v-else class="coaches-preview__grid">
         <li v-for="c in coaches" :key="c.id" class="coach">
           <div class="coach__photo" aria-hidden="true">
-            <IconUsers :size="48" />
+            <picture v-if="c.photo">
+              <source type="image/webp" :srcset="c.photo.srcsetWebp" sizes="(max-width: 640px) 90vw, 380px" />
+              <img class="coach__img" :src="c.photo.src" :srcset="c.photo.srcsetJpg" sizes="(max-width: 640px) 90vw, 380px" width="600" height="600" alt="" loading="lazy" decoding="async" />
+            </picture>
+            <IconUsers v-else :size="48" />
             <span class="coach__shield">{{ c.badge }}</span>
           </div>
           <div class="coach__body">
@@ -117,6 +123,19 @@ const coaches = computed(() => {
   align-items: center;
   justify-content: center;
   color: $color-brand-500;
+}
+
+.coach__photo picture {
+  position: absolute;
+  inset: 0;
+}
+
+// Квадратный портрет в кадре 4:3 — лицо держим в верхней трети.
+.coach__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
 }
 
 .coach__shield {
