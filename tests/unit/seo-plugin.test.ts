@@ -53,9 +53,11 @@ describe('vite-plugins/seo', () => {
     it('sitemap выпускается и содержит все публичные маршруты', () => {
       const xml = files['sitemap.xml']
       expect(xml).toBeDefined()
-      for (const path of ['/', '/teams', '/coaches', '/tournaments', '/gallery', '/contacts']) {
+      for (const path of ['/', '/teams', '/coaches', '/tournaments', '/contacts']) {
         expect(xml).toContain(`<loc>https://dinamchiki.ru${path}</loc>`)
       }
+      // «Галерея» временно скрыта — в sitemap её нет (vite-plugins/static-routes.json)
+      expect(xml).not.toContain('<loc>https://dinamchiki.ru/gallery</loc>')
     })
 
     it('sitemap не содержит детальных маршрутов с параметрами', () => {

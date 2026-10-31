@@ -21,6 +21,13 @@
  */
 
 /** Телефон в международном формате — для tel:, WhatsApp и JSON-LD. */
+/**
+ * Раздел «Галерея» временно скрыт (31.10.2026): пункт меню, страница /gallery
+ * (редирект на главную), блок фото на главной, sitemap/пререндер.
+ * Вернуть — true здесь и маршрут /gallery в vite-plugins/static-routes.json.
+ */
+export const GALLERY_ENABLED = false
+
 export const CLUB_PHONE_E164 = '+79283200494'
 
 /** Телефон для отображения. */

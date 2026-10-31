@@ -5,11 +5,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, h } from 'vue'
 import AppHeader from '@/shared/ui/layout/AppHeader.vue'
 import AppFooter from '@/shared/ui/layout/AppFooter.vue'
-import { CLUB_PHONE_HREF, CLUB_PHONE_DISPLAY, SIGNUP_ROUTE } from '@/shared/config/club'
+import { CLUB_PHONE_HREF, CLUB_PHONE_DISPLAY, SIGNUP_ROUTE, GALLERY_ENABLED } from '@/shared/config/club'
 
 const Stub = defineComponent({ render: () => h('div') })
 
-const ROUTES = ['/', '/teams', '/coaches', '/tournaments', '/gallery', '/contacts']
+// «Галерея» временно скрыта (GALLERY_ENABLED) — в меню её нет.
+const ROUTES = ['/', '/teams', '/coaches', '/tournaments', ...(GALLERY_ENABLED ? ['/gallery'] : []), '/contacts']
 
 async function header(at = '/') {
   const pinia = createPinia()
@@ -39,7 +40,8 @@ describe('AppHeader', () => {
   it('пункт, ведущий в галерею, называется «Галерея», а не «Новости»', async () => {
     const w = await header()
     const link = w.findAll('.header__nav-link').find((a) => a.attributes('href') === '/gallery')
-    expect(link!.text()).toBe('Галерея')
+    if (GALLERY_ENABLED) expect(link!.text()).toBe('Галерея')
+    else expect(link, 'галерея скрыта — пункта в меню нет').toBeUndefined()
     expect(w.text()).not.toContain('Новости')
   })
 

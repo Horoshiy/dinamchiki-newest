@@ -1,3 +1,4 @@
+import { GALLERY_ENABLED } from '@/shared/config/club'
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { appConfig } from '@/app/config/app.config'
@@ -146,6 +147,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'gallery',
         name: 'gallery',
+        // Раздел временно скрыт — см. GALLERY_ENABLED в shared/config/club.ts
+        ...(GALLERY_ENABLED ? {} : { redirect: '/' }),
         component: GalleryPage,
         meta: {
           title: 'Галерея',

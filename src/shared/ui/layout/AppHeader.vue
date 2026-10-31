@@ -10,6 +10,7 @@
  * Активный пункт подсвечивается синим жирным шрифтом.
  * Под header — тонкая нижняя граница (как в мокапах).
  */
+import { GALLERY_ENABLED } from '@/shared/config/club'
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import LogoMark from '@/shared/ui/icons/LogoMark.vue'
@@ -32,7 +33,7 @@ const NAV: ReadonlyArray<NavItem> = [
   { to: '/teams',       label: 'Команды' },
   { to: '/coaches',     label: 'Тренеры' },
   { to: '/tournaments', label: 'Турниры' },
-  { to: '/gallery',     label: 'Галерея' },
+  ...(GALLERY_ENABLED ? [{ to: '/gallery', label: 'Галерея' }] : []),
   { to: '/contacts',    label: 'Контакты' },
   // Пункт 3 приказа Рособрнадзора № 1493: доступ к разделу «Сведения
   // об образовательной организации» обязан быть из основного меню.

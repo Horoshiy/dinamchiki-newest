@@ -20,11 +20,6 @@
     "priority": "0.9"
   },
   {
-    "path": "/gallery",
-    "changefreq": "weekly",
-    "priority": "0.7"
-  },
-  {
     "path": "/contacts",
     "changefreq": "monthly",
     "priority": "0.8"

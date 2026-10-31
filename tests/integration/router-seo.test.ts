@@ -86,8 +86,8 @@ describe('роутер: SEO-мета', () => {
   })
 
   it('og:title и og:description заполняются', async () => {
-    await go('/gallery')
-    expect(og('og:title')).toContain('Галерея')
+    await go('/contacts')
+    expect(og('og:title')).toContain('Контакты')
     expect(og('og:description')).toBeTruthy()
   })
 
@@ -135,8 +135,8 @@ describe('роутер: SEO-мета', () => {
   it('canonical обновляется при переходе', async () => {
     await go('/teams')
     expect(canonical()).toBe(`${appConfig.siteUrl}/teams`)
-    await go('/gallery')
-    expect(canonical()).toBe(`${appConfig.siteUrl}/gallery`)
+    await go('/contacts')
+    expect(canonical()).toBe(`${appConfig.siteUrl}/contacts`)
   })
 })
 

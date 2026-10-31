@@ -10,6 +10,7 @@
  * а не из литералов в этом файле.
  */
 import { computed } from 'vue'
+import { GALLERY_ENABLED } from '@/shared/config/club'
 import { RouterLink } from 'vue-router'
 import SectionTitle from '@/shared/ui/base/SectionTitle.vue'
 import BaseButton from '@/shared/ui/base/BaseButton.vue'
@@ -42,8 +43,8 @@ const preview = computed(() => {
 })
 
 /** Ни фото, ни отзывов — секцию рендерить незачем. */
-const hasPhotos = computed(() => preview.value.length > 0)
-const hasAnything = computed(() => hasPhotos.value || hasAlbums.value || reviews.value.length > 0)
+const hasPhotos = computed(() => GALLERY_ENABLED && preview.value.length > 0)
+const hasAnything = computed(() => hasPhotos.value || (GALLERY_ENABLED && hasAlbums.value) || reviews.value.length > 0)
 </script>
 
 <template>

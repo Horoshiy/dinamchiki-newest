@@ -84,12 +84,12 @@ describe('HomePage', () => {
     return w
   }
 
-  it('собирает все девять секций мокапа', async () => {
+  it('собирает все секции главной', async () => {
     const w = await home()
     for (const cls of [
       '.hero', '.why-us', '.stats', '.groups',
       '.how-it-works', '.coaches-preview', '.tournaments-preview',
-      '.gallery-preview', '.cta',
+      '.cta',
     ]) {
       expect(w.find(cls).exists(), `нет секции ${cls}`).toBe(true)
     }
