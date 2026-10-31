@@ -61,7 +61,7 @@ export const CLUB_EMAIL_HREF = `mailto:${CLUB_EMAIL}`
 export const SIGNUP_ROUTE = '/contacts#lead'
 
 /** Часы работы офиса — фолбэк, если бэкенд не отдал contactInfo.workingHours. */
-export const CLUB_WORKING_HOURS = '09:00 — 20:30'
+export const CLUB_WORKING_HOURS = '09:00 — 13:00'
 
-/** Чат клуба в мессенджере MAX — фолбэк, если бэкенд не отдал socials.max. */
-export const CLUB_MAX_HREF = 'https://max.ru/id2634093143_biz'
+/** Профиль клуба в MAX (кнопка «Написать») — фолбэк, если бэкенд не отдал socials.max. */
+export const CLUB_MAX_HREF = 'https://max.ru/u/f9LHodD0cOKGm6W3Ol1X_D9U1dSoV3Cnh5_lAFNBxHsTKsoU8xftX4K67AE'

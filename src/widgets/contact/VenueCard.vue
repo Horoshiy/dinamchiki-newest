@@ -17,10 +17,11 @@ const ageGroupsText = computed(() => props.venue.ageGroups.join(' · '))
 </script>
 
 <template>
-  <article class="venue" :class="{ 'venue--primary': venue.isPrimary }">
+  <!-- Плашку «Главная» и выделение убрали 30.10: все площадки равны.
+       isPrimary остаётся только для центра карты (MapEmbed). -->
+  <article class="venue">
     <div class="venue__head">
       <h3 class="venue__name">{{ venue.name }}</h3>
-      <span v-if="venue.isPrimary" class="venue__badge">Главная</span>
     </div>
 
     <dl class="venue__meta">
@@ -64,10 +65,6 @@ const ageGroupsText = computed(() => props.venue.ageGroups.join(' · '))
     transform: translateY(-2px);
     border-color: $color-border-strong;
   }
-
-  &--primary {
-    border-left: 4px solid $color-brand-500;
-  }
 }
 
 .venue__head {
@@ -85,18 +82,6 @@ const ageGroupsText = computed(() => props.venue.ageGroups.join(' · '))
   color: $color-fg-strong;
   margin: 0;
   letter-spacing: -0.01em;
-}
-
-.venue__badge {
-  display: inline-block;
-  padding: 2px $space-3;
-  background: rgba(30, 80, 216, 0.1);
-  color: $color-brand-500;
-  border-radius: $radius-pill;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .venue__meta {

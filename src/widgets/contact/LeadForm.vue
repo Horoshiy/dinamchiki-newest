@@ -94,9 +94,9 @@ const {
           :loading="isSubmitting"
           block
         >
-          {{ isSubmitting ? 'Отправляем...' : 'Записаться на бесплатную пробную' }}
+          {{ isSubmitting ? 'Отправляем...' : 'Записаться на бесплатную пробную тренировку' }}
         </BaseButton>
-        <ConsentNote button="Записаться на бесплатную пробную" />
+        <ConsentNote button="Записаться на бесплатную пробную тренировку" />
       </div>
     </form>
   </div>

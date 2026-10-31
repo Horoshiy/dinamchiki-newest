@@ -134,7 +134,7 @@ describe('LeadForm — форма заявки на /contacts', () => {
   /** Согласие по нажатию информированное, только если подпись ведёт на его текст. */
   it('под кнопкой подпись со ссылками на согласие и политику', async () => {
     const w = await form()
-    expect(w.find('.consent-note').text()).toContain('Записаться на бесплатную пробную')
+    expect(w.find('.consent-note').text()).toContain('Записаться на бесплатную пробную тренировку')
     expect(w.find('.consent-note a[href="/consent"]').exists()).toBe(true)
     expect(w.find('.consent-note a[href="/privacy"]').exists()).toBe(true)
   })

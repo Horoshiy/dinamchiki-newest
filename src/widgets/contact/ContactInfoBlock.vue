@@ -3,6 +3,8 @@
  * Блок контактной информации: телефон, мессенджеры, email, часы работы, юр. адрес.
  *
  * Каждый контакт — крупная кликабельная карточка с иконкой.
+ * Под телефоном — сетка в две колонки: мессенджеры и email
+ * (email стоит рядом с MAX), ниже юр. адрес рядом с часами работы.
  */
 import { computed } from 'vue'
 import type { ContactInfo } from '@/entities/contact/contact.types'
@@ -67,36 +69,38 @@ const workingHours = computed(() => props.contact.workingHours?.trim() || null)
           <strong class="cinfo__value">{{ c.value }}</strong>
         </div>
       </a>
+
+      <a :href="contacts.emailHref" class="cinfo__item">
+        <div class="cinfo__icon cinfo__icon--mail">
+          <IconMail :size="22" />
+        </div>
+        <div class="cinfo__body">
+          <span class="cinfo__label">Email</span>
+          <strong class="cinfo__value">{{ contacts.email }}</strong>
+        </div>
+      </a>
     </div>
 
-    <a :href="contacts.emailHref" class="cinfo__item">
-      <div class="cinfo__icon cinfo__icon--mail">
-        <IconMail :size="22" />
+    <div class="cinfo__row">
+      <div class="cinfo__item cinfo__item--static">
+        <div class="cinfo__icon">
+          <IconLocation :size="22" />
+        </div>
+        <div class="cinfo__body">
+          <span class="cinfo__label">Юридический адрес</span>
+          <strong class="cinfo__value">{{ contact.legalAddress }}</strong>
+          <span v-if="contact.inn" class="cinfo__sub">{{ innLabel }}</span>
+        </div>
       </div>
-      <div class="cinfo__body">
-        <span class="cinfo__label">Email</span>
-        <strong class="cinfo__value">{{ contacts.email }}</strong>
-      </div>
-    </a>
 
-    <div class="cinfo__item cinfo__item--static">
-      <div class="cinfo__icon">
-        <IconLocation :size="22" />
-      </div>
-      <div class="cinfo__body">
-        <span class="cinfo__label">Юридический адрес</span>
-        <strong class="cinfo__value">{{ contact.legalAddress }}</strong>
-        <span v-if="contact.inn" class="cinfo__sub">{{ innLabel }}</span>
-      </div>
-    </div>
-
-    <div v-if="workingHours" class="cinfo__item cinfo__item--static">
-      <div class="cinfo__icon">
-        <IconClock :size="22" />
-      </div>
-      <div class="cinfo__body">
-        <span class="cinfo__label">Часы работы офиса</span>
-        <strong class="cinfo__value">{{ workingHours }}</strong>
+      <div v-if="workingHours" class="cinfo__item cinfo__item--static">
+        <div class="cinfo__icon">
+          <IconClock :size="22" />
+        </div>
+        <div class="cinfo__body">
+          <span class="cinfo__label">Часы работы офиса</span>
+          <strong class="cinfo__value">{{ workingHours }}</strong>
+        </div>
       </div>
     </div>
   </div>

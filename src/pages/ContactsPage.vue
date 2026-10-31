@@ -59,7 +59,7 @@ const venues = computed<ReadonlyArray<Venue>>(() => {
           <ContactInfoBlock v-else :contact="contact" />
         </div>
         <div>
-          <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на бесплатную пробную" />
+          <SectionTitle id="lead" eyebrow="Заявка" title="Записаться на бесплатную пробную тренировку" />
           <LeadForm />
         </div>
       </div>

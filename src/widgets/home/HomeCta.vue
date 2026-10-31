@@ -49,7 +49,7 @@ const {
           <p class="cta__eyebrow">Запишитесь сегодня</p>
           <h2 class="cta__title">
             Запишите ребёнка<br />
-            <span class="cta__title-accent">на бесплатную пробную</span>
+            <span class="cta__title-accent">на бесплатную пробную тренировку</span>
           </h2>
           <p class="cta__lead">
             Оставьте телефон — тренер перезвонит, подберёт группу

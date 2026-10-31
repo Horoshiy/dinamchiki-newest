@@ -30,3 +30,4 @@ dist-ssr/
 # отчёты покрытия
 coverage/
 .shots/
+documents-src/out/

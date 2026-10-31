@@ -28,7 +28,12 @@ defineProps<{ docs: ReadonlyArray<SvedenDoc> }>()
       >
         Скачать<span v-if="d.size"> · {{ d.size }}</span>
       </a>
-      <span v-else class="sv-docs__pending" :itemprop="d.itemprop">Не размещён</span>
+      <span
+        v-else
+        class="sv-docs__pending"
+        :class="{ 'sv-docs__pending--none': d.status }"
+        :itemprop="d.itemprop"
+      >{{ d.status ?? 'Не размещён' }}</span>
     </li>
   </ul>
 </template>
@@ -94,5 +99,11 @@ defineProps<{ docs: ReadonlyArray<SvedenDoc> }>()
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   white-space: nowrap;
+
+  // «Отсутствует» — не долг, а сведение: без жёлтой плашки-предупреждения.
+  &--none {
+    background: $color-bg-muted;
+    color: $color-fg-muted;
+  }
 }
 </style>

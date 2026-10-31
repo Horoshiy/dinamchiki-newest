@@ -46,7 +46,7 @@ export const venuesMock: ReadonlyArray<Venue> = [
   },
   {
     id: 'venue-3',
-    name: 'Воинская часть',
+    name: '204 квартал',
     address: 'г. Ставрополь, ул. Серова, 533',
     shortAddress: '204 квартал, Серова, 533',
     workingHours: 'По расписанию групп',

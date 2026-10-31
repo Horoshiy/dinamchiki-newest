@@ -95,6 +95,12 @@ export interface SvedenDoc {
   size?: string
   /** Атрибут микроразметки для этого документа. */
   itemprop?: string
+  /**
+   * Подпись вместо ссылки, когда файла нет. «Отсутствует» — документа
+   * нет в природе (договор не заключался), по умолчанию «Не размещён» —
+   * документ есть, но на сайт ещё не выложен.
+   */
+  status?: string
 }
 
 export const DOCUMENTS: ReadonlyArray<SvedenDoc> = [
@@ -108,8 +114,8 @@ export const DOCUMENTS: ReadonlyArray<SvedenDoc> = [
   {
     title: 'Правила внутреннего распорядка обучающихся',
     description: 'Локальный акт, регламентирующий режим занятий обучающихся',
-    href: '/documents/pravila_vnutrennego_rasporyadka_dinamchiki_cyr.pdf',
-    size: '133 КБ',
+    href: '/documents/pravila_rasporyadka.pdf',
+    size: '136 КБ',
     itemprop: 'localActStud',
   },
   {
@@ -128,17 +134,65 @@ export const DOCUMENTS: ReadonlyArray<SvedenDoc> = [
   },
 ]
 
-/** Документы, которых пока нет. Показываем честно, а не прячем строку. */
+/**
+ * Локальные акты по основным вопросам образовательной деятельности
+ * (ч. 2 ст. 30 273-ФЗ, п. 9 «д» приказа № 1493). Исходники — documents-src/,
+ * PDF на официальном бланке собирает scripts/build-local-acts.py.
+ */
+export const LOCAL_ACTS: ReadonlyArray<SvedenDoc> = [
+  {
+    title: 'Правила приёма обучающихся',
+    description: 'Порядок приёма на обучение по дополнительным общеразвивающим программам',
+    href: '/documents/pravila_priema.pdf',
+    size: '92 КБ',
+    itemprop: 'localAct',
+  },
+  {
+    title: 'Положение о режиме занятий обучающихся',
+    description: 'Учебный год, расписание, продолжительность и время занятий',
+    href: '/documents/rezhim_zanyatiy.pdf',
+    size: '91 КБ',
+    itemprop: 'localAct',
+  },
+  {
+    title: 'Положение о текущем контроле успеваемости и промежуточной аттестации',
+    description: 'Формы, периодичность и порядок текущего контроля и промежуточной аттестации',
+    href: '/documents/attestaciya.pdf',
+    size: '92 КБ',
+    itemprop: 'localAct',
+  },
+  {
+    title: 'Положение о переводе, отчислении и восстановлении обучающихся',
+    description: 'Порядок и основания перевода, отчисления и восстановления',
+    href: '/documents/perevod_otchislenie.pdf',
+    size: '88 КБ',
+    itemprop: 'localAct',
+  },
+  {
+    title: 'Порядок оформления возникновения, приостановления и прекращения отношений',
+    description: 'Между Клубом и обучающимися и (или) их родителями (законными представителями)',
+    href: '/documents/oformlenie_otnosheniy.pdf',
+    size: '89 КБ',
+    itemprop: 'localAct',
+  },
+]
+
+/**
+ * Документы, которых у организации нет. Оба пункта приказа № 1493 —
+ * «при наличии», поэтому достаточно сообщить об их отсутствии.
+ */
 export const DOCUMENTS_PENDING: ReadonlyArray<SvedenDoc> = [
   {
     title: 'Коллективный договор',
     description: 'Не заключался',
     itemprop: 'localActCollec',
+    status: 'Отсутствует',
   },
   {
     title: 'Предписания органов государственного контроля (надзора)',
     description: 'Предписаний в адрес организации не выдавалось',
     itemprop: 'prescriptionDocLink',
+    status: 'Отсутствует',
   },
 ]
 
