@@ -61,9 +61,25 @@ function findChrome() {
   throw new Error('Chrome не найден: задайте CHROME_BIN')
 }
 
+/**
+ * fetch к API с повтором: если API в эту минуту перезапускается (CI выкладывает
+ * его параллельно с сайтом — 01.11.2026 сборка упала на 502), ждём и пробуем снова.
+ */
+async function fetchApi(init, attempts = 6) {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(API_UPSTREAM, init)
+      if (res.status < 500 || i >= attempts) return res
+    } catch (e) {
+      if (i >= attempts) throw e
+    }
+    await new Promise((r) => setTimeout(r, 5000))
+  }
+}
+
 /** Группы с расписанием и тренеры — у них есть что показать поисковику. */
 async function fetchDetailRoutes() {
-  const res = await fetch(API_UPSTREAM, {
+  const res = await fetchApi({
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query: '{ teams { id schedule { day } } coaches { id } }' }),
@@ -94,7 +110,7 @@ async function proxyApi(req, res) {
   const chunks = []
   for await (const c of req) chunks.push(c)
   try {
-    const up = await fetch(API_UPSTREAM, {
+    const up = await fetchApi({
       method: req.method,
       headers: { 'content-type': req.headers['content-type'] || 'application/json' },
       body: req.method === 'GET' || req.method === 'HEAD' ? undefined : Buffer.concat(chunks),
