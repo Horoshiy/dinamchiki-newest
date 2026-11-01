@@ -32,3 +32,4 @@ coverage/
 .shots/
 documents-src/out/
 !.env.production
+!.env.test
