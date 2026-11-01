@@ -27,7 +27,20 @@ jobs:
 
       - run: npm ci
 
+      # Контрактные тесты сверяют запросы сайта со схемой API из соседнего
+      # (закрытого) репозитория — клонируем его ключом только на чтение.
+      - name: Схема API (dinamchiki-gql)
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.GQL_REPO_KEY }}" > ~/.ssh/gql_key
+          chmod 600 ~/.ssh/gql_key
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/gql_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            git clone --depth 1 git@github.com:Horoshiy/dinamchiki-gql.git "$RUNNER_TEMP/dinamchiki-gql"
+          rm -f ~/.ssh/gql_key
+
       - name: Тесты
+        env:
+          GQL_SCHEMA_PATH: ${{ runner.temp }}/dinamchiki-gql/src/schema.graphql
         run: npm test
 
       # Сборка берёт адреса из .env.production (API, домен, Метрика).
