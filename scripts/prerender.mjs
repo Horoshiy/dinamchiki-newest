@@ -40,6 +40,12 @@ const UA_MARK = 'DinamchikiPrerender' // см. src/shared/lib/metrika.ts
 const CONCURRENCY = 4
 
 const env = loadEnv(process.env.MODE || 'production', ROOT, 'VITE_')
+
+// Если API живёт на адресе самого сайта (dinamchiki.ru/query), браузер пререндера
+// попадёт в локальный сервер — запросы к API он проксирует сюда. Адрес берётся
+// из PRERENDER_API_UPSTREAM (.env.production или окружение), иначе сам VITE_GRAPHQL_HTTP.
+const envAll = loadEnv(process.env.MODE || 'production', ROOT, '')
+const API_UPSTREAM = process.env.PRERENDER_API_UPSTREAM || envAll.PRERENDER_API_UPSTREAM || env.VITE_GRAPHQL_HTTP
 const staticRoutes = JSON.parse(readFileSync(join(ROOT, 'vite-plugins/static-routes.json'), 'utf8'))
 
 function findChrome() {
@@ -57,7 +63,7 @@ function findChrome() {
 
 /** Группы с расписанием и тренеры — у них есть что показать поисковику. */
 async function fetchDetailRoutes() {
-  const res = await fetch(env.VITE_GRAPHQL_HTTP, {
+  const res = await fetch(API_UPSTREAM, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ query: '{ teams { id schedule { day } } coaches { id } }' }),
@@ -83,11 +89,30 @@ function selfSignedCert(host) {
   return cert
 }
 
+/** Запрос браузера к API на адресе сайта — переслать настоящему API. */
+async function proxyApi(req, res) {
+  const chunks = []
+  for await (const c of req) chunks.push(c)
+  try {
+    const up = await fetch(API_UPSTREAM, {
+      method: req.method,
+      headers: { 'content-type': req.headers['content-type'] || 'application/json' },
+      body: req.method === 'GET' || req.method === 'HEAD' ? undefined : Buffer.concat(chunks),
+    })
+    res.writeHead(up.status, { 'content-type': up.headers.get('content-type') || 'application/json' })
+    res.end(Buffer.from(await up.arrayBuffer()))
+  } catch (e) {
+    res.writeHead(502, { 'content-type': 'text/plain' })
+    res.end(String(e))
+  }
+}
+
 /** Статика из dist с SPA-fallback на исходную оболочку. */
-function serve(shell, tls) {
+function serve(shell, tls, apiPath) {
   return new Promise((ok) => {
     const server = createServer(tls, (req, res) => {
       const path = decodeURIComponent(new URL(req.url, 'http://x').pathname)
+      if (apiPath && path === apiPath) return void proxyApi(req, res)
       const file = join(DIST, path)
       if (file.startsWith(DIST) && extname(path) && existsSync(file)) {
         res.writeHead(200, { 'content-type': MIME[extname(path)] || 'application/octet-stream' })
@@ -143,7 +168,10 @@ async function main() {
   const detail = await fetchDetailRoutes()
   const routes = [...staticRoutes, ...detail, { path: '/__prerender-404__', notFound: true }]
   const site = new URL(env.VITE_SITE_URL || 'https://dinamchiki.ru')
-  const server = await serve(shell, selfSignedCert(site.hostname))
+  const api = new URL(env.VITE_GRAPHQL_HTTP)
+  const apiPath = api.host === site.host ? api.pathname : null
+  if (apiPath) console.log(`API на адресе сайта (${apiPath}) — пререндер проксирует в ${API_UPSTREAM}`)
+  const server = await serve(shell, selfSignedCert(site.hostname), apiPath)
   const resolverRule = `MAP ${site.hostname} 127.0.0.1:${server.address().port}`
   const base = `https://${site.hostname}`
 
