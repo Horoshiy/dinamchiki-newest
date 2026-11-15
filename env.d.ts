@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_CLUB_PHONE: string
   /** Номер счётчика Яндекс.Метрики. На стенде не задаётся. */
   readonly VITE_YM_ID?: string
+  /** База API «Тайной базы». По умолчанию same-origin '/api/base'. */
+  readonly VITE_BASE_API?: string
 }
 
 interface ImportMeta {

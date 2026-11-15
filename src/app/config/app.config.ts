@@ -10,6 +10,8 @@ export interface AppConfig {
   allowIndexing: boolean
   /** Номер счётчика Яндекс.Метрики; пусто — Метрика не подключается. */
   metrikaId: number | null
+  /** База API «Тайной базы» — same-origin прокси на бота. */
+  baseApi: string
 }
 
 function readEnv(key: keyof ImportMetaEnv, fallback: string): string {
@@ -34,4 +36,6 @@ export const appConfig: AppConfig = {
   siteUrl: readEnv('VITE_SITE_URL', '').replace(/\/+$/, ''),
   allowIndexing: readEnv('VITE_ALLOW_INDEXING', 'false') === 'true',
   metrikaId: Number(readEnv('VITE_YM_ID', '')) || null,
+  // Same-origin: одинаково работает на бете и проде, обходит CSP connect-src 'self'.
+  baseApi: readEnv('VITE_BASE_API', '/api/base'),
 }

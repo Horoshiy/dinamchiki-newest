@@ -62,6 +62,17 @@ describe('vite-plugins/env-guard', () => {
     expect(out).toContain(key)
   })
 
+  it('VITE_BASE_API не обязателен — same-origin путь по умолчанию', () => {
+    expect(checkEnv(VALID_PROD)).toHaveLength(0)
+    expect(checkEnv({ ...VALID_PROD, VITE_BASE_API: '/api/base' })).toHaveLength(0)
+  })
+
+  it('боевая сборка падает, если VITE_BASE_API указывает на бета-хост', () => {
+    const out = build({ ...VALID_PROD, VITE_BASE_API: 'https://flowise.dinamchiki.ru/api/base' })
+    expect(out).toContain('бета-хост')
+    expect(out).toContain('VITE_BASE_API')
+  })
+
   it('незаполненный плейсхолдер из шаблона валит сборку', () => {
     const out = build({ ...VALID_PROD, VITE_SITE_URL: 'https://<боевой-домен>' })
     expect(out).toContain('плейсхолдер')

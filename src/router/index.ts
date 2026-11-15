@@ -8,6 +8,7 @@ import { SVEDEN_LEGACY_REDIRECTS } from '@/entities/sveden/sveden.sections'
 import { applyPageMeta, setLink, setMeta, setOg } from '@/shared/lib/page-meta'
 import { trackPageView } from '@/shared/lib/metrika'
 import { clubDescription, STAFF_EXPERIENCE_TEXT } from '@/entities/club/club.facts'
+import { useBaseAuth } from '@/features/base/stores/baseAuth'
 
 // Lazy-loaded страницы.
 const HomePage        = () => import('@/pages/HomePage.vue')
@@ -23,6 +24,14 @@ const ContactsPage    = () => import('@/pages/ContactsPage.vue')
 const NotFoundPage    = () => import('@/pages/NotFoundPage.vue')
 const PrivacyPage     = () => import('@/pages/legal/PrivacyPage.vue')
 const ConsentPage     = () => import('@/pages/legal/ConsentPage.vue')
+
+// «Тайная база» — скрытый раздел (noindex, вне навигации и sitemap).
+const AgentShell         = () => import('@/features/base/components/AgentShell.vue')
+const BaseLoginView      = () => import('@/features/base/views/LoginView.vue')
+const BaseMissionView    = () => import('@/features/base/views/MissionView.vue')
+const BaseProgressView   = () => import('@/features/base/views/ProgressView.vue')
+const BaseStaffView      = () => import('@/features/base/views/StaffView.vue')
+const BaseStaffChildView = () => import('@/features/base/views/StaffChildView.vue')
 
 // Раздел «Сведения об образовательной организации» — обязательный по ст. 29
 // Федерального закона № 273-ФЗ. Грузится отдельными чанками, как и остальное.
@@ -327,6 +336,19 @@ const routes: RouteRecordRaw[] = [
       })),
     ],
   },
+  // «Тайная база» — отдельный корень со своей тёмной оболочкой.
+  // Скрыт от индексации, навигации и sitemap; вход по коду агента / SMS тренера.
+  {
+    path: '/agent-base',
+    component: AgentShell,
+    children: [
+      { path: '', name: 'base-login', component: BaseLoginView, meta: { title: 'Тайная база', noIndex: true } },
+      { path: 'mission', name: 'base-mission', component: BaseMissionView, meta: { title: 'Миссия дня — Тайная база', noIndex: true } },
+      { path: 'progress', name: 'base-progress', component: BaseProgressView, meta: { title: 'Моё досье — Тайная база', noIndex: true } },
+      { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Штаб тренера — Тайная база', noIndex: true } },
+      { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Досье агента — Тайная база', noIndex: true } },
+    ],
+  },
   // 404 — bare layout (без header/footer)
   {
     path: '/:pathMatch(.*)*',
@@ -391,11 +413,35 @@ export const router = createRouter({
 })
 
 /**
+ * Доступ в «Тайную базу»: детские экраны требуют child-токен, досье агента —
+ * staff-токен. Без токена отправляем на соответствующий вход. Идентичность
+ * всё равно проверяет сервер по JWT — guard лишь убирает лишние редиректы.
+ */
+router.beforeEach((to) => {
+  if (!to.path.startsWith('/agent-base')) return true
+  const auth = useBaseAuth()
+  const needsChild = to.name === 'base-mission' || to.name === 'base-progress'
+  const needsStaff = to.name === 'base-staff-child'
+  if (needsChild && !auth.isChildAuthed) return { name: 'base-login' }
+  if (needsStaff && !auth.isStaffAuthed) return { name: 'base-staff' }
+  if (to.name === 'base-login' && auth.isChildAuthed) return { name: 'base-mission' }
+  return true
+})
+
+/**
  * Обновление <title>, <meta name="description">, og:* и каноникала при смене маршрута.
  * Детальные страницы уточняют заголовок после загрузки данных (usePageMeta).
  */
 router.afterEach((to) => {
   const meta = to.meta ?? {}
+
+  // «Тайная база»: только title и noindex. Без canonical/og/Метрики —
+  // скрытый раздел не должен оставлять следов в поиске и аналитике.
+  if (to.path.startsWith('/agent-base')) {
+    applyPageMeta({ title: typeof meta.title === 'string' ? meta.title : 'Тайная база' })
+    setMeta('robots', 'noindex, nofollow')
+    return
+  }
 
   applyPageMeta({
     title: typeof meta.title === 'string' ? meta.title : undefined,

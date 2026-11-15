@@ -31,6 +31,8 @@ export function seoPlugin(env: Record<string, string>): Plugin {
             'Allow: /',
             // Карточки детей в поиск не отдаём.
             'Disallow: /player/',
+            // «Тайная база» — скрытый раздел с ответами детей.
+            'Disallow: /agent-base',
             '',
             `Sitemap: ${siteUrl}/sitemap.xml`,
             '',

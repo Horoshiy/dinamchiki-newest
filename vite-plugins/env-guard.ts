@@ -31,7 +31,7 @@ export function checkEnv(env: Record<string, string>): string[] {
   }
 
   if (env.VITE_ALLOW_INDEXING === 'true') {
-    for (const key of ['VITE_GRAPHQL_HTTP', 'VITE_SITE_URL'] as const) {
+    for (const key of ['VITE_GRAPHQL_HTTP', 'VITE_SITE_URL', 'VITE_BASE_API'] as const) {
       const beta = BETA_HOSTS.find((h) => (env[key] ?? '').includes(h))
       if (beta) problems.push(`${key} указывает на бета-хост ${beta}: ${env[key]}`)
     }

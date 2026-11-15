@@ -81,6 +81,8 @@ function init(id: number) {
 }
 
 export function trackPageView(url: string) {
+  // «Тайная база»: ответы детей и код агента в URL не должны уходить в Метрику.
+  if (url.startsWith('/agent-base')) return
   const id = appConfig.metrikaId
   if (!id || !isMetrikaEnabled()) return
   if (!consentInSession && !hasCookieConsent()) {

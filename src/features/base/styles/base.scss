@@ -1,0 +1,282 @@
+// «Тайная база» — ночное досье секретного клуба агентов.
+// Всё неймспейсится под .agent-base, чтобы не задеть светлую тему сайта.
+// Палитра выведена из_subject: доминанта динамо-синий, лайм — XP, циан — энергия,
+// янтарь — серия, малиновый — боль/тревога. Тёмный «радарный» фон, зерно, сетка.
+
+.agent-base {
+  // ─── Палитра ───────────────────────────────────────────────────────────────
+  --ab-bg-0: #060912;
+  --ab-bg-1: #0a0f1f;
+  --ab-bg-2: #111834;
+  --ab-bg-3: #18224a;
+  --ab-line: rgba(120, 150, 255, 0.16);
+  --ab-line-strong: rgba(120, 150, 255, 0.32);
+
+  --ab-blue: #1e50d8;
+  --ab-blue-bright: #3b6dff;
+  --ab-cyan: #35e0ff;
+  --ab-lime: #c6f24e;
+  --ab-amber: #ffb020;
+  --ab-raspberry: #ff3d71;
+
+  --ab-text: #eaf0ff;
+  --ab-text-dim: #9aa7d0;
+  --ab-text-faint: #61709c;
+  --ab-success: #3ddc84;
+
+  --ab-radius: 18px;
+  --ab-radius-sm: 12px;
+  --ab-radius-lg: 26px;
+  --ab-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --ab-glow-blue: 0 0 0 1px rgba(59, 109, 255, 0.4), 0 10px 40px rgba(30, 80, 216, 0.35);
+
+  --ab-font-display: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --ab-font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --ab-font-mono: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--ab-text);
+  font-family: var(--ab-font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  background: var(--ab-bg-0);
+  color-scheme: dark;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+
+  // ─── Фоновые слои ──────────────────────────────────────────────────────────
+  .ab-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% -10%, #16204a 0%, rgba(10, 15, 31, 0) 55%),
+      radial-gradient(90% 70% at 100% 100%, #0d1a3a 0%, rgba(6, 9, 18, 0) 60%),
+      linear-gradient(180deg, var(--ab-bg-1) 0%, var(--ab-bg-0) 100%);
+  }
+  // Сетка «радара»
+  .ab-bg::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background-image:
+      linear-gradient(var(--ab-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ab-line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(120% 100% at 50% 0%, #000 0%, transparent 78%);
+    opacity: 0.5;
+  }
+  // Зерно плёнки
+  .ab-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+  }
+  .ab-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.4;
+    animation: ab-float 18s ease-in-out infinite;
+  }
+  .ab-orb--blue { width: 420px; height: 420px; top: -120px; left: -80px; background: #1e50d8; }
+  .ab-orb--cyan { width: 320px; height: 320px; bottom: -100px; right: -60px; background: #1899c9; animation-delay: -6s; }
+  .ab-orb--lime { width: 240px; height: 240px; top: 40%; right: 12%; background: #5f7a1e; opacity: 0.22; animation-delay: -12s; }
+
+  .ab-content { position: relative; z-index: 1; }
+
+  // ─── Типографика ───────────────────────────────────────────────────────────
+  h1, h2, h3, h4 { font-family: var(--ab-font-display); font-weight: 800; line-height: 1.12; letter-spacing: -0.01em; margin: 0; }
+  .ab-eyebrow {
+    font-family: var(--ab-font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ab-cyan);
+  }
+  .ab-dim { color: var(--ab-text-dim); }
+  .ab-faint { color: var(--ab-text-faint); }
+  .ab-mono { font-family: var(--ab-font-mono); }
+
+  // ─── Карточки и поверхности ────────────────────────────────────────────────
+  .ab-card {
+    background: linear-gradient(180deg, rgba(24, 34, 74, 0.72), rgba(17, 24, 52, 0.72));
+    border: 1px solid var(--ab-line);
+    border-radius: var(--ab-radius);
+    box-shadow: var(--ab-shadow);
+    backdrop-filter: blur(8px);
+  }
+  .ab-panel {
+    background: rgba(10, 15, 31, 0.6);
+    border: 1px solid var(--ab-line);
+    border-radius: var(--ab-radius-sm);
+  }
+
+  // ─── Кнопки ────────────────────────────────────────────────────────────────
+  .ab-btn {
+    --btn-bg: var(--ab-blue);
+    --btn-fg: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 0 26px;
+    border: none;
+    border-radius: var(--ab-radius-sm);
+    background: linear-gradient(180deg, var(--ab-blue-bright), var(--btn-bg));
+    color: var(--btn-fg);
+    font-family: var(--ab-font-display);
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: var(--ab-glow-blue);
+    transition: transform 140ms ease, box-shadow 200ms ease, filter 200ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ab-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+  .ab-btn:active { transform: translateY(0) scale(0.985); }
+  .ab-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: grayscale(0.3); box-shadow: none; }
+  .ab-btn--lime { --btn-bg: #8fbf26; --btn-fg: #0c1400; background: linear-gradient(180deg, #d4ff5e, var(--ab-lime)); box-shadow: 0 0 0 1px rgba(198, 242, 78, 0.5), 0 10px 40px rgba(143, 191, 38, 0.35); }
+  .ab-btn--ghost { background: rgba(120, 150, 255, 0.08); color: var(--ab-text); box-shadow: inset 0 0 0 1px var(--ab-line-strong); }
+  .ab-btn--ghost:hover { background: rgba(120, 150, 255, 0.16); }
+  .ab-btn--danger { background: linear-gradient(180deg, #ff5c8a, var(--ab-raspberry)); box-shadow: 0 0 0 1px rgba(255, 61, 113, 0.5), 0 10px 40px rgba(255, 61, 113, 0.3); }
+  .ab-btn--block { width: 100%; }
+  .ab-btn--sm { min-height: 44px; padding: 0 18px; font-size: 0.9rem; }
+
+  // ─── Поля ввода ────────────────────────────────────────────────────────────
+  .ab-input {
+    width: 100%;
+    min-height: 56px;
+    padding: 0 18px;
+    background: rgba(6, 9, 18, 0.7);
+    border: 1px solid var(--ab-line-strong);
+    border-radius: var(--ab-radius-sm);
+    color: var(--ab-text);
+    font-family: var(--ab-font-body);
+    font-size: 1.05rem;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .ab-input::placeholder { color: var(--ab-text-faint); }
+  .ab-input:focus { outline: none; border-color: var(--ab-cyan); box-shadow: 0 0 0 3px rgba(53, 224, 255, 0.18); }
+  textarea.ab-input { min-height: 120px; padding: 14px 18px; resize: vertical; line-height: 1.5; }
+
+  // ─── Чипы / варианты ───────────────────────────────────────────────────────
+  .ab-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 10px 18px;
+    border-radius: var(--ab-radius-sm);
+    background: rgba(120, 150, 255, 0.07);
+    border: 1px solid var(--ab-line);
+    color: var(--ab-text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ab-chip:hover { border-color: var(--ab-line-strong); background: rgba(120, 150, 255, 0.14); }
+  .ab-chip.is-active {
+    background: linear-gradient(180deg, rgba(59, 109, 255, 0.35), rgba(30, 80, 216, 0.25));
+    border-color: var(--ab-blue-bright);
+    box-shadow: 0 0 0 1px var(--ab-blue-bright), 0 6px 24px rgba(30, 80, 216, 0.3);
+    color: #fff;
+  }
+
+  .ab-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-family: var(--ab-font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--ab-line-strong);
+    background: rgba(120, 150, 255, 0.1);
+  }
+
+  .ab-alert {
+    border-radius: var(--ab-radius-sm);
+    padding: 14px 18px;
+    border: 1px solid;
+    font-size: 0.95rem;
+  }
+  .ab-alert--error { color: #ffd7e2; background: rgba(255, 61, 113, 0.12); border-color: rgba(255, 61, 113, 0.45); }
+  .ab-alert--info { color: #cdf6ff; background: rgba(53, 224, 255, 0.1); border-color: rgba(53, 224, 255, 0.4); }
+  .ab-alert--warn { color: #ffe9c2; background: rgba(255, 176, 32, 0.12); border-color: rgba(255, 176, 32, 0.45); }
+
+  // ─── Скроллбар в теме ──────────────────────────────────────────────────────
+  .agent-base, .agent-base * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ab-blue) rgba(120, 150, 255, 0.08);
+  }
+  .agent-base ::-webkit-scrollbar { width: 10px; height: 10px; }
+  .agent-base ::-webkit-scrollbar-track { background: rgba(120, 150, 255, 0.06); border-radius: 8px; }
+  .agent-base ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--ab-blue-bright), var(--ab-blue));
+    border-radius: 8px;
+    border: 2px solid var(--ab-bg-0);
+  }
+  .agent-base ::-webkit-scrollbar-thumb:hover { background: var(--ab-cyan); }
+
+  // ─── Анимации ──────────────────────────────────────────────────────────────
+  .ab-rise { animation: ab-rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .ab-rise-1 { animation-delay: 80ms; }
+  .ab-rise-2 { animation-delay: 180ms; }
+  .ab-rise-3 { animation-delay: 300ms; }
+  .ab-rise-4 { animation-delay: 430ms; }
+  .ab-pop { animation: ab-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  a { color: var(--ab-cyan); }
+}
+
+@keyframes ab-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.08); }
+  66% { transform: translate(-30px, 24px) scale(0.95); }
+}
+@keyframes ab-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ab-pop {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ab-sweep { to { transform: rotate(360deg); } }
+@keyframes ab-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(53, 224, 255, 0.4); }
+  70% { box-shadow: 0 0 0 16px rgba(53, 224, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(53, 224, 255, 0); }
+}
+@keyframes ab-flame {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50% { transform: scale(1.12) rotate(2deg); }
+}
+@keyframes ab-shimmer { to { background-position: 200% center; } }
+@keyframes ab-confetti {
+  0% { transform: translateY(-10vh) rotate(0); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+@keyframes ab-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-base *, .agent-base *::before, .agent-base *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .agent-base .ab-orb { animation: none; }
+}
