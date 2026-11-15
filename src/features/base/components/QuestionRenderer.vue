@@ -25,6 +25,10 @@ function setScale(v: number) {
 function setText(v: string) {
   emit('update:modelValue', { question_id: props.question.id, value_text: v })
 }
+function setSingle(v: string) {
+  sound.play('select')
+  emit('update:modelValue', { question_id: props.question.id, value_text: v })
+}
 function toggleMulti(opt: string) {
   sound.play('select')
   const next = multiValue.value.includes(opt)
@@ -49,7 +53,7 @@ const scaleComponent = computed(() => {
     />
     <GoalPicker
       v-else-if="question.kind === 'single'"
-      :options="question.options" :model-value="textValue" @update:model-value="setText"
+      :options="question.options" :model-value="textValue" @update:model-value="setSingle"
     />
     <DreamInput
       v-else-if="question.kind === 'text'"

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { router } from '@/router'
@@ -9,6 +9,9 @@ import LoginView from '@/features/base/views/LoginView.vue'
 import MoodScale from '@/features/base/components/MoodScale.vue'
 import GoalPicker from '@/features/base/components/GoalPicker.vue'
 import PainScale from '@/features/base/components/PainScale.vue'
+import QuestionRenderer from '@/features/base/components/QuestionRenderer.vue'
+import { useBaseSound } from '@/features/base/stores/baseSound'
+import type { BaseQuestion } from '@/features/base/api/base.types'
 
 /**
  * «Тайная база» скрыта и приватна: guard не пускает без токена, мета не оставляет
@@ -122,6 +125,47 @@ describe('компоненты: вопросы отвечают на клик', 
     // Компонент управляемый: родитель возвращает значение через v-model.
     await w.setProps({ modelValue: 4 })
     expect(w.text()).toContain('скажи тренеру')
+  })
+})
+
+describe('QuestionRenderer: звук выбора', () => {
+  const q = (over: Partial<BaseQuestion>): BaseQuestion => ({
+    id: 1, template_key: 'mood', kind: 'scale', text: 'Вопрос?', options: SCALE,
+    is_required: true, max_len: 0, position: 1, ...over,
+  })
+  function spySound() {
+    return vi.spyOn(useBaseSound(), 'play').mockImplementation(() => {})
+  }
+
+  it('шкала (настрой/энергия/боль) играет select', async () => {
+    const play = spySound()
+    const w = mount(QuestionRenderer, { props: { question: q({}) } })
+    await w.findAll('.mood__opt')[2].trigger('click')
+    expect(play).toHaveBeenCalledWith('select')
+    expect(w.emitted('update:modelValue')?.[0]).toEqual([{ question_id: 1, value_int: 3 }])
+  })
+
+  it('одиночный выбор цели играет select', async () => {
+    const play = spySound()
+    const w = mount(QuestionRenderer, { props: { question: q({ id: 4, template_key: 'goal', kind: 'single', options: ['Скорость', 'Пас'] }) } })
+    await w.findAll('.goal__opt')[1].trigger('click')
+    expect(play).toHaveBeenCalledWith('select')
+    expect(w.emitted('update:modelValue')?.[0]).toEqual([{ question_id: 4, value_text: 'Пас' }])
+  })
+
+  it('мультивыбор играет select', async () => {
+    const play = spySound()
+    const w = mount(QuestionRenderer, { props: { question: q({ id: 6, kind: 'multi', options: ['Пас', 'Удар'] }) } })
+    await w.findAll('.ab-chip')[0].trigger('click')
+    expect(play).toHaveBeenCalledWith('select')
+  })
+
+  it('свободный текст не шумит на каждый ввод', async () => {
+    const play = spySound()
+    const w = mount(QuestionRenderer, { props: { question: q({ id: 5, template_key: 'dream', kind: 'text', options: [], max_len: 200 }) } })
+    await w.find('.dream__area').setValue('Забить гол в девятку')
+    expect(play).not.toHaveBeenCalled()
+    expect(w.emitted('update:modelValue')?.[0]).toEqual([{ question_id: 5, value_text: 'Забить гол в девятку' }])
   })
 })
 
