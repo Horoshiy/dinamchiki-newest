@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Вход агента по секретному коду. QR-ссылка (#code=…) входит автоматически.
+// Вход игрока по коду. QR-ссылка (#code=…) входит автоматически.
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBaseAuth } from '../stores/baseAuth'
@@ -47,10 +47,10 @@ onMounted(() => {
         <span class="login__radar-dot" />
       </div>
       <span class="ab-eyebrow">ДФК «Динамчики» · доступ по коду</span>
-      <h1 class="login__title">ТАЙНАЯ<br />БАЗА</h1>
+      <h1 class="login__title">ПОДТРИБУНКА</h1>
       <p class="login__lead">
-        Секретный клуб агентов. Каждый день — новая миссия: расскажи о настрое,
-        энергии и целях, получай XP, значки и звание. Твои ответы видишь только ты и тренер.
+        Свой клуб под трибуной. Каждый день — новая разминка: расскажи о настрое,
+        силах и сне, получай XP, значки и звание. Твои ответы видишь только ты и тренер.
       </p>
     </section>
 
@@ -62,14 +62,14 @@ onMounted(() => {
         :disabled="code.replace(/[^A-Z0-9]/gi, '').length !== 10 || auth.childLoading"
         @click="login"
       >
-        {{ auth.childLoading ? 'Проверяем код…' : 'Войти в базу' }}
+        {{ auth.childLoading ? 'Проверяем код…' : 'Войти в Подтрибунку' }}
       </button>
-      <p class="login__hint ab-faint">Нет кода? Попроси тренера выдать карточку агента на тренировке.</p>
-      <RouterLink :to="{ name: 'base-staff' }" class="login__staff">Я тренер → штаб</RouterLink>
+      <p class="login__hint ab-faint">Нет кода? Попроси тренера выдать карточку игрока на тренировке.</p>
+      <RouterLink :to="{ name: 'base-staff' }" class="login__staff">Я тренер → тренерская</RouterLink>
     </section>
 
     <section class="login__perks ab-rise ab-rise-2">
-      <div class="login__perk"><span>🎯</span><b>Миссия дня</b><i>1 минута в день</i></div>
+      <div class="login__perk"><span>🎯</span><b>Разминка дня</b><i>1 минута в день</i></div>
       <div class="login__perk"><span>🏅</span><b>Значки и звания</b><i>расти от новичка до легенды</i></div>
       <div class="login__perk"><span>🔥</span><b>Серия дней</b><i>не пропускай — держи огонь</i></div>
     </section>

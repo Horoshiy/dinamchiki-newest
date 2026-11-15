@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Досье агента для тренера: профиль, код (выдача/отзыв + QR), ответы по дням,
+// Карточка игрока для тренера: профиль, код (выдача/отзыв + QR), ответы по дням,
 // заметки. Просмотр прямых ответов пишется в журнал (аудит) на сервере.
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -48,7 +48,7 @@ async function load() {
     codeInfo.value = c
   } catch (e) {
     if (authFail(e)) return
-    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить досье.'
+    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить карточку.'
   } finally {
     loading.value = false
   }
@@ -132,9 +132,9 @@ onMounted(load)
 
 <template>
   <div class="child">
-    <RouterLink :to="{ name: 'base-staff' }" class="child__back">← в штаб</RouterLink>
+    <RouterLink :to="{ name: 'base-staff' }" class="child__back">← в тренерскую</RouterLink>
 
-    <div v-if="loading" class="child__loading ab-card"><span class="child__spinner" />Загружаем досье…</div>
+    <div v-if="loading" class="child__loading ab-card"><span class="child__spinner" />Загружаем карточку…</div>
     <div v-else-if="error && !detail" class="ab-card child__loading">
       <p class="ab-alert ab-alert--error">{{ error }}</p>
       <button class="ab-btn ab-btn--ghost" type="button" @click="load">Повторить</button>
@@ -157,11 +157,11 @@ onMounted(load)
 
       <p v-if="error" class="ab-alert ab-alert--error">{{ error }}</p>
 
-      <!-- Код агента -->
+      <!-- Код игрока -->
       <section class="child__code ab-card ab-rise ab-rise-1">
-        <h2 class="child__h">Код агента</h2>
+        <h2 class="child__h">Код игрока</h2>
         <div v-if="issued" class="child__issued">
-          <p class="ab-alert ab-alert--warn">Код показывается один раз. Передай его агенту лично или покажи QR.</p>
+          <p class="ab-alert ab-alert--warn">Код показывается один раз. Передай его игроку лично или покажи QR.</p>
           <div class="child__issued-code ab-mono">{{ issued.code }}</div>
           <img v-if="issued.qr_png" class="child__qr" :src="`data:image/png;base64,${issued.qr_png}`" alt="QR-код для входа" width="200" height="200" />
           <div class="child__issued-url ab-mono">{{ issued.login_url }}</div>
@@ -178,7 +178,7 @@ onMounted(load)
             <span class="ab-faint">создан {{ fmtTime(codeInfo.created_at || '') }}</span>
             <span v-if="codeInfo.last_used_at" class="ab-faint">вход {{ fmtTime(codeInfo.last_used_at) }}</span>
           </div>
-          <p v-else class="ab-dim">Код ещё не выдан — агент не сможет войти.</p>
+          <p v-else class="ab-dim">Код ещё не выдан — игрок не сможет войти.</p>
           <div class="child__code-actions">
             <button class="ab-btn ab-btn--sm" type="button" :disabled="issuing" @click="issue">
               {{ issuing ? 'Выпускаем…' : codeInfo?.exists ? 'Перевыпустить код' : 'Выдать код' }}
@@ -199,13 +199,13 @@ onMounted(load)
           <h2 class="child__h">Ответы по дням</h2>
           <span class="child__audit ab-faint">🔒 просмотр записывается в журнал</span>
         </div>
-        <p v-if="!detail.submissions.length" class="ab-dim">Агент ещё не проходил миссии.</p>
+        <p v-if="!detail.submissions.length" class="ab-dim">Игрок ещё не проходил разминки.</p>
         <div v-for="s in detail.submissions" :key="s.day_key" class="child__sub" :class="{ 'is-warn': s.needs_attention }">
           <button class="child__sub-head" type="button" @click="expandedDay = expandedDay === s.day_key ? null : s.day_key">
             <span class="child__sub-date">{{ fmtDate(s.day_key) }}</span>
             <span class="child__sub-metrics">
               <span title="Настрой">🙂 {{ s.mood }}/5</span>
-              <span title="Энергия">⚡ {{ s.energy }}/5</span>
+              <span title="Силы">⚡ {{ s.energy }}/5</span>
               <span title="Боль" :class="{ 'is-pain': s.pain_score >= 3 }">🩹 {{ s.pain_score }}/5</span>
             </span>
             <span v-if="s.needs_attention" class="staff-tag staff-tag--warn">боль</span>

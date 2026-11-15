@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Эмблема звания: щит агента с уровнем. Цвет зависит от ступени звания.
+// Эмблема звания: щит игрока с уровнем. Цвет зависит от ступени звания.
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{ rank: string; xp?: number; size?: 'sm' | 'md' | 'lg' }>(), {
@@ -7,7 +7,7 @@ const props = withDefaults(defineProps<{ rank: string; xp?: number; size?: 'sm' 
   size: 'md',
 })
 
-const RANKS = ['Новичок', 'Агент', 'Спецагент', 'Капитан базы', 'Легенда базы']
+const RANKS = ['Новичок', 'Игрок', 'Мастер', 'Капитан', 'Легенда клуба']
 const COLORS = ['#61709c', '#35e0ff', '#3b6dff', '#c6f24e', '#ffb020']
 
 const tier = computed(() => Math.max(0, RANKS.indexOf(props.rank)))

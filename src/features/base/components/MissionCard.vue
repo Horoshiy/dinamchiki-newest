@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Шапка миссии дня: тема, дата, слоган клуба.
+// Шапка разминки дня: тема, дата, слоган клуба.
 import { computed } from 'vue'
 
 const props = defineProps<{ theme: string; dayKey: string; weekday: number; slogan: string }>()
@@ -18,8 +18,8 @@ const dayName = computed(() => DAYS[props.weekday] ?? '')
   <header class="mission-card ab-card ab-rise">
     <div class="mission-card__radar" aria-hidden="true"><span /></div>
     <div class="mission-card__body">
-      <span class="ab-eyebrow">Миссия дня · {{ dateLabel }} · {{ dayName }}</span>
-      <h1 class="mission-card__title">{{ theme || 'Ежедневная миссия агента' }}</h1>
+      <span class="ab-eyebrow">Разминка дня · {{ dateLabel }} · {{ dayName }}</span>
+      <h1 class="mission-card__title">{{ theme || 'Ежедневная разминка игрока' }}</h1>
       <p class="mission-card__slogan">{{ slogan }}</p>
     </div>
   </header>

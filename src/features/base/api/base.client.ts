@@ -1,4 +1,4 @@
-// HTTP-клиент «Тайной базы». Same-origin прокси /api/base/ → бот /api/v1/base/.
+// HTTP-клиент «Подтрибунки». Same-origin прокси /api/base/ → бот /api/v1/base/.
 // Токен передаётся явно (child или staff) — клиент не хранит состояние.
 import { appConfig } from '@/app/config/app.config'
 
@@ -55,9 +55,9 @@ export async function baseRequest<T>(path: string, opts: RequestOptions = {}): P
   } catch (e) {
     if (e instanceof BaseApiError) throw e
     if ((e as Error).name === 'AbortError') {
-      throw new BaseApiError(0, 'База не отвечает. Проверь связь и попробуй ещё раз.')
+      throw new BaseApiError(0, 'Подтрибунка не отвечает. Проверь связь и попробуй ещё раз.')
     }
-    throw new BaseApiError(0, 'Не удалось связаться с базой. Попробуй ещё раз.')
+    throw new BaseApiError(0, 'Не удалось связаться с Подтрибункой. Попробуй ещё раз.')
   } finally {
     clearTimeout(timer)
     opts.signal?.removeEventListener('abort', onAbort)
@@ -70,7 +70,7 @@ function defaultError(status: number): string {
     case 403: return 'Доступ запрещён.'
     case 404: return 'Не найдено.'
     case 429: return 'Слишком много попыток. Подожди немного.'
-    case 503: return 'База временно недоступна.'
+    case 503: return 'Подтрибунка временно недоступна.'
     default: return 'Что-то пошло не так. Попробуй ещё раз.'
   }
 }

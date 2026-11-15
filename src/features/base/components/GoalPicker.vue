@@ -1,12 +1,12 @@
 <script setup lang="ts">
-// Футбольная цель дня: одиночный выбор из 4 вариантов (чипы).
+// Одиночный выбор из вариантов (чипы): сон, а в старых разминках — цель дня.
 defineProps<{ options: string[]; modelValue?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [string] }>()
 const ICONS = ['⚡', '🎯', '🤝', '🛡️', '🔥', '⭐', '🚀', '🏆']
 </script>
 
 <template>
-  <div class="goal" role="radiogroup" aria-label="Цель дня">
+  <div class="goal" role="radiogroup" aria-label="Выбери один вариант">
     <button
       v-for="(opt, i) in options"
       :key="opt"

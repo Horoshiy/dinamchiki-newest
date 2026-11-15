@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Вкладки раздела. Ребёнок: Миссия / Досье. Тренер: Штаб.
+// Вкладки раздела. Ребёнок: Разминка / Карточка. Тренер: Тренерская.
 import { useRoute } from 'vue-router'
 
 defineProps<{ mode: 'child' | 'staff' }>()
@@ -7,18 +7,18 @@ const route = useRoute()
 </script>
 
 <template>
-  <nav class="base-nav" aria-label="Разделы базы">
+  <nav class="base-nav" aria-label="Разделы Подтрибунки">
     <template v-if="mode === 'child'">
       <RouterLink :to="{ name: 'base-mission' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-mission' }">
-        <span aria-hidden="true">🎯</span> Миссия
+        <span aria-hidden="true">⚽</span> Разминка
       </RouterLink>
       <RouterLink :to="{ name: 'base-progress' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-progress' }">
-        <span aria-hidden="true">📁</span> Досье
+        <span aria-hidden="true">📇</span> Карточка
       </RouterLink>
     </template>
     <template v-else>
       <RouterLink :to="{ name: 'base-staff' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-staff' || route.name === 'base-staff-child' }">
-        <span aria-hidden="true">🛰️</span> Штаб
+        <span aria-hidden="true">🧢</span> Тренерская
       </RouterLink>
     </template>
   </nav>

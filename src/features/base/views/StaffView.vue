@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// Штаб тренера: вход по SMS, обзор агентов, «требуют внимания», сводка по команде.
-// Прямые ответы — только в карточке ребёнка (с аудитом). Здесь — сводка без ответов.
+// Тренерская: вход по SMS, доска дня с ответами всего состава, «требуют внимания»,
+// сводка по команде. Прямые ответы дня видны здесь (аудит view_board); карточка
+// ребёнка — по клику (аудит view_answers).
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as api from '../api/base.api'
@@ -44,10 +45,11 @@ const attention = ref<AttentionRow[]>([])
 const loading = ref(false)
 const error = ref('')
 const showAttention = ref(false)
+const showProgress = ref(false)
 
 const query = ref('')
 const filter = ref<'all' | 'done' | 'pending' | 'attention' | 'nocode'>('all')
-const sort = ref<'name' | 'xp' | 'streak'>('name')
+const sort = ref<'name' | 'xp' | 'streak' | 'pain' | 'mood'>('name')
 
 const teamId = ref('')
 const agg = ref<TeamAggregate | null>(null)
@@ -65,11 +67,50 @@ const filtered = computed(() => {
   const sorted = [...list]
   if (sort.value === 'xp') sorted.sort((a, b) => b.xp - a.xp)
   else if (sort.value === 'streak') sorted.sort((a, b) => b.streak_current - a.streak_current)
+  else if (sort.value === 'pain') sorted.sort((a, b) => b.pain_today - a.pain_today)
+  else if (sort.value === 'mood') sorted.sort((a, b) => a.mood_today - b.mood_today)
   else sorted.sort((a, b) => a.full_name.localeCompare(b.full_name, 'ru'))
   return sorted
 })
 
 const doneCount = computed(() => rows.value.filter((r) => r.completed_today).length)
+const attentionToday = computed(() => rows.value.filter((r) => r.needs_attention_today).length)
+
+// Средние — только по прошедшим сегодня (иначе «—»): не выдаём конкретного ребёнка.
+const completedRows = computed(() => rows.value.filter((r) => r.completed_today))
+function avgOf(sel: (r: StaffChildRow) => number): string {
+  const list = completedRows.value
+  if (!list.length) return '—'
+  return (list.reduce((s, r) => s + sel(r), 0) / list.length).toFixed(1)
+}
+const avgMood = computed(() => avgOf((r) => r.mood_today))
+const avgEnergy = computed(() => avgOf((r) => r.energy_today))
+const avgPain = computed(() => avgOf((r) => r.pain_today))
+const painWarn = computed(() => completedRows.value.length > 0 && Number(avgPain.value) >= 2)
+
+// ─── Ячейки ответов дня ──────────────────────────────────────────────────────
+const MOOD_ICON = ['😴', '😕', '🙂', '😊', '🤩']
+const MOOD_WORD = ['устал', 'так себе', 'норм', 'хорошо', 'супер']
+const ENERGY_ICON = ['🪫', '🔋', '🔋', '⚡', '⚡']
+const ENERGY_WORD = ['мало', 'немного', 'средне', 'много', 'очень']
+const PAIN_WORD = ['нет', 'немного', 'болит', 'сильно', 'очень']
+function at(arr: string[], v: number): string { return v >= 1 && v <= arr.length ? arr[v - 1] : '' }
+function moodIcon(v: number): string { return at(MOOD_ICON, v) || '—' }
+function moodWord(v: number): string { return at(MOOD_WORD, v) }
+function energyIcon(v: number): string { return at(ENERGY_ICON, v) || '—' }
+function energyWord(v: number): string { return at(ENERGY_WORD, v) }
+function painWord(v: number): string { return at(PAIN_WORD, v) || '—' }
+function sleepLabel(s: string): string {
+  if (!s) return '—'
+  if (s.startsWith('Много')) return '😴 много'
+  if (s.startsWith('Мало')) return '🥱 мало'
+  if (s.startsWith('Почти')) return '😵 почти нет'
+  return s
+}
+function fuelLabel(vals: string[]): string {
+  if (!vals || !vals.length) return '—'
+  return vals.map((v) => (v.includes('Позавтракал') ? '🍎' : v.includes('воду') ? '💧' : '•')).join(' ')
+}
 
 function authFail(e: unknown): boolean {
   if (e instanceof BaseApiError && (e.status === 401 || e.status === 403)) {
@@ -92,7 +133,7 @@ async function loadDashboard() {
     attention.value = at.items
   } catch (e) {
     if (authFail(e)) return
-    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить штаб.'
+    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить тренерскую.'
   } finally {
     loading.value = false
   }
@@ -131,7 +172,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
     <!-- ─── Вход тренера ─── -->
     <section v-if="!auth.isStaffAuthed" class="staff-login ab-card ab-rise">
       <span class="ab-eyebrow">Доступ персонала</span>
-      <h1 class="staff-login__title">Штаб тренера</h1>
+      <h1 class="staff-login__title">Тренерская</h1>
       <p class="ab-dim">Вход по номеру телефона и коду из SMS. Доступно тренерам и администраторам клуба.</p>
 
       <template v-if="loginStep === 'phone'">
@@ -145,13 +186,13 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
         <label class="ab-eyebrow" for="staff-code">Код из SMS на {{ phone }}</label>
         <input id="staff-code" v-model="code" class="ab-input staff-login__code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" @keydown.enter="verify" />
         <button class="ab-btn ab-btn--block" type="button" :disabled="!code.trim() || auth.staffLoading" @click="verify">
-          {{ auth.staffLoading ? 'Проверяем…' : 'Войти в штаб' }}
+          {{ auth.staffLoading ? 'Проверяем…' : 'Войти в тренерскую' }}
         </button>
         <button class="staff-login__back" type="button" @click="loginStep = 'phone'; code = ''; loginError = ''">← изменить номер</button>
       </template>
 
       <p v-if="loginError" class="ab-alert ab-alert--error" role="alert">{{ loginError }}</p>
-      <RouterLink :to="{ name: 'base-login' }" class="staff-login__child">Я агент → вход по коду</RouterLink>
+      <RouterLink :to="{ name: 'base-login' }" class="staff-login__child">Я игрок → вход по коду</RouterLink>
     </section>
 
     <!-- ─── Дашборд ─── -->
@@ -159,7 +200,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
       <header class="staff__head ab-rise">
         <div>
           <span class="ab-eyebrow">{{ auth.staffRole === 'admin' ? 'Администратор' : 'Тренер' }} · {{ auth.staffName }}</span>
-          <h1 class="staff__title">Штаб базы</h1>
+          <h1 class="staff__title">Тренерская</h1>
         </div>
         <button class="ab-btn ab-btn--ghost ab-btn--sm" type="button" :disabled="loading" @click="loadDashboard">↻ Обновить</button>
       </header>
@@ -168,7 +209,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
       <section v-if="attention.length" class="staff__attention ab-rise ab-rise-1">
         <button class="staff__attention-head" type="button" @click="showAttention = !showAttention">
           <span class="staff__attention-icon">⚠️</span>
-          <span>Требуют внимания: <b>{{ attention.length }}</b> {{ attention.length === 1 ? 'агент отметил боль' : 'агентов отметили боль' }}</span>
+          <span>Требуют внимания: <b>{{ attention.length }}</b> {{ attention.length === 1 ? 'игрок отметил боль' : 'игроков отметили боль' }}</span>
           <span class="staff__attention-toggle">{{ showAttention ? 'скрыть' : 'показать' }}</span>
         </button>
         <ul v-if="showAttention" class="staff__attention-list">
@@ -182,11 +223,20 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 
       <p v-if="error" class="ab-alert ab-alert--error">{{ error }}</p>
 
+      <!-- Сводка дня -->
+      <div class="staff__board-summary ab-rise ab-rise-1">
+        <span>Ответили <b>{{ doneCount }}</b> из {{ rows.length }}</span>
+        <span>Настрой ⌀ <b>{{ avgMood }}</b></span>
+        <span>Силы ⌀ <b>{{ avgEnergy }}</b></span>
+        <span :class="{ 'is-warn': painWarn }">Боль ⌀ <b>{{ avgPain }}</b></span>
+        <span :class="{ 'is-warn': attentionToday > 0 }">Тревоги <b>{{ attentionToday }}</b></span>
+      </div>
+
       <!-- Панель управления -->
       <section class="staff__toolbar ab-rise ab-rise-1">
-        <input v-model="query" class="ab-input staff__search" type="search" placeholder="Поиск по имени или позывному…" />
+        <input v-model="query" class="ab-input staff__search" type="search" placeholder="Поиск по имени или прозвищу…" />
         <select v-model="filter" class="ab-input staff__select" aria-label="Фильтр">
-          <option value="all">Все агенты</option>
+          <option value="all">Все игроки</option>
           <option value="done">Прошли сегодня</option>
           <option value="pending">Не прошли сегодня</option>
           <option value="attention">Требуют внимания</option>
@@ -194,48 +244,65 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
         </select>
         <select v-model="sort" class="ab-input staff__select" aria-label="Сортировка">
           <option value="name">По имени</option>
+          <option value="pain">По боли</option>
+          <option value="mood">По настрою</option>
           <option value="xp">По XP</option>
           <option value="streak">По серии</option>
         </select>
+        <button class="ab-btn ab-btn--ghost ab-btn--sm staff__progress-toggle" type="button" :aria-pressed="showProgress" @click="showProgress = !showProgress">
+          {{ showProgress ? 'Скрыть прогресс' : 'Прогресс' }}
+        </button>
       </section>
 
       <div class="staff__summary ab-faint ab-rise ab-rise-1">
         {{ filtered.length }} из {{ rows.length }} · сегодня прошли {{ doneCount }}
       </div>
 
-      <!-- Таблица агентов -->
-      <section v-if="loading" class="staff__loading ab-card"><span class="staff__spinner" />Загружаем агентов…</section>
+      <!-- Доска дня: ответы всего состава -->
+      <section v-if="loading" class="staff__loading ab-card"><span class="staff__spinner" />Загружаем игроков…</section>
       <section v-else-if="!filtered.length" class="staff__empty ab-card ab-dim">
-        {{ rows.length ? 'Никого не найдено по фильтру.' : 'Пока нет доступных агентов.' }}
+        {{ rows.length ? 'Никого не найдено по фильтру.' : 'Пока нет доступных игроков.' }}
       </section>
       <section v-else class="staff__table ab-card ab-rise ab-rise-2">
         <div class="staff__row staff__row--head">
-          <span>Агент</span><span>Звание</span><span>XP</span><span>Серия</span><span>Сегодня</span><span>Код</span>
+          <span class="staff__c-name">Игрок</span>
+          <span class="staff__c-mood">Настрой</span>
+          <span class="staff__c-energy">Силы</span>
+          <span class="staff__c-pain">Болит</span>
+          <span class="staff__c-sleep">Сон</span>
+          <span class="staff__c-fuel">Еда/вода</span>
+          <span class="staff__c-status">Статус</span>
         </div>
-        <button v-for="r in filtered" :key="r.child_id" type="button" class="staff__row" @click="openChild(r.child_id)">
-          <span class="staff__name">
-            <b>{{ r.full_name }}</b>
-            <i class="ab-mono">{{ r.codename }}</i>
-          </span>
-          <span class="staff__rank">{{ r.rank }}</span>
-          <span class="staff__xp">{{ r.xp }}</span>
-          <span class="staff__streak">🔥 {{ r.streak_current }}</span>
-          <span>
-            <span v-if="r.needs_attention_today" class="staff__tag staff__tag--warn">боль</span>
-            <span v-else-if="r.completed_today" class="staff__tag staff__tag--ok">✓ прошёл</span>
-            <span v-else class="staff__tag staff__tag--idle">ждём</span>
-          </span>
-          <span>
-            <span v-if="r.has_code" class="staff__tag staff__tag--code">есть</span>
-            <span v-else class="staff__tag staff__tag--idle">нет</span>
-          </span>
-        </button>
+        <div v-for="r in filtered" :key="r.child_id" class="staff__item">
+          <button type="button" class="staff__row" :class="{ 'staff__row--idle': !r.completed_today }" @click="openChild(r.child_id)">
+            <span class="staff__name staff__c-name">
+              <b>{{ r.full_name }}</b>
+              <i class="ab-mono">{{ r.codename }}</i>
+            </span>
+            <span class="staff__cell staff__c-mood">{{ moodIcon(r.mood_today) }} <em>{{ moodWord(r.mood_today) }}</em></span>
+            <span class="staff__cell staff__c-energy">{{ energyIcon(r.energy_today) }} <em>{{ energyWord(r.energy_today) }}</em></span>
+            <span class="staff__cell staff__c-pain" :class="{ 'is-warn': r.pain_today >= 3 }">{{ painWord(r.pain_today) }}</span>
+            <span class="staff__cell staff__c-sleep">{{ sleepLabel(r.sleep_today) }}</span>
+            <span class="staff__cell staff__c-fuel">{{ fuelLabel(r.fuel_today) }}</span>
+            <span class="staff__c-status">
+              <span v-if="r.needs_attention_today" class="staff__tag staff__tag--warn">боль</span>
+              <span v-else-if="r.completed_today" class="staff__tag staff__tag--ok">✓ прошёл</span>
+              <span v-else class="staff__tag staff__tag--idle">ждём</span>
+            </span>
+          </button>
+          <div v-if="showProgress" class="staff__progress">
+            <span class="staff__rank">{{ r.rank }}</span>
+            <span class="staff__xp">XP {{ r.xp }}</span>
+            <span class="staff__streak">🔥 {{ r.streak_current }}</span>
+            <span class="staff__tag" :class="r.has_code ? 'staff__tag--code' : 'staff__tag--idle'">{{ r.has_code ? 'код есть' : 'без кода' }}</span>
+          </div>
+        </div>
       </section>
 
       <!-- Сводка по команде -->
       <section class="staff__agg ab-card ab-rise ab-rise-3">
         <h2 class="staff__h">Сводка по команде</h2>
-        <p class="ab-faint staff__agg-hint">Средние за 14 дней. Показываем только если ответили ≥ 3 агентов — иначе среднее выдаёт конкретного ребёнка.</p>
+        <p class="ab-faint staff__agg-hint">Средние за 14 дней. Показываем только если ответили ≥ 3 игроков — иначе среднее выдаёт конкретного ребёнка.</p>
         <div class="staff__agg-form">
           <input v-model="teamId" class="ab-input" type="number" min="1" placeholder="ID команды" @keydown.enter="loadAggregate" />
           <button class="ab-btn ab-btn--sm" type="button" :disabled="!teamId || aggLoading" @click="loadAggregate">Показать</button>
@@ -246,7 +313,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
           <template v-else>
             <div class="staff__agg-stats">
               <div class="staff__agg-stat"><b>{{ agg.avg_mood }}</b><span>настрой</span></div>
-              <div class="staff__agg-stat"><b>{{ agg.avg_energy }}</b><span>энергия</span></div>
+              <div class="staff__agg-stat"><b>{{ agg.avg_energy }}</b><span>силы</span></div>
               <div class="staff__agg-stat" :class="{ 'is-warn': agg.avg_pain >= 2 }"><b>{{ agg.avg_pain }}</b><span>боль</span></div>
               <div class="staff__agg-stat"><b>{{ agg.responded_count }}/{{ agg.children_count }}</b><span>ответили</span></div>
               <div class="staff__agg-stat" :class="{ 'is-warn': agg.attention_count > 0 }"><b>{{ agg.attention_count }}</b><span>тревог</span></div>
@@ -280,21 +347,32 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff__attention-list { list-style: none; margin: 0; padding: 0 18px 14px; display: flex; flex-direction: column; gap: 6px; }
 .staff__attention-list button { background: none; border: none; color: var(--ab-text); cursor: pointer; font-size: 0.9rem; padding: 4px 0; }
 .staff__attention-list button:hover { color: var(--ab-amber); }
-.staff__toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+.staff__board-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 16px; border-radius: var(--ab-radius-sm); background: rgba(6, 9, 18, 0.5); border: 1px solid var(--ab-line); font-size: 0.86rem; color: var(--ab-text-dim); }
+.staff__board-summary b { font-family: var(--ab-font-mono); color: var(--ab-cyan); }
+.staff__board-summary .is-warn b { color: var(--ab-raspberry); }
+.staff__toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .staff__search { flex: 1; min-width: 200px; }
 .staff__select { flex: 0 0 auto; width: auto; min-width: 150px; cursor: pointer; }
+.staff__progress-toggle { flex: 0 0 auto; }
 .staff__summary { font-size: 0.82rem; }
 .staff__loading, .staff__empty { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 40px; }
 .staff__spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--ab-line); border-top-color: var(--ab-cyan); animation: ab-sweep 0.9s linear infinite; }
 .staff__table { padding: 8px; overflow: hidden; }
-.staff__row { display: grid; grid-template-columns: 2.2fr 1.3fr 0.7fr 0.8fr 1.1fr 0.7fr; gap: 10px; align-items: center; width: 100%; padding: 14px 16px; border: none; border-radius: var(--ab-radius-sm); background: none; color: var(--ab-text); text-align: left; cursor: pointer; font-size: 0.92rem; transition: background 140ms ease; }
+.staff__item { border-radius: var(--ab-radius-sm); }
+.staff__row { display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(5, minmax(0, 1fr)) minmax(0, 1fr); gap: 10px; align-items: center; width: 100%; padding: 14px 16px; border: none; border-radius: var(--ab-radius-sm); background: none; color: var(--ab-text); text-align: left; cursor: pointer; font-size: 0.92rem; transition: background 140ms ease; }
 .staff__row:not(.staff__row--head):hover { background: rgba(120, 150, 255, 0.1); }
+.staff__row--idle { opacity: 0.55; }
 .staff__row--head { cursor: default; font-family: var(--ab-font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ab-text-faint); border-bottom: 1px solid var(--ab-line); border-radius: 0; }
-.staff__name { display: flex; flex-direction: column; gap: 2px; }
+.staff__name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.staff__name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .staff__name i { font-style: normal; font-size: 0.74rem; color: var(--ab-text-faint); }
-.staff__rank { color: var(--ab-cyan); font-size: 0.84rem; }
+.staff__cell { min-width: 0; font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.staff__cell em { font-style: normal; color: var(--ab-text-dim); }
+.staff__cell.is-warn { color: #ff8fae; font-weight: 700; }
+.staff__progress { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 0 16px 12px; font-size: 0.8rem; }
+.staff__rank { color: var(--ab-cyan); }
 .staff__xp { font-family: var(--ab-font-mono); color: var(--ab-lime); }
-.staff__streak { font-size: 0.84rem; }
+.staff__streak { color: var(--ab-text-dim); }
 .staff__tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
 .staff__tag--ok { background: rgba(61, 220, 132, 0.16); color: var(--ab-success); }
 .staff__tag--warn { background: rgba(255, 61, 113, 0.18); color: #ff8fae; }
@@ -315,10 +393,24 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff__bar-fill.is-empty { background: rgba(120, 150, 255, 0.12); }
 .staff__bar-day { font-family: var(--ab-font-mono); font-size: 0.6rem; color: var(--ab-text-faint); }
 @media (max-width: 760px) {
-  .staff__row { grid-template-columns: 1.8fr 1fr 0.6fr; grid-auto-rows: min-content; }
-  .staff__row--head span:nth-child(n+4) { display: none; }
-  .staff__row:not(.staff__row--head) span:nth-child(4) { display: none; }
-  .staff__rank { font-size: 0.76rem; }
+  .staff__row--head { display: none; }
+  .staff__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name name status"
+      "mood energy pain"
+      "sleep fuel fuel";
+    gap: 6px 10px; padding: 12px 14px;
+  }
+  .staff__c-name { grid-area: name; }
+  .staff__c-mood { grid-area: mood; }
+  .staff__c-energy { grid-area: energy; }
+  .staff__c-pain { grid-area: pain; }
+  .staff__c-sleep { grid-area: sleep; }
+  .staff__c-fuel { grid-area: fuel; }
+  .staff__c-status { grid-area: status; justify-self: end; }
+  .staff__cell { white-space: normal; }
+  .staff__progress { padding: 0 14px 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .staff__spinner { animation-duration: 2s; } }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Ввод секретного кода агента: 10 символов Crockford base32.
+// Ввод кода игрока: 10 символов Crockford base32.
 // Нормализацию (O→0, I/L→1) делает сервер; здесь — верхний регистр и чистка.
 import { computed } from 'vue'
 
@@ -23,7 +23,7 @@ function onKey(e: KeyboardEvent) {
 
 <template>
   <div class="code-input">
-    <label class="ab-eyebrow" for="agent-code">Секретный код агента</label>
+    <label class="ab-eyebrow" for="agent-code">Код игрока</label>
     <div class="code-input__field" :class="{ 'is-full': clean.length === 10 }">
       <input
         id="agent-code"

@@ -25,7 +25,7 @@ const NotFoundPage    = () => import('@/pages/NotFoundPage.vue')
 const PrivacyPage     = () => import('@/pages/legal/PrivacyPage.vue')
 const ConsentPage     = () => import('@/pages/legal/ConsentPage.vue')
 
-// «Тайная база» — скрытый раздел (noindex, вне навигации и sitemap).
+// «Подтрибунка» — скрытый раздел (noindex, вне навигации и sitemap).
 const AgentShell         = () => import('@/features/base/components/AgentShell.vue')
 const BaseLoginView      = () => import('@/features/base/views/LoginView.vue')
 const BaseMissionView    = () => import('@/features/base/views/MissionView.vue')
@@ -336,17 +336,17 @@ const routes: RouteRecordRaw[] = [
       })),
     ],
   },
-  // «Тайная база» — отдельный корень со своей тёмной оболочкой.
-  // Скрыт от индексации, навигации и sitemap; вход по коду агента / SMS тренера.
+  // «Подтрибунка» — отдельный корень со своей тёмной оболочкой.
+  // Скрыт от индексации, навигации и sitemap; вход по коду игрока / SMS тренера.
   {
     path: '/agent-base',
     component: AgentShell,
     children: [
-      { path: '', name: 'base-login', component: BaseLoginView, meta: { title: 'Тайная база', noIndex: true } },
-      { path: 'mission', name: 'base-mission', component: BaseMissionView, meta: { title: 'Миссия дня — Тайная база', noIndex: true } },
-      { path: 'progress', name: 'base-progress', component: BaseProgressView, meta: { title: 'Моё досье — Тайная база', noIndex: true } },
-      { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Штаб тренера — Тайная база', noIndex: true } },
-      { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Досье агента — Тайная база', noIndex: true } },
+      { path: '', name: 'base-login', component: BaseLoginView, meta: { title: 'Подтрибунка', noIndex: true } },
+      { path: 'mission', name: 'base-mission', component: BaseMissionView, meta: { title: 'Разминка дня — Подтрибунка', noIndex: true } },
+      { path: 'progress', name: 'base-progress', component: BaseProgressView, meta: { title: 'Моя карточка — Подтрибунка', noIndex: true } },
+      { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Тренерская — Подтрибунка', noIndex: true } },
+      { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Карточка игрока — Подтрибунка', noIndex: true } },
     ],
   },
   // 404 — bare layout (без header/footer)
@@ -413,7 +413,7 @@ export const router = createRouter({
 })
 
 /**
- * Доступ в «Тайную базу»: детские экраны требуют child-токен, досье агента —
+ * Доступ в «Подтрибунку»: детские экраны требуют child-токен, карточка игрока —
  * staff-токен. Без токена отправляем на соответствующий вход. Идентичность
  * всё равно проверяет сервер по JWT — guard лишь убирает лишние редиректы.
  */
@@ -435,10 +435,10 @@ router.beforeEach((to) => {
 router.afterEach((to) => {
   const meta = to.meta ?? {}
 
-  // «Тайная база»: только title и noindex. Без canonical/og/Метрики —
+  // «Подтрибунка»: только title и noindex. Без canonical/og/Метрики —
   // скрытый раздел не должен оставлять следов в поиске и аналитике.
   if (to.path.startsWith('/agent-base')) {
-    applyPageMeta({ title: typeof meta.title === 'string' ? meta.title : 'Тайная база' })
+    applyPageMeta({ title: typeof meta.title === 'string' ? meta.title : 'Подтрибунка' })
     setMeta('robots', 'noindex, nofollow')
     return
   }

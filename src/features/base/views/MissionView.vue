@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Ежедневная миссия: один вопрос на экран → награда. Боль >= 3 → экран заботы.
+// Ежедневная разминка: один вопрос на экран → награда. Боль >= 3 → экран заботы.
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBaseAuth } from '../stores/baseAuth'
@@ -73,7 +73,7 @@ onMounted(async () => {
     <!-- Загрузка -->
     <div v-if="loading" class="mission__loading ab-card">
       <span class="mission__spinner" aria-hidden="true" />
-      <p class="ab-dim">Получаем миссию дня…</p>
+      <p class="ab-dim">Получаем разминку дня…</p>
     </div>
 
     <!-- Ошибка -->
@@ -95,7 +95,7 @@ onMounted(async () => {
       <template v-else>
         <MissionCard :theme="mission.theme" :day-key="mission.day_key" :weekday="mission.weekday" :slogan="mission.slogan" />
 
-        <div class="mission__dots" role="tablist" aria-label="Вопросы миссии">
+        <div class="mission__dots" role="tablist" aria-label="Вопросы разминки">
           <button
             v-for="(q, i) in questions" :key="q.id" type="button"
             class="mission__dot" :class="{ 'is-current': i === step, 'is-done': isAnswered(q) }"
@@ -123,7 +123,7 @@ onMounted(async () => {
             :disabled="!canAdvance || submitting || (isLast && !requiredDone)"
             @click="next"
           >
-            {{ submitting ? 'Отправляем…' : isLast ? 'Завершить миссию 🚀' : 'Дальше →' }}
+            {{ submitting ? 'Отправляем…' : isLast ? 'Завершить разминку ⚽' : 'Дальше →' }}
           </button>
         </div>
       </template>

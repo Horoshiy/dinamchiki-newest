@@ -1,4 +1,4 @@
-// Типы ответов «Тайной базы» — зеркалят JSON бэкенда (docs/api/base.yaml).
+// Типы ответов «Подтрибунки» — зеркалят JSON бэкенда (docs/api/base.yaml).
 
 export interface AnswerInput {
   question_id: number
@@ -172,6 +172,11 @@ export interface StaffChildRow {
   needs_attention_today: boolean
   has_code: boolean
   last_mission_date: string
+  mood_today: number
+  energy_today: number
+  pain_today: number
+  sleep_today: string
+  fuel_today: string[]
 }
 
 export interface StaffAnswer {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Досье агента: звание, XP, серия, значки, календарь, позывной.
+// Карточка игрока: звание, XP, серия, значки, календарь, прозвище.
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as api from '../api/base.api'
@@ -44,7 +44,7 @@ async function load() {
     codename.value = auth.me?.codename ?? ''
   } catch (e) {
     if (e instanceof BaseApiError && (e.status === 401 || e.status === 403)) { auth.logoutChild(); void router.push({ name: 'base-login' }); return }
-    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить досье.'
+    error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить карточку.'
   } finally {
     loading.value = false
   }
@@ -59,7 +59,7 @@ async function saveCodename() {
     sound.play('success')
     editing.value = false
   } catch (e) {
-    error.value = e instanceof BaseApiError ? e.message : 'Не удалось сохранить позывной.'
+    error.value = e instanceof BaseApiError ? e.message : 'Не удалось сохранить прозвище.'
   } finally {
     saving.value = false
   }
@@ -70,7 +70,7 @@ onMounted(load)
 
 <template>
   <div class="progress">
-    <div v-if="loading" class="progress__loading ab-card"><span class="progress__spinner" />Загружаем досье…</div>
+    <div v-if="loading" class="progress__loading ab-card"><span class="progress__spinner" />Загружаем карточку…</div>
     <div v-else-if="error && !progress" class="ab-card progress__loading">
       <p class="ab-alert ab-alert--error">{{ error }}</p>
       <button class="ab-btn ab-btn--ghost" type="button" @click="load">Повторить</button>
@@ -82,12 +82,12 @@ onMounted(load)
         <RankBadge :rank="progress.rank" :xp="progress.xp" size="lg" />
         <div class="progress__id">
           <template v-if="!editing">
-            <h1 class="progress__codename">{{ auth.me?.codename || 'Агент' }}</h1>
-            <button class="progress__edit" type="button" @click="editing = true">✎ изменить позывной</button>
+            <h1 class="progress__codename">{{ auth.me?.codename || 'Игрок' }}</h1>
+            <button class="progress__edit" type="button" @click="editing = true">✎ изменить прозвище</button>
           </template>
           <template v-else>
             <div class="progress__edit-row">
-              <input v-model="codename" class="ab-input" maxlength="24" placeholder="Твой позывной" @keydown.enter="saveCodename" />
+              <input v-model="codename" class="ab-input" maxlength="24" placeholder="Твоё прозвище" @keydown.enter="saveCodename" />
               <button class="ab-btn ab-btn--sm" type="button" :disabled="saving" @click="saveCodename">OK</button>
             </div>
           </template>
@@ -96,7 +96,7 @@ onMounted(load)
             <p v-if="auth.me?.rank_progress && !auth.me.rank_progress.maxed" class="progress__rankhint ab-faint">
               До звания «{{ auth.me.rank_progress.next_title }}» — {{ auth.me.rank_progress.to_next }} XP
             </p>
-            <p v-else class="progress__rankhint ab-faint">Максимальное звание. Ты легенда базы! 🏆</p>
+            <p v-else class="progress__rankhint ab-faint">Максимальное звание. Ты легенда клуба! 🏆</p>
           </div>
         </div>
       </section>
@@ -105,10 +105,10 @@ onMounted(load)
 
       <!-- Быстрые цифры -->
       <section class="progress__stats ab-rise ab-rise-1">
-        <div class="progress__stat ab-panel"><b>{{ progress.missions_total }}</b><span>миссий</span></div>
+        <div class="progress__stat ab-panel"><b>{{ progress.missions_total }}</b><span>разминок</span></div>
         <div class="progress__stat ab-panel"><b>{{ progress.xp }}</b><span>всего XP</span></div>
         <div class="progress__stat ab-panel"><b>{{ progress.streak_best }}</b><span>рекорд серии</span></div>
-        <RouterLink v-if="!auth.me?.completed_today" :to="{ name: 'base-mission' }" class="progress__cta ab-btn ab-btn--lime ab-btn--sm">Миссия дня →</RouterLink>
+        <RouterLink v-if="!auth.me?.completed_today" :to="{ name: 'base-mission' }" class="progress__cta ab-btn ab-btn--lime ab-btn--sm">Разминка дня →</RouterLink>
         <div v-else class="progress__done ab-panel">✓ сегодня выполнено</div>
       </section>
 
@@ -120,7 +120,7 @@ onMounted(load)
 
       <!-- Лестница званий -->
       <section class="ab-card progress__block ab-rise ab-rise-2">
-        <h2 class="progress__h">Путь агента</h2>
+        <h2 class="progress__h">Путь игрока</h2>
         <ol class="ladder">
           <li v-for="r in progress.rank_ladder" :key="r.title" class="ladder__step" :class="{ 'is-reached': r.reached, 'is-current': r.current }">
             <span class="ladder__mark" />

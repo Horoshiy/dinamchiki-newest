@@ -1,5 +1,5 @@
 /**
- * E2E «Тайной базы»: сквозной прогон вход → миссия → награда → досье и штаб тренера.
+ * E2E «Подтрибунки»: сквозной прогон вход → разминка → награда → карточка и тренерская.
  *
  * Раздел закрыт от посторонних, поэтому прогон идёт против собранной SPA с
  * подменённым API (фикстуры зеркалят docs/api/base.yaml). Так проверяется реальная
@@ -39,31 +39,31 @@ const server = http.createServer((req, res) => {
   })
 })
 
-// ─── Фикстуры API (зеркало base.types.ts) ──────────────────────────────────────
+// ─── Фикстуры API (зеркало base.types.ts и modules/base/content) ───────────────
 const SLOGAN = 'СТАРайся • ПОДДЕРЖИВАЙ • ИГРАЙ ЧЕСТНО'
 const QUESTIONS = [
-  { id: 1, template_key: 'mood', kind: 'scale', text: 'Как твой настрой сегодня?', options: ['Очень плохо', 'Так себе', 'Нормально', 'Хорошо', 'Отлично'], is_required: true, max_len: 0, position: 1 },
-  { id: 2, template_key: 'energy', kind: 'scale', text: 'Сколько у тебя энергии?', options: ['Пусто', 'Мало', 'Средне', 'Много', 'Полный заряд'], is_required: true, max_len: 0, position: 2 },
-  { id: 3, template_key: 'pain', kind: 'scale', text: 'Что-нибудь болит после тренировки?', options: ['Ничего', 'Чуть-чуть', 'Заметно', 'Сильно', 'Очень сильно'], is_required: true, max_len: 0, position: 3 },
-  { id: 4, template_key: 'goal', kind: 'single', text: 'Какая цель на сегодня?', options: ['Быстрее бегать', 'Точнее пасовать', 'Поддерживать команду', 'Играть честно'], is_required: true, max_len: 0, position: 4 },
-  { id: 5, template_key: 'dream', kind: 'text', text: 'О чём ты мечтаешь в футболе?', options: [], is_required: false, max_len: 200, position: 5 },
+  { id: 1, template_key: 'mood', kind: 'scale', text: 'Какой у тебя сегодня настрой?', options: ['Устал', 'Так себе', 'Нормально', 'Хорошо', 'Супер!'], is_required: true, max_len: 0, position: 1 },
+  { id: 2, template_key: 'energy', kind: 'scale', text: 'Сколько у тебя сил?', options: ['Мало', 'Немного', 'Средне', 'Много', 'Очень много!'], is_required: true, max_len: 0, position: 2 },
+  { id: 3, template_key: 'pain', kind: 'scale', text: 'Что-нибудь болит или ноет?', options: ['Ничего не болит', 'Немного болит', 'Болит', 'Сильно болит', 'Очень сильно болит'], is_required: true, max_len: 0, position: 3 },
+  { id: 4, template_key: 'sleep', kind: 'single', text: 'Как ты спал?', options: ['Много (8–10 часов)', 'Мало (меньше 8)', 'Почти не спал'], is_required: true, max_len: 0, position: 4 },
+  { id: 5, template_key: 'fuel', kind: 'multi', text: 'Еда и вода — что уже было?', options: ['Позавтракал 🍎', 'Пил воду 💧'], is_required: false, max_len: 0, position: 5 },
 ]
 const BADGES = [
-  { key: 'first_mission', title: 'Первый выход', description: 'Первая миссия выполнена', icon: '🚀', threshold: 1, earned: true },
-  { key: 'streak_3', title: 'Серия 3 дня', description: '3 дня подряд', icon: '🔥', threshold: 3, earned: true },
-  { key: 'streak_7', title: 'Неделя силы', description: '7 дней подряд', icon: '⚡', threshold: 7, earned: true },
-  { key: 'streak_14', title: 'Две недели', description: '14 дней подряд', icon: '🛡️', threshold: 14, earned: false },
-  { key: 'streak_30', title: 'Месяц агента', description: '30 дней подряд', icon: '🏆', threshold: 30, earned: false },
-  { key: 'xp_100', title: '100 XP', description: 'Набрано 100 XP', icon: '💯', threshold: 100, earned: true },
-  { key: 'xp_500', title: '500 XP', description: 'Набрано 500 XP', icon: '🌟', threshold: 500, earned: false },
-  { key: 'honest', title: 'Честная игра', description: 'Честно ответил о самочувствии', icon: '🤝', threshold: 1, earned: false },
+  { key: 'first', title: 'Первый выход', description: 'Прошёл первую разминку', icon: '🎯', threshold: 1, earned: true },
+  { key: 'streak3', title: 'Серия 3', description: '3 дня подряд', icon: '🔥', threshold: 3, earned: true },
+  { key: 'streak7', title: 'Неделя огня', description: '7 дней подряд', icon: '⚡', threshold: 7, earned: true },
+  { key: 'streak14', title: 'Две недели', description: '14 дней подряд', icon: '🛡️', threshold: 14, earned: false },
+  { key: 'streak30', title: 'Месяц чемпиона', description: '30 дней подряд', icon: '🏆', threshold: 30, earned: false },
+  { key: 'xp100', title: 'Сотня', description: 'Набрал 100 XP', icon: '💯', threshold: 100, earned: true },
+  { key: 'xp500', title: 'Пятьсот', description: 'Набрал 500 XP', icon: '🌟', threshold: 500, earned: false },
+  { key: 'missions10', title: 'Десять разминок', description: 'Прошёл 10 разминок', icon: '🎖️', threshold: 10, earned: false },
 ]
 const LADDER = [
   { title: 'Новичок', min_xp: 0, reached: true, current: false },
-  { title: 'Разведчик', min_xp: 50, reached: true, current: true },
-  { title: 'Агент', min_xp: 150, reached: false, current: false },
-  { title: 'Спецагент', min_xp: 300, reached: false, current: false },
-  { title: 'Легенда базы', min_xp: 600, reached: false, current: false },
+  { title: 'Игрок', min_xp: 100, reached: true, current: true },
+  { title: 'Мастер', min_xp: 300, reached: false, current: false },
+  { title: 'Капитан', min_xp: 700, reached: false, current: false },
+  { title: 'Легенда клуба', min_xp: 1500, reached: false, current: false },
 ]
 const MOTIVATION = 'Каждая тренировка делает тебя сильнее. Сегодня ты на шаг ближе к голу мечты — не сдавайся!'
 const JOKE = 'Почему мяч не ходит в школу? Потому что его и так пинают каждый день!'
@@ -79,10 +79,10 @@ function calendar() {
 }
 function me(state) {
   return {
-    child_id: 101, codename: state.codename, rank: 'Разведчик', xp: state.submitted ? 120 : 105,
+    child_id: 101, codename: state.codename, rank: 'Игрок', xp: state.submitted ? 120 : 105,
     streak_current: state.submitted ? 4 : 3, streak_best: 7, completed_today: state.submitted,
     needs_attention_today: state.attention, sound_on: true,
-    rank_progress: { current: 'Разведчик', next_title: 'Агент', next_min_xp: 150, to_next: state.submitted ? 30 : 45, maxed: false },
+    rank_progress: { current: 'Игрок', next_title: 'Мастер', next_min_xp: 300, to_next: state.submitted ? 180 : 195, maxed: false },
     badges: BADGES, slogan: SLOGAN,
   }
 }
@@ -94,16 +94,21 @@ function mission(state) {
   }
 }
 const CHILDREN = [
-  { child_id: 101, full_name: 'Артём Соколов', codename: 'Сокол', rank: 'Разведчик', xp: 120, streak_current: 4, completed_today: true, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-15' },
-  { child_id: 102, full_name: 'Максим Орлов', codename: 'Орёл', rank: 'Агент', xp: 210, streak_current: 9, completed_today: true, needs_attention_today: true, has_code: true, last_mission_date: '2026-11-15' },
-  { child_id: 103, full_name: 'Иван Волков', codename: 'Волк', rank: 'Новичок', xp: 25, streak_current: 1, completed_today: false, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-13' },
-  { child_id: 104, full_name: 'Денис Медведев', codename: 'Медведь', rank: 'Разведчик', xp: 80, streak_current: 2, completed_today: false, needs_attention_today: false, has_code: false, last_mission_date: '' },
-  { child_id: 105, full_name: 'Кирилл Зайцев', codename: 'Заяц', rank: 'Спецагент', xp: 340, streak_current: 14, completed_today: true, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-15' },
-  { child_id: 106, full_name: 'Егор Лисов', codename: 'Лис', rank: 'Новичок', xp: 10, streak_current: 0, completed_today: false, needs_attention_today: false, has_code: false, last_mission_date: '' },
+  { child_id: 101, full_name: 'Артём Соколов', codename: 'Сокол', rank: 'Игрок', xp: 120, streak_current: 4, completed_today: true, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-15', mood_today: 4, energy_today: 4, pain_today: 1, sleep_today: 'Много (8–10 часов)', fuel_today: ['Позавтракал 🍎', 'Пил воду 💧'] },
+  { child_id: 102, full_name: 'Максим Орлов', codename: 'Орёл', rank: 'Мастер', xp: 320, streak_current: 9, completed_today: true, needs_attention_today: true, has_code: true, last_mission_date: '2026-11-15', mood_today: 2, energy_today: 3, pain_today: 4, sleep_today: 'Мало (меньше 8)', fuel_today: ['Пил воду 💧'] },
+  { child_id: 103, full_name: 'Иван Волков', codename: 'Волк', rank: 'Новичок', xp: 25, streak_current: 1, completed_today: false, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-13', mood_today: 0, energy_today: 0, pain_today: 0, sleep_today: '', fuel_today: [] },
+  { child_id: 104, full_name: 'Денис Медведев', codename: 'Медведь', rank: 'Новичок', xp: 80, streak_current: 2, completed_today: false, needs_attention_today: false, has_code: false, last_mission_date: '', mood_today: 0, energy_today: 0, pain_today: 0, sleep_today: '', fuel_today: [] },
+  { child_id: 105, full_name: 'Кирилл Зайцев', codename: 'Заяц', rank: 'Капитан', xp: 740, streak_current: 14, completed_today: true, needs_attention_today: false, has_code: true, last_mission_date: '2026-11-15', mood_today: 5, energy_today: 4, pain_today: 1, sleep_today: 'Много (8–10 часов)', fuel_today: ['Позавтракал 🍎', 'Пил воду 💧'] },
+  { child_id: 106, full_name: 'Егор Лисов', codename: 'Лис', rank: 'Новичок', xp: 10, streak_current: 0, completed_today: false, needs_attention_today: false, has_code: false, last_mission_date: '', mood_today: 0, energy_today: 0, pain_today: 0, sleep_today: '', fuel_today: [] },
 ]
 function childDetail(id) {
   const c = CHILDREN.find((x) => x.child_id === id) || CHILDREN[0]
-  const answers = QUESTIONS.map((q) => ({ template_key: q.template_key, text: q.text, kind: q.kind, value_int: q.kind === 'scale' ? 4 : 0, value_text: q.kind === 'text' ? 'Забить гол в девятку' : q.kind === 'single' ? 'Играть честно' : '', values: [] }))
+  const answers = QUESTIONS.map((q) => ({
+    template_key: q.template_key, text: q.text, kind: q.kind,
+    value_int: q.kind === 'scale' ? 4 : 0,
+    value_text: q.kind === 'single' ? 'Много (8–10 часов)' : q.kind === 'text' ? 'Забить гол в девятку' : '',
+    values: q.kind === 'multi' ? ['Позавтракал 🍎', 'Пил воду 💧'] : [],
+  }))
   return {
     child_id: c.child_id, full_name: c.full_name, codename: c.codename, rank: c.rank, xp: c.xp,
     streak_current: c.streak_current, streak_best: Math.max(c.streak_current, 7), has_code: c.has_code, badges: BADGES,
@@ -115,7 +120,7 @@ function childDetail(id) {
   }
 }
 function aggregate(id) {
-  if (id === 999) return { team_id: id, insufficient: true, message: 'Мало данных: ответили меньше 3 агентов — среднее выдавало бы конкретного ребёнка.', children_count: 2, responded_count: 1, days: 14, avg_mood: 0, avg_energy: 0, avg_pain: 0, attention_count: 0, daily: [] }
+  if (id === 999) return { team_id: id, insufficient: true, message: 'Мало данных: ответили меньше 3 игроков — среднее выдавало бы конкретного ребёнка.', children_count: 2, responded_count: 1, days: 14, avg_mood: 0, avg_energy: 0, avg_pain: 0, attention_count: 0, daily: [] }
   const daily = []
   for (let i = 13; i >= 0; i--) {
     const d = new Date(Date.UTC(2026, 10, 15 - i))
@@ -131,7 +136,7 @@ function handleBase(method, pathname, body, state) {
   if (p === 'auth/login' && method === 'POST') {
     const code = String(body?.code || '').replace(/[^A-Z0-9]/gi, '').toUpperCase()
     if (code === 'AAAAAAAAAA') return { status: 401, json: { success: false, error: 'Код не подошёл. Проверь и попробуй снова.' } }
-    return ok({ success: true, token: 'child-jwt-token', child_id: 101, codename: state.codename, rank: 'Разведчик' })
+    return ok({ success: true, token: 'child-jwt-token', child_id: 101, codename: state.codename, rank: 'Игрок' })
   }
   if (p === 'me' && method === 'GET') return ok(me(state))
   if (p === 'me' && method === 'PUT') { if (body?.codename) state.codename = body.codename; return ok(me(state)) }
@@ -141,12 +146,12 @@ function handleBase(method, pathname, body, state) {
     const pain = (body?.answers || []).find((a) => a.question_id === 3)?.value_int || 0
     state.submitted = true; state.attention = pain >= 3
     return ok({
-      already: false, xp_granted: 15, total_xp: 120, streak: 4, streak_best: 7, rank: 'Разведчик',
+      already: false, xp_granted: 15, total_xp: 120, streak: 4, streak_best: 7, rank: 'Игрок',
       new_badges: [BADGES[2]], needs_attention: state.attention, motivation: MOTIVATION, joke: JOKE,
       attention_message: state.attention ? 'Расскажи тренеру и родителям, что болит — вместе разберёмся.' : undefined,
     })
   }
-  if (p === 'progress' && method === 'GET') return ok({ xp: state.submitted ? 120 : 105, rank: 'Разведчик', streak_current: state.submitted ? 4 : 3, streak_best: 7, missions_total: 12, rank_ladder: LADDER, badges: BADGES, calendar: calendar() })
+  if (p === 'progress' && method === 'GET') return ok({ xp: state.submitted ? 120 : 105, rank: 'Игрок', streak_current: state.submitted ? 4 : 3, streak_best: 7, missions_total: 12, rank_ladder: LADDER, badges: BADGES, calendar: calendar() })
   if (p.startsWith('history')) return ok({ success: true, items: [], total: 0, limit: 30, offset: 0 })
   // ─── Тренер ───
   if (p === 'staff/auth/request-code' && method === 'POST') return ok({ success: true })
@@ -289,19 +294,19 @@ const VIEWPORTS = [
     await check(page, vp, 'login'); await shot(page, vp, 'login')
     // Ошибка входа
     await page.fill('#agent-code', 'AAAAAAAAAA')
-    await clickBtn(page, 'Войти в базу')
+    await clickBtn(page, 'Войти в Подтрибунку')
     await page.waitForSelector('.ab-alert--error')
     await check(page, vp, 'login-error')
     // Успешный вход
     await page.fill('#agent-code', 'ABCDEFGHJK')
-    await clickBtn(page, 'Войти в базу')
+    await clickBtn(page, 'Войти в Подтрибунку')
     await page.waitForSelector('.mission__q-text')
     await shot(page, vp, 'mission-mood')
     // q1 настрой
     await check(page, vp, 'mission-mood')
     await page.locator('.mood__opt').nth(3).click()
     await clickBtn(page, 'Дальше')
-    // q2 энергия
+    // q2 силы
     await page.waitForSelector('.energy__battery')
     await check(page, vp, 'mission-energy')
     await page.locator('.energy__seg').nth(3).click()
@@ -312,16 +317,17 @@ const VIEWPORTS = [
     await check(page, vp, 'mission-pain')
     await shot(page, vp, 'mission-pain')
     await clickBtn(page, 'Дальше')
-    // q4 цель
+    // q4 сон
     await page.waitForSelector('.goal')
-    await check(page, vp, 'mission-goal')
+    await check(page, vp, 'mission-sleep')
     await page.locator('.goal__opt').nth(0).click()
     await clickBtn(page, 'Дальше')
-    // q5 мечта
-    await page.waitForSelector('.dream__area')
-    await page.fill('.dream__area', 'Забить гол в девятку и сыграть на большом стадионе')
-    await check(page, vp, 'mission-dream')
-    await clickBtn(page, 'Завершить миссию')
+    // q5 еда/вода (необязательный — не блокирует завершение)
+    await page.waitForSelector('.ab-chip')
+    await check(page, vp, 'mission-fuel')
+    if (!(await page.locator('.mission__next').isEnabled())) problems.push(`[${vp.name}] fuel необязательный, но кнопка завершения заблокирована`)
+    await page.locator('.ab-chip').nth(0).click()
+    await clickBtn(page, 'Завершить разминку')
     if (painIndex >= 2) {
       await page.waitForSelector('.attention__title')
       await check(page, vp, 'attention'); await shot(page, vp, 'attention')
@@ -330,27 +336,27 @@ const VIEWPORTS = [
     await page.waitForSelector('.reward__title')
     await page.waitForTimeout(1100) // конфетти + счётчик XP
     await check(page, vp, tag + '-reward'); await shot(page, vp, 'reward')
-    await clickBtn(page, 'В моё досье')
+    await clickBtn(page, 'В мою карточку')
     await page.waitForSelector('.progress__codename')
     await check(page, vp, 'progress'); await shot(page, vp, 'progress')
-    // Смена позывного
+    // Смена прозвища
     await page.click('.progress__edit')
     await page.fill('.progress__edit-row input', 'Ястреб')
     await clickBtn(page, 'OK')
     await page.waitForTimeout(200)
     const cn = await page.textContent('.progress__codename')
-    if (!/Ястреб/.test(cn || '')) problems.push(`[${vp.name}] позывной не обновился: «${cn}»`)
-    // Повторный заход в тот же день: миссия уже выполнена → отчёт без повторного XP и конфетти
+    if (!/Ястреб/.test(cn || '')) problems.push(`[${vp.name}] прозвище не обновилось: «${cn}»`)
+    // Повторный заход в тот же день: разминка уже пройдена → протокол без повторного XP и конфетти
     if (painIndex === 1) {
-      await page.getByRole('link', { name: 'Миссия', exact: false }).first().click()
+      await page.getByRole('link', { name: 'Разминка', exact: false }).first().click()
       await page.waitForSelector('.reward__title')
       await page.waitForTimeout(300)
       const head = await page.textContent('.reward__title')
-      if (!/уже выполнена/.test(head || '')) problems.push(`[${vp.name}] повторный заход: ожидался отчёт «уже выполнена», получено «${head}»`)
+      if (!/уже пройдена/.test(head || '')) problems.push(`[${vp.name}] повторный заход: ожидался протокол «уже пройдена», получено «${head}»`)
       const conf = await page.locator('.reward__confetti span').count()
       if (conf > 0) problems.push(`[${vp.name}] повторный заход: конфетти не должно сыпаться повторно (${conf})`)
       await check(page, vp, 'mission-reopen'); await shot(page, vp, 'mission-reopen')
-      await clickBtn(page, 'В моё досье')
+      await clickBtn(page, 'В мою карточку')
       await page.waitForSelector('.progress__codename')
     }
     await ctx.close()
@@ -365,9 +371,22 @@ const VIEWPORTS = [
     await clickBtn(page, 'Получить код')
     await page.waitForSelector('#staff-code')
     await page.fill('#staff-code', '1234')
-    await clickBtn(page, 'Войти в штаб')
+    await clickBtn(page, 'Войти в тренерскую')
     await page.waitForSelector('.staff__title')
     await check(page, vp, 'staff-dashboard'); await shot(page, vp, 'staff-dashboard')
+    // Доска дня: сводка + колонки ответов на одном экране
+    const summary = await page.textContent('.staff__board-summary')
+    if (!/Ответили/.test(summary || '')) problems.push(`[${vp.name}] нет сводки дня «Ответили X из Y»`)
+    const headTxt = (await page.textContent('.staff__row--head')) || ''
+    for (const c of ['Игрок', 'Настрой', 'Силы', 'Болит', 'Сон', 'Еда/вода', 'Статус']) {
+      if (!headTxt.includes(c)) problems.push(`[${vp.name}] в доске дня нет колонки «${c}»`)
+    }
+    // Прогресс скрыт по умолчанию, раскрывается по клику
+    if ((await page.locator('.staff__progress').count()) !== 0) problems.push(`[${vp.name}] Прогресс должен быть скрыт по умолчанию`)
+    await clickBtn(page, 'Прогресс')
+    await page.waitForSelector('.staff__progress')
+    await clickBtn(page, 'Скрыть прогресс')
+    await page.waitForTimeout(150)
     // Поиск + фильтр + сортировка
     await page.fill('.staff__search', 'Орлов')
     await page.waitForTimeout(150)
@@ -439,5 +458,5 @@ const VIEWPORTS = [
     console.error(`\nСкриншоты: ${SHOTS}`)
     process.exit(1)
   }
-  console.log(`\nE2E «Тайная база»: замечаний нет. Скриншоты: ${SHOTS}`)
+  console.log(`\nE2E «Подтрибунка»: замечаний нет. Скриншоты: ${SHOTS}`)
 })().catch((e) => { console.error('FATAL:', e.stack || e.message); server.close(); process.exit(1) })

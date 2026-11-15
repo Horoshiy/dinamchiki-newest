@@ -1,4 +1,4 @@
-// Состояние ежедневной миссии: загрузка, черновик, ответы, отправка.
+// Состояние ежедневной разминки: загрузка, черновик, ответы, отправка.
 // Один вопрос на экран; черновик автосохраняется, чтобы не потерять ответы.
 import { computed, ref } from 'vue'
 import * as api from '../api/base.api'
@@ -7,7 +7,7 @@ import type { AnswerInput, BaseMission, BaseQuestion, SubmitResult } from '../ap
 import { useBaseAuth } from '../stores/baseAuth'
 
 function errText(e: unknown): string {
-  return e instanceof BaseApiError ? e.message : 'Не удалось связаться с базой. Попробуй ещё раз.'
+  return e instanceof BaseApiError ? e.message : 'Не удалось связаться с Подтрибункой. Попробуй ещё раз.'
 }
 
 export function useMission() {

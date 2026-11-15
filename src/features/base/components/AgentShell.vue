@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Оболочка «Тайной базы»: тёмный радарный фон, верхняя панель, звук, навигация.
+// Оболочка «Подтрибунки»: тёмный футбольный фон, верхняя панель, звук, навигация.
 // Изолирована от светлой темы сайта — всё под .agent-base.
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -52,11 +52,12 @@ function logout() {
         <RouterLink :to="brandTo" class="ab-brand">
           <span class="ab-brand__mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="22" height="22">
-              <path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z" fill="none" stroke="currentColor" stroke-width="1.6" />
-              <circle cx="12" cy="11" r="3" fill="currentColor" />
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M12 7.4l3.3 2.4-1.25 3.9h-4.1L8.7 9.8z" fill="currentColor" />
+              <path d="M12 3v4.4M4.1 9.6l4.6 1.5M19.9 9.6l-4.6 1.5M7.2 20.2l2.7-3.5M16.8 20.2l-2.7-3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
             </svg>
           </span>
-          <span class="ab-brand__text">ТАЙНАЯ БАЗА</span>
+          <span class="ab-brand__text">ПОДТРИБУНКА</span>
         </RouterLink>
 
         <BaseNav v-if="showChildNav" mode="child" />
@@ -82,7 +83,7 @@ function logout() {
       </main>
 
       <footer class="ab-footer ab-faint">
-        ДФК «Динамчики» · секретный клуб агентов · результаты видишь только ты и тренер
+        ДФК «Динамчики» · свой клуб под трибуной · результаты видишь только ты и тренер
       </footer>
     </div>
   </div>

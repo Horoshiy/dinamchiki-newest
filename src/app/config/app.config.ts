@@ -10,7 +10,7 @@ export interface AppConfig {
   allowIndexing: boolean
   /** Номер счётчика Яндекс.Метрики; пусто — Метрика не подключается. */
   metrikaId: number | null
-  /** База API «Тайной базы» — same-origin прокси на бота. */
+  /** База API «Подтрибунки» — same-origin прокси на бота. */
   baseApi: string
 }
 

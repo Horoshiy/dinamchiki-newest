@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Награда после миссии: мотивация + шутка + XP/серия/звание/значки.
+// Награда после разминки: мотивация + шутка + XP/серия/звание/значки.
 // Считает XP вверх, сыплет конфетти (уважает prefers-reduced-motion).
 import { computed, onMounted, ref } from 'vue'
 import type { SubmitResult } from '../api/base.types'
@@ -16,7 +16,7 @@ const confetti = ref<Array<Record<string, string>>>([])
 const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const COLORS = ['#1e50d8', '#35e0ff', '#c6f24e', '#ffb020', '#ff3d71', '#3b6dff']
 
-const headline = computed(() => (props.result.already ? 'Миссия уже выполнена' : 'Миссия выполнена!'))
+const headline = computed(() => (props.result.already ? 'Разминка уже пройдена' : 'Разминка пройдена!'))
 
 onMounted(() => {
   if (props.result.already) return
@@ -53,7 +53,7 @@ onMounted(() => {
     </div>
 
     <div class="reward__hero ab-card ab-pop">
-      <span class="ab-eyebrow">{{ result.already ? 'Отчёт агента' : 'Секретный отчёт' }}</span>
+      <span class="ab-eyebrow">Протокол дня</span>
       <h2 class="reward__title">{{ headline }}</h2>
       <div class="reward__xp">
         <span class="reward__xp-num">+{{ shownXP }}</span>
@@ -101,7 +101,7 @@ onMounted(() => {
     </div>
 
     <button class="ab-btn ab-btn--lime ab-btn--block ab-rise ab-rise-4" type="button" @click="emit('done')">
-      В моё досье →
+      В мою карточку →
     </button>
   </div>
 </template>
