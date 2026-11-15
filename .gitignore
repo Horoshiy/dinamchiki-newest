@@ -30,6 +30,7 @@ dist-ssr/
 # отчёты покрытия
 coverage/
 .shots/
+tests/e2e/__screens__/
 documents-src/out/
 !.env.production
 !.env.test

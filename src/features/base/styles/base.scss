@@ -93,7 +93,9 @@
   .ab-content { position: relative; z-index: 1; }
 
   // ─── Типографика ───────────────────────────────────────────────────────────
-  h1, h2, h3, h4 { font-family: var(--ab-font-display); font-weight: 800; line-height: 1.12; letter-spacing: -0.01em; margin: 0; }
+  // color обязателен: global.scss красит все h1–h6 в тёмный $color-fg-strong
+  // светлой темы сайта. Без явного цвета заголовки базы были бы тёмными на тёмном.
+  h1, h2, h3, h4 { font-family: var(--ab-font-display); font-weight: 800; line-height: 1.12; letter-spacing: -0.01em; margin: 0; color: var(--ab-text); }
   .ab-eyebrow {
     font-family: var(--ab-font-mono);
     font-size: 0.72rem;

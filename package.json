@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "node tests/e2e/smoke.cjs",
+    "e2e:base": "node tests/e2e/base-flow.cjs",
     "verify": "npm run lint && npm run type-check && npm run test && npm run build"
   },
   "dependencies": {
