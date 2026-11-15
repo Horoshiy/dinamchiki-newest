@@ -340,6 +340,19 @@ const VIEWPORTS = [
     await page.waitForTimeout(200)
     const cn = await page.textContent('.progress__codename')
     if (!/Ястреб/.test(cn || '')) problems.push(`[${vp.name}] позывной не обновился: «${cn}»`)
+    // Повторный заход в тот же день: миссия уже выполнена → отчёт без повторного XP и конфетти
+    if (painIndex === 1) {
+      await page.getByRole('link', { name: 'Миссия', exact: false }).first().click()
+      await page.waitForSelector('.reward__title')
+      await page.waitForTimeout(300)
+      const head = await page.textContent('.reward__title')
+      if (!/уже выполнена/.test(head || '')) problems.push(`[${vp.name}] повторный заход: ожидался отчёт «уже выполнена», получено «${head}»`)
+      const conf = await page.locator('.reward__confetti span').count()
+      if (conf > 0) problems.push(`[${vp.name}] повторный заход: конфетти не должно сыпаться повторно (${conf})`)
+      await check(page, vp, 'mission-reopen'); await shot(page, vp, 'mission-reopen')
+      await clickBtn(page, 'В моё досье')
+      await page.waitForSelector('.progress__codename')
+    }
     await ctx.close()
   }
 
@@ -401,10 +414,20 @@ const VIEWPORTS = [
     await ctx.close()
   }
 
+  async function qrFlow(vp) {
+    const { ctx, page } = await newPage(vp)
+    // QR-карточка тренера: вход по #code= без ручного ввода кода
+    await page.goto(ORIGIN + '/agent-base#code=ABCDEFGHJK', { waitUntil: 'networkidle' })
+    await page.waitForSelector('.mission__q-text')
+    await check(page, vp, 'qr-login'); await shot(page, vp, 'qr-login')
+    await ctx.close()
+  }
+
   for (const vp of VIEWPORTS) {
     await childFlow(vp, 1)        // боль 2 → обычная награда
     await childFlow(vp, 3)        // боль 4 → экран заботы
     await staffFlow(vp)
+    await qrFlow(vp)              // вход по QR-ссылке тренера
     console.log(`${vp.name}: прогон завершён`)
   }
 
