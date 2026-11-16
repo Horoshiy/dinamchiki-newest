@@ -75,8 +75,10 @@ describe('vite-plugins/seo', () => {
     })
 
     it('robots запрещает обход «Подтрибунки», а sitemap её не содержит', () => {
+      expect(files['robots.txt']).toContain('Disallow: /podtribunka')
       expect(files['robots.txt']).toContain('Disallow: /razdevalka')
       expect(files['robots.txt']).toContain('Disallow: /agent-base')
+      expect(files['sitemap.xml']).not.toContain('/podtribunka')
       expect(files['sitemap.xml']).not.toContain('/razdevalka')
       expect(files['sitemap.xml']).not.toContain('/agent-base')
     })

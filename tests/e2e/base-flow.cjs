@@ -26,7 +26,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, ORIGIN)
   let p = decodeURIComponent(u.pathname)
-  if (p === '/razdevalka' || p.startsWith('/razdevalka/') || p === '/agent-base' || p.startsWith('/agent-base/')) p = '/spa.html'
+  if (['/podtribunka', '/razdevalka', '/agent-base'].some((b) => p === b || p.startsWith(b + '/'))) p = '/spa.html'
   const file = path.join(DIST, p)
   if (!file.startsWith(DIST)) { res.writeHead(403); return res.end() }
   fs.readFile(file, (err, buf) => {
@@ -165,7 +165,7 @@ function handleBase(method, pathname, body, state) {
     const id = Number(childM[1]); const sub = childM[2]
     if (!sub && method === 'GET') return ok(childDetail(id))
     if (sub === '/code' && method === 'GET') return ok(state.codeExists ? { exists: true, hint: 'ABCD-…-JK', created_at: '2026-11-10T10:00:00Z', last_used_at: '2026-11-15T08:25:00Z', locked: false } : { exists: false, locked: false })
-    if (sub === '/code' && method === 'POST') { state.codeExists = true; return ok({ success: true, child_id: id, code: 'ABCD-EFGH-JK', hint: 'ABCD-…-JK', login_url: 'https://dinamchiki.ru/razdevalka#code=ABCD-EFGH-JK', qr_png: QR_PNG }) }
+    if (sub === '/code' && method === 'POST') { state.codeExists = true; return ok({ success: true, child_id: id, code: 'ABCD-EFGH-JK', hint: 'ABCD-…-JK', login_url: 'https://dinamchiki.ru/podtribunka#code=ABCD-EFGH-JK', qr_png: QR_PNG }) }
     if (sub === '/code' && method === 'DELETE') { state.codeExists = false; return ok({ success: true }) }
     if (sub === '/note' && method === 'POST') return ok({ id: Date.now(), text: body?.text || '', created_at: new Date().toISOString() })
   }
@@ -289,7 +289,7 @@ const VIEWPORTS = [
   async function childFlow(vp, painIndex) {
     const { ctx, page } = await newPage(vp)
     const tag = painIndex >= 2 ? 'attention' : 'reward'
-    await page.goto(ORIGIN + '/razdevalka', { waitUntil: 'networkidle' })
+    await page.goto(ORIGIN + '/podtribunka', { waitUntil: 'networkidle' })
     await page.waitForSelector('.login__title')
     await check(page, vp, 'login'); await shot(page, vp, 'login')
     // Ошибка входа
@@ -364,7 +364,7 @@ const VIEWPORTS = [
 
   async function staffFlow(vp) {
     const { ctx, page } = await newPage(vp)
-    await page.goto(ORIGIN + '/razdevalka/staff', { waitUntil: 'networkidle' })
+    await page.goto(ORIGIN + '/podtribunka/staff', { waitUntil: 'networkidle' })
     await page.waitForSelector('.staff-login__title')
     await check(page, vp, 'staff-login'); await shot(page, vp, 'staff-login')
     await page.fill('#staff-phone', '+7 900 000-00-00')
@@ -439,7 +439,7 @@ const VIEWPORTS = [
     // Адрес прежний (/agent-base) — проверяем редирект уже розданных QR.
     await page.goto(ORIGIN + '/agent-base#code=ABCDEFGHJK', { waitUntil: 'networkidle' })
     await page.waitForSelector('.mission__q-text')
-    if (!page.url().includes('/razdevalka')) problems.push(`[${vp.name}] старый QR-адрес не переехал на /razdevalka: ${page.url()}`)
+    if (!page.url().includes('/podtribunka')) problems.push(`[${vp.name}] старый QR-адрес не переехал на /podtribunka: ${page.url()}`)
     await check(page, vp, 'qr-login'); await shot(page, vp, 'qr-login')
     await ctx.close()
   }

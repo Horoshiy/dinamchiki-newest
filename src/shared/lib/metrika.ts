@@ -82,7 +82,7 @@ function init(id: number) {
 
 export function trackPageView(url: string) {
   // «Подтрибунка»: ответы детей и код игрока в URL не должны уходить в Метрику.
-  if (url.startsWith('/razdevalka') || url.startsWith('/agent-base')) return
+  if (url.startsWith('/podtribunka') || url.startsWith('/razdevalka') || url.startsWith('/agent-base')) return
   const id = appConfig.metrikaId
   if (!id || !isMetrikaEnabled()) return
   if (!consentInSession && !hasCookieConsent()) {

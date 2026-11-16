@@ -32,6 +32,7 @@ export function seoPlugin(env: Record<string, string>): Plugin {
             // Карточки детей в поиск не отдаём.
             'Disallow: /player/',
             // «Подтрибунка» — скрытый раздел с ответами детей.
+            'Disallow: /podtribunka',
             'Disallow: /razdevalka',
             'Disallow: /agent-base',
             '',
