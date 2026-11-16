@@ -74,8 +74,10 @@ describe('vite-plugins/seo', () => {
       expect((xml.match(/<url>/g) ?? []).length).toBe((xml.match(/<\/url>/g) ?? []).length)
     })
 
-    it('robots запрещает обход «Тайной базы», а sitemap её не содержит', () => {
+    it('robots запрещает обход «Подтрибунки», а sitemap её не содержит', () => {
+      expect(files['robots.txt']).toContain('Disallow: /razdevalka')
       expect(files['robots.txt']).toContain('Disallow: /agent-base')
+      expect(files['sitemap.xml']).not.toContain('/razdevalka')
       expect(files['sitemap.xml']).not.toContain('/agent-base')
     })
   })

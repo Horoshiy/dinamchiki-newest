@@ -339,7 +339,7 @@ const routes: RouteRecordRaw[] = [
   // «Подтрибунка» — отдельный корень со своей тёмной оболочкой.
   // Скрыт от индексации, навигации и sitemap; вход по коду игрока / SMS тренера.
   {
-    path: '/agent-base',
+    path: '/razdevalka',
     component: AgentShell,
     children: [
       { path: '', name: 'base-login', component: BaseLoginView, meta: { title: 'Подтрибунка', noIndex: true } },
@@ -348,6 +348,16 @@ const routes: RouteRecordRaw[] = [
       { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Тренерская — Подтрибунка', noIndex: true } },
       { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Карточка игрока — Подтрибунка', noIndex: true } },
     ],
+  },
+  // Прежний адрес раздела. QR-ссылки уже розданы — редирект с сохранением
+  // хвоста пути и хэша (#code=… входит автоматически).
+  {
+    path: '/agent-base/:rest(.*)*',
+    redirect: (to) => ({
+      path: '/razdevalka' + (to.params.rest ? '/' + (Array.isArray(to.params.rest) ? to.params.rest.join('/') : to.params.rest) : ''),
+      query: to.query,
+      hash: to.hash,
+    }),
   },
   // 404 — bare layout (без header/footer)
   {
@@ -418,7 +428,7 @@ export const router = createRouter({
  * всё равно проверяет сервер по JWT — guard лишь убирает лишние редиректы.
  */
 router.beforeEach((to) => {
-  if (!to.path.startsWith('/agent-base')) return true
+  if (!to.path.startsWith('/razdevalka')) return true
   const auth = useBaseAuth()
   const needsChild = to.name === 'base-mission' || to.name === 'base-progress'
   const needsStaff = to.name === 'base-staff-child'
@@ -437,7 +447,7 @@ router.afterEach((to) => {
 
   // «Подтрибунка»: только title и noindex. Без canonical/og/Метрики —
   // скрытый раздел не должен оставлять следов в поиске и аналитике.
-  if (to.path.startsWith('/agent-base')) {
+  if (to.path.startsWith('/razdevalka')) {
     applyPageMeta({ title: typeof meta.title === 'string' ? meta.title : 'Подтрибунка' })
     setMeta('robots', 'noindex, nofollow')
     return

@@ -42,46 +42,46 @@ afterEach(() => {
 
 describe('guard: доступ в Подтрибунку', () => {
   it('без child-токена разминка уводит на вход', async () => {
-    await router.push('/agent-base/mission')
+    await router.push('/razdevalka/mission')
     await router.isReady()
     expect(router.currentRoute.value.name).toBe('base-login')
   })
 
   it('без child-токена карточка уводит на вход', async () => {
-    await router.push('/agent-base/progress')
+    await router.push('/razdevalka/progress')
     expect(router.currentRoute.value.name).toBe('base-login')
   })
 
   it('с child-токеном разминка доступна', async () => {
     const auth = useBaseAuth()
     auth.childToken = 'child-token'
-    await router.push('/agent-base/mission')
+    await router.push('/razdevalka/mission')
     expect(router.currentRoute.value.name).toBe('base-mission')
   })
 
   it('без staff-токена карточка игрока уводит в тренерскую', async () => {
-    await router.push('/agent-base/staff/child/7')
+    await router.push('/razdevalka/staff/child/7')
     expect(router.currentRoute.value.name).toBe('base-staff')
   })
 
   it('со staff-токеном карточка игрока доступна', async () => {
     const auth = useBaseAuth()
     auth.staffToken = 'staff-token'
-    await router.push('/agent-base/staff/child/7')
+    await router.push('/razdevalka/staff/child/7')
     expect(router.currentRoute.value.name).toBe('base-staff-child')
   })
 
   it('вошедшего ребёнка со входа уводит на разминку', async () => {
     const auth = useBaseAuth()
     auth.childToken = 'child-token'
-    await router.push('/agent-base')
+    await router.push('/razdevalka')
     expect(router.currentRoute.value.name).toBe('base-mission')
   })
 })
 
 describe('мета: раздел не оставляет следов', () => {
   it('в Подтрибунке robots=noindex и нет canonical/og:url', async () => {
-    await router.push('/agent-base')
+    await router.push('/razdevalka')
     await router.isReady()
     await Promise.resolve()
     expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex, nofollow')
@@ -103,7 +103,12 @@ describe('Метрика: просмотры Подтрибунки не отп�
     document.head.innerHTML = ''
   })
 
-  it('trackPageView для /agent-base не инициализирует счётчик', () => {
+  it('trackPageView для /razdevalka не инициализирует счётчик', () => {
+    trackPageView('/razdevalka/mission#code=SECRET')
+    expect(window.ym).toBeUndefined()
+  })
+
+  it('trackPageView для прежнего /agent-base тоже молчит', () => {
     trackPageView('/agent-base/mission#code=SECRET')
     expect(window.ym).toBeUndefined()
   })
@@ -111,6 +116,28 @@ describe('Метрика: просмотры Подтрибунки не отп�
   it('обычная страница счётчик инициализирует (защита именно от Подтрибунки)', () => {
     trackPageView('/teams')
     expect(window.ym).toBeDefined()
+  })
+})
+
+describe('редирект: прежний адрес /agent-base', () => {
+  it('корень ведёт на /razdevalka', async () => {
+    await router.push('/agent-base')
+    expect(router.currentRoute.value.path).toBe('/razdevalka')
+    expect(router.currentRoute.value.name).toBe('base-login')
+  })
+
+  it('QR-ссылка сохраняет хэш #code=…', async () => {
+    await router.push('/agent-base#code=ABCD-EFGH-JK')
+    expect(router.currentRoute.value.path).toBe('/razdevalka')
+    expect(router.currentRoute.value.hash).toBe('#code=ABCD-EFGH-JK')
+  })
+
+  it('вложенный путь сохраняется', async () => {
+    const auth = useBaseAuth()
+    auth.staffToken = 'staff-token'
+    await router.push('/agent-base/staff/child/7')
+    expect(router.currentRoute.value.path).toBe('/razdevalka/staff/child/7')
+    expect(router.currentRoute.value.name).toBe('base-staff-child')
   })
 })
 
@@ -188,7 +215,7 @@ describe('QuestionRenderer: звук выбора', () => {
 
 describe('LoginView: вход по коду', () => {
   it('рендерит поле кода и блокирует кнопку, пока код не полный', async () => {
-    await router.push('/agent-base')
+    await router.push('/razdevalka')
     await router.isReady()
     const pinia = createPinia()
     setActivePinia(pinia)

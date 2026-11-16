@@ -38,6 +38,22 @@ flowise.dinamchiki.ru {
 	@trailing path_regexp trailing ^(.+)/$
 	redir @trailing {re.trailing.1} 301
 
+	# «Подтрибунка»: прежний адрес — постоянный редирект, фрагмент #code=…
+	# браузер сохраняет при 301. Query Caddy сохраняет сам; «?» в конце
+	# назначения его бы отбросил.
+	@oldbase path_regexp oldbase ^/agent-base(.*)$
+	redir @oldbase /razdevalka{re.oldbase.1} 301
+
+	# «Подтрибунка»: скрытый SPA-раздел, не пререндерится (нет в static-routes).
+	# Отдаём spa.html с X-Robots-Tag noindex.
+	handle /razdevalka* {
+		root * /srv/dynamost-flowise
+		rewrite * /spa.html
+		header X-Robots-Tag "noindex, nofollow"
+		header Cache-Control "no-cache"
+		file_server
+	}
+
 	handle {
 		root * /srv/dynamost-flowise
 

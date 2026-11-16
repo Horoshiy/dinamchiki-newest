@@ -59,13 +59,13 @@ describe('роутер: маршруты', () => {
   })
 })
 
-describe('роутер: «Тайная база» (скрытый раздел)', () => {
+describe('роутер: «Подтрибунка» (скрытый раздел)', () => {
   it.each([
-    ['/agent-base', 'base-login'],
-    ['/agent-base/mission', 'base-mission'],
-    ['/agent-base/progress', 'base-progress'],
-    ['/agent-base/staff', 'base-staff'],
-    ['/agent-base/staff/child/7', 'base-staff-child'],
+    ['/razdevalka', 'base-login'],
+    ['/razdevalka/mission', 'base-mission'],
+    ['/razdevalka/progress', 'base-progress'],
+    ['/razdevalka/staff', 'base-staff'],
+    ['/razdevalka/staff/child/7', 'base-staff-child'],
   ])('%s резолвится в %s, а не в 404', (path, name) => {
     const r = router.resolve(path)
     expect(r.matched.length).toBeGreaterThan(0)
@@ -73,25 +73,25 @@ describe('роутер: «Тайная база» (скрытый раздел)'
   })
 
   it('все экраны базы помечены noIndex', () => {
-    for (const path of ['/agent-base', '/agent-base/mission', '/agent-base/progress', '/agent-base/staff', '/agent-base/staff/child/7']) {
+    for (const path of ['/razdevalka', '/razdevalka/mission', '/razdevalka/progress', '/razdevalka/staff', '/razdevalka/staff/child/7']) {
       expect(router.resolve(path).meta.noIndex, `${path}: нет noIndex`).toBe(true)
     }
   })
 
   it('карточка агента передаёт id как props', () => {
-    const r = router.resolve('/agent-base/staff/child/7')
+    const r = router.resolve('/razdevalka/staff/child/7')
     expect(r.params.id).toBe('7')
     expect(r.matched.some((m) => m.props.default === true)).toBe(true)
   })
 
   it('базы нет в статических маршрутах — не попадает в sitemap и пререндер', () => {
-    expect(staticRoutes.some((r) => r.path.startsWith('/agent-base'))).toBe(false)
+    expect(staticRoutes.some((r) => r.path.startsWith('/razdevalka') || r.path.startsWith('/agent-base'))).toBe(false)
   })
 
   it('раздел не ссылается из публичной навигации (отдельный корень)', () => {
-    const root = router.resolve('/agent-base').matched[0]
+    const root = router.resolve('/razdevalka').matched[0]
     // Корень базы — самостоятельный layout, не дочерний к публичному '/'.
-    expect(root.path).toBe('/agent-base')
+    expect(root.path).toBe('/razdevalka')
   })
 })
 
