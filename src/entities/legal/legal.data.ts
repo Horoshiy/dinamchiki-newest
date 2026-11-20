@@ -17,6 +17,7 @@ import { ORG, REQUISITES } from '@/entities/sveden/sveden.data'
 
 /** Редакция документов — меняется при каждой правке текста. */
 export const LEGAL_REVISION = '09.10.2026'
+export const PRIVACY_REVISION = '20.11.2026'
 
 /** Срок хранения заявки, если договор не заключён. */
 export const LEAD_RETENTION = '1 (один) год с даты подачи заявки'
