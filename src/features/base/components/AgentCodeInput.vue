@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Ввод кода игрока: 10 символов Crockford base32.
-// Нормализацию (O→0, I/L→1) делает сервер; здесь — верхний регистр и чистка.
-import { computed } from 'vue'
+// Поле принимает только латинские буквы и цифры — кириллица и прочее отбрасываются,
+// чтобы русская раскладка не превращалась в другой код.
+import { computed, ref } from 'vue'
 import { formatAgentCode, normalizeAgentCode } from '../utils/agentCode'
 
 const props = defineProps<{ modelValue: string; loading?: boolean }>()
@@ -9,9 +10,16 @@ const emit = defineEmits<{ 'update:modelValue': [string]; submit: [] }>()
 
 const clean = computed(() => normalizeAgentCode(props.modelValue))
 const grouped = computed(() => formatAgentCode(props.modelValue))
+// Символы вне латиницы и цифр не попадают в поле — говорим об этом явно.
+const dropped = ref(false)
 
 function onInput(e: Event) {
-  emit('update:modelValue', normalizeAgentCode((e.target as HTMLInputElement).value))
+  const el = e.target as HTMLInputElement
+  const next = normalizeAgentCode(el.value)
+  dropped.value = /[^\u0020-\u007E]/.test(el.value)
+  emit('update:modelValue', next)
+  // Значение в поле — всегда нормализованное: без кириллицы и лишних символов.
+  if (el.value !== formatAgentCode(next)) el.value = formatAgentCode(next)
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Enter' && clean.value.length === 10) emit('submit')
@@ -27,9 +35,11 @@ function onKey(e: KeyboardEvent) {
         class="code-input__raw"
         :value="grouped"
         type="text"
-        inputmode="text"
+        inputmode="latin"
+        lang="en"
         autocomplete="off"
         autocapitalize="characters"
+        autocorrect="off"
         spellcheck="false"
         maxlength="12"
         placeholder="XXXX-XXXX-XX"
@@ -39,7 +49,10 @@ function onKey(e: KeyboardEvent) {
       />
       <span class="code-input__count">{{ clean.length }}/10</span>
     </div>
-    <p class="code-input__hint ab-faint">Код из 10 символов — на карточке, которую дал тренер.</p>
+    <p v-if="dropped" class="code-input__warn" role="alert">
+      В коде есть русские буквы — код состоит только из латинских букв и цифр.
+    </p>
+    <p v-else class="code-input__hint ab-faint">Код из 10 символов — на карточке, которую дал тренер. Только латинские буквы и цифры.</p>
   </div>
 </template>
 
@@ -60,6 +73,7 @@ function onKey(e: KeyboardEvent) {
 .code-input__raw::placeholder { color: var(--ab-text-faint); letter-spacing: 0.18em; }
 .code-input__count { flex-shrink: 0; padding-right: 16px; font-family: var(--ab-font-mono); font-size: 0.8rem; color: var(--ab-text-faint); }
 .code-input__hint { font-size: 0.82rem; margin: 0; }
+.code-input__warn { font-size: 0.82rem; margin: 0; color: var(--ab-cyan); }
 @media (max-width: 480px) {
   .code-input__raw { font-size: 1.15rem; letter-spacing: 0.12em; padding: 0 12px; }
   .code-input__raw::placeholder { letter-spacing: 0.1em; }

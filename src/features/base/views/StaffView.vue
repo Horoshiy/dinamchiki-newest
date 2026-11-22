@@ -18,6 +18,18 @@ const code = ref('')
 const loginStep = ref<'phone' | 'code'>('phone')
 const loginError = ref('')
 
+// Ввод принимается только из цифр и знаков телефона: буквы и кириллица
+// молча терялись бы при отправке, и номер не совпал бы.
+function onPhoneInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  phone.value = el.value.replace(/[^\d+()\-\s]/g, '')
+}
+// Код из SMS — строго цифры: пробел или буква из буфера обмена ломает проверку.
+function onStaffCodeInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  code.value = el.value.replace(/\D/g, '').slice(0, 6)
+}
+
 async function requestCode() {
   if (phone.value.replace(/\D/g, '').length < 10 || auth.staffLoading) return
   loginError.value = ''
@@ -158,14 +170,14 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 
       <template v-if="loginStep === 'phone'">
         <label class="ab-eyebrow" for="staff-phone">Телефон</label>
-        <input id="staff-phone" v-model="phone" class="ab-input" type="tel" inputmode="tel" placeholder="+7 900 000-00-00" @keydown.enter="requestCode" />
+        <input id="staff-phone" :value="phone" class="ab-input" type="tel" inputmode="tel" placeholder="+7 900 000-00-00" @input="onPhoneInput" @keydown.enter="requestCode" />
         <button class="ab-btn ab-btn--block" type="button" :disabled="phone.replace(/\D/g, '').length < 10 || auth.staffLoading" @click="requestCode">
           {{ auth.staffLoading ? 'Отправляем…' : 'Получить код' }}
         </button>
       </template>
       <template v-else>
         <label class="ab-eyebrow" for="staff-code">Код из SMS на {{ phone }}</label>
-        <input id="staff-code" v-model="code" class="ab-input staff-login__code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" @keydown.enter="verify" />
+        <input id="staff-code" :value="code" class="ab-input staff-login__code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" @input="onStaffCodeInput" @keydown.enter="verify" />
         <button class="ab-btn ab-btn--block" type="button" :disabled="!code.trim() || auth.staffLoading" @click="verify">
           {{ auth.staffLoading ? 'Проверяем…' : 'Войти в тренерскую' }}
         </button>
