@@ -15,15 +15,45 @@ const grouped = computed(() => formatAgentCode(props.modelValue))
 // нажатии, и к последнему вводу кириллицы в поле уже не видно.
 const dropped = ref(false)
 
+// codeCharsBefore — сколько букв и цифр кода стоит до каретки (дефисы не считаем).
+function codeCharsBefore(raw: string, caret: number): number {
+  let n = 0
+  for (let i = 0; i < caret && i < raw.length; i++) {
+    if (/[A-Z0-9]/.test(raw[i])) n++
+  }
+  return n
+}
+
+// caretAfterCode — позиция каретки после n-й буквы кода. Если дальше дефис,
+// перескакиваем его: следующая буква вводится в следующую группу.
+function caretAfterCode(display: string, n: number): number {
+  if (n <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < display.length; i++) {
+    if (/[A-Z0-9]/.test(display[i])) {
+      seen++
+      if (seen === n) return display[i + 1] === '-' ? i + 2 : i + 1
+    }
+  }
+  return display.length
+}
+
 function onInput(e: Event) {
   const el = e.target as HTMLInputElement
   const raw = el.value
+  const caret = el.selectionStart ?? raw.length
   const next = normalizeAgentCode(raw)
   if (/[^\u0020-\u007E]/.test(raw)) dropped.value = true
   if (raw.trim() === '') dropped.value = false
   emit('update:modelValue', next)
-  // Значение в поле — всегда нормализованное: без кириллицы и лишних символов.
-  if (el.value !== formatAgentCode(next)) el.value = formatAgentCode(next)
+  const display = formatAgentCode(next)
+  if (el.value !== display) {
+    el.value = display
+    // Каретку возвращаем на своё место: иначе после переформатирования
+    // ввода курсор уезжает в конец поля.
+    const pos = caretAfterCode(display, codeCharsBefore(raw, caret))
+    el.setSelectionRange(pos, pos)
+  }
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Enter' && clean.value.length === 10) emit('submit')
@@ -45,7 +75,7 @@ function onKey(e: KeyboardEvent) {
         autocapitalize="characters"
         autocorrect="off"
         spellcheck="false"
-        maxlength="12"
+        maxlength="13"
         placeholder="XXXX-XXXX-XX"
         :disabled="loading"
         @input="onInput"

@@ -83,7 +83,7 @@ onMounted(load)
         <div class="progress__id">
           <template v-if="!editing">
             <h1 class="progress__codename">{{ auth.me?.codename || 'Игрок' }}</h1>
-            <button class="progress__edit" type="button" @click="editing = true">✎ изменить прозвище</button>
+            <button class="progress__edit" type="button" @click="editing = true">✎ своё прозвище</button>
           </template>
           <template v-else>
             <div class="progress__edit-row">

@@ -43,6 +43,13 @@ describe('код игрока: разбивка на группы', () => {
   })
 
   it('недостающий код не раздувает', () => {
-    expect(formatAgentCode('2AW5')).toBe('2AW5')
+    expect(formatAgentCode('2AW5')).toBe('2AW5-')
+    expect(formatAgentCode('2AW58')).toBe('2AW5-8')
+  })
+
+  it('завершённую группу закрывает дефисом — видно место для следующей буквы', () => {
+    expect(formatAgentCode('2AW583')).toBe('2AW5-83')
+    expect(formatAgentCode('2AW583GT')).toBe('2AW5-83GT-')
+    expect(formatAgentCode('2AW583GTP')).toBe('2AW5-83GT-P')
   })
 })
