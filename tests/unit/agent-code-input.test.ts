@@ -21,6 +21,17 @@ function caret(w: ReturnType<typeof mount>): number {
   return (w.find('input').element as HTMLInputElement).selectionStart ?? -1
 }
 
+// Печатаем символ по каретке — так же, как это делает браузер.
+async function typeChar(w: ReturnType<typeof mount>, ch: string) {
+  const input = w.find('input')
+  const el = input.element as HTMLInputElement
+  const pos = el.selectionStart ?? el.value.length
+  const end = el.selectionEnd ?? pos
+  el.value = el.value.slice(0, pos) + ch + el.value.slice(end)
+  el.setSelectionRange(pos + ch.length, pos + ch.length)
+  await input.trigger('input')
+}
+
 describe('поле ввода кода игрока', () => {
   it('кириллица не попадает в значение и в модель', async () => {
     const w = mount(Harness)
@@ -103,5 +114,22 @@ describe('поле ввода кода игрока', () => {
     await w.find('input').trigger('input')
     expect(w.vm.code).toBe('2AW5X83GTP')
     expect(caret(w)).toBe(6)
+  })
+
+  it('строчные буквы не переставляют код', async () => {
+    const w = mount(Harness)
+    for (const ch of '9ne') await typeChar(w, ch)
+    const el = w.find('input').element as HTMLInputElement
+    expect(el.value).toBe('9NE')
+    expect(w.vm.code).toBe('9NE')
+    expect(caret(w)).toBe(3)
+  })
+
+  it('строчные буквы не сбивают каретку на границе группы', async () => {
+    const w = mount(Harness)
+    for (const ch of '2aw5') await typeChar(w, ch)
+    const el = w.find('input').element as HTMLInputElement
+    expect(el.value).toBe('2AW5-')
+    expect(caret(w)).toBe(5)
   })
 })

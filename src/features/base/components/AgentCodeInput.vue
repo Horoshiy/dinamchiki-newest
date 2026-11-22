@@ -16,12 +16,11 @@ const grouped = computed(() => formatAgentCode(props.modelValue))
 const dropped = ref(false)
 
 // codeCharsBefore — сколько букв и цифр кода стоит до каретки (дефисы не считаем).
+// Считаем по нормализованному префиксу: иначе строчные буквы (ввод с
+// автокапитализацией выключенным) обнуляются в счёте, каретка уезжает влево,
+// и следующая буква вставляется ПЕРЕД предыдущей — «9NE» превращается в «9EN».
 function codeCharsBefore(raw: string, caret: number): number {
-  let n = 0
-  for (let i = 0; i < caret && i < raw.length; i++) {
-    if (/[A-Z0-9]/.test(raw[i])) n++
-  }
-  return n
+  return normalizeAgentCode(raw.slice(0, caret)).length
 }
 
 // caretAfterCode — позиция каретки после n-й буквы кода. Если дальше дефис,
@@ -30,7 +29,7 @@ function caretAfterCode(display: string, n: number): number {
   if (n <= 0) return 0
   let seen = 0
   for (let i = 0; i < display.length; i++) {
-    if (/[A-Z0-9]/.test(display[i])) {
+    if (/[A-Za-z0-9]/.test(display[i])) {
       seen++
       if (seen === n) return display[i + 1] === '-' ? i + 2 : i + 1
     }
