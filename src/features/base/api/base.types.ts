@@ -177,6 +177,7 @@ export interface StaffChildRow {
   pain_today: number
   sleep_today: string
   fuel_today: string[]
+  attendance_today: string
 }
 
 export interface StaffAnswer {

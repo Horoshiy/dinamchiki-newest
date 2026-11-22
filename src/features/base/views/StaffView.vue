@@ -70,6 +70,8 @@ const filtered = computed(() => {
 
 const doneCount = computed(() => rows.value.filter((r) => r.completed_today).length)
 const attentionToday = computed(() => rows.value.filter((r) => r.needs_attention_today).length)
+// Явка: сколько детей сегодня ответили «Буду» на тренировку.
+const willCome = computed(() => rows.value.filter((r) => r.attendance_today === 'Буду').length)
 
 // Средние — только по прошедшим сегодня (иначе «—»): не выдаём конкретного ребёнка.
 const completedRows = computed(() => rows.value.filter((r) => r.completed_today))
@@ -205,6 +207,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
       <!-- Сводка дня -->
       <div class="staff__board-summary ab-rise ab-rise-1">
         <span>Ответили <b>{{ doneCount }}</b> из {{ rows.length }}</span>
+        <span>Будут ⚽ <b>{{ willCome }}</b></span>
         <span>Настрой ⌀ <b>{{ avgMood }}</b></span>
         <span>Силы ⌀ <b>{{ avgEnergy }}</b></span>
         <span :class="{ 'is-warn': painWarn }">Боль ⌀ <b>{{ avgPain }}</b></span>
@@ -256,6 +259,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
           <button type="button" class="staff__row" :class="{ 'staff__row--idle': !r.completed_today }" @click="openChild(r.child_id)">
             <span class="staff__name staff__c-name">
               <b>{{ r.full_name }}</b>
+              <span v-if="r.attendance_today" class="staff__att" :class="r.attendance_today === 'Буду' ? 'staff__att--yes' : 'staff__att--no'">{{ r.attendance_today === 'Буду' ? '⚽ будет' : '✕ не будет' }}</span>
             </span>
             <span class="staff__cell staff__c-mood">{{ moodIcon(r.mood_today) }} <em>{{ moodWord(r.mood_today) }}</em></span>
             <span class="staff__cell staff__c-energy">{{ energyIcon(r.energy_today) }} <em>{{ energyWord(r.energy_today) }}</em></span>
@@ -314,6 +318,9 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff__row--head { cursor: default; font-family: var(--ab-font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ab-text-faint); border-bottom: 1px solid var(--ab-line); border-radius: 0; }
 .staff__name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .staff__name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.staff__att { align-self: flex-start; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; width: fit-content; }
+.staff__att--yes { background: rgba(61, 220, 132, 0.16); color: var(--ab-success); }
+.staff__att--no { background: rgba(255, 61, 113, 0.14); color: #ff8fae; }
 .staff__cell { min-width: 0; font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .staff__cell em { font-style: normal; color: var(--ab-text-dim); }
 .staff__cell.is-warn { color: #ff8fae; font-weight: 700; }
