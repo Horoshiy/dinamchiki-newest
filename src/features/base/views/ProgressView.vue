@@ -108,7 +108,11 @@ onMounted(load)
         <div class="progress__stat ab-panel"><b>{{ progress.missions_total }}</b><span>разминок</span></div>
         <div class="progress__stat ab-panel"><b>{{ progress.xp }}</b><span>всего XP</span></div>
         <div class="progress__stat ab-panel"><b>{{ progress.streak_best }}</b><span>рекорд серии</span></div>
-        <RouterLink v-if="!auth.me?.completed_today" :to="{ name: 'base-mission' }" class="progress__cta ab-btn ab-btn--lime ab-btn--sm">Разминка дня →</RouterLink>
+        <RouterLink
+          v-if="!auth.me?.completed_today && auth.me?.checkin_open !== false"
+          :to="{ name: 'base-mission' }" class="progress__cta ab-btn ab-btn--lime ab-btn--sm"
+        >Разминка дня →</RouterLink>
+        <div v-else-if="auth.me?.checkin_open === false && !auth.me?.completed_today" class="progress__done ab-panel">Сегодня выходной — откроется в понедельник</div>
         <div v-else class="progress__done ab-panel">✓ сегодня выполнено</div>
       </section>
 

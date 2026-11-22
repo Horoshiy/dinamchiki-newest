@@ -36,6 +36,8 @@ export interface BaseMission {
   slogan: string
   questions: BaseQuestion[]
   completed: boolean
+  /** Окно отметки открыто (пн–пт). В выходные — false, вопросы не приходят. */
+  checkin_open?: boolean
   draft?: AnswerInput[]
   reward?: BaseReward
 }
@@ -66,6 +68,8 @@ export interface BaseMe {
   streak_best: number
   completed_today: boolean
   needs_attention_today: boolean
+  /** Окно отметки открыто (пн–пт). В выходные — false. */
+  checkin_open?: boolean
   sound_on: boolean
   rank_progress: RankProgress
   badges: BaseBadge[]

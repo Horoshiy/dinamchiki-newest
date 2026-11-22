@@ -23,6 +23,8 @@ const questions = computed(() => mission.value?.questions ?? [])
 const current = computed(() => questions.value[step.value])
 const isLast = computed(() => step.value === questions.value.length - 1)
 const canAdvance = computed(() => !!current.value && (!current.value.is_required || isAnswered(current.value)))
+// В выходные сервер закрывает окно отметки и не отдаёт вопросы.
+const checkinClosed = computed(() => mission.value?.checkin_open === false && !mission.value?.completed)
 
 const displayResult = computed<SubmitResult | null>(() => {
   if (result.value) return result.value
@@ -91,6 +93,19 @@ onMounted(async () => {
         <RewardReveal :result="displayResult" @done="toProgress" />
       </template>
 
+      <!-- Выходной: окно отметки закрыто до понедельника 00:00 -->
+      <template v-else-if="checkinClosed">
+        <section class="mission__closed ab-card ab-rise">
+          <span class="ab-eyebrow">Выходной</span>
+          <h2 class="mission__closed-title">Сегодня не отмечаемся</h2>
+          <p class="mission__closed-text">
+            В субботу и воскресенье разминка закрыта. Снова на тренировку — с понедельника в 00:00.
+            Серия не прервётся: выходные не считаются пропуском.
+          </p>
+          <button class="ab-btn ab-btn--ghost" type="button" @click="toProgress">Посмотреть прогресс</button>
+        </section>
+      </template>
+
       <!-- Вопросы -->
       <template v-else>
         <MissionCard :theme="mission.theme" :day-key="mission.day_key" :weekday="mission.weekday" :slogan="mission.slogan" />
@@ -141,6 +156,9 @@ onMounted(async () => {
 .mission__dot.is-current { transform: scale(1.4); box-shadow: 0 0 0 3px rgba(53, 224, 255, 0.25); border-color: var(--ab-cyan); }
 .mission__question { padding: 26px 24px; }
 .mission__q-text { font-size: clamp(1.3rem, 4vw, 1.7rem); margin: 10px 0 22px; }
+.mission__closed { padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.mission__closed-title { font-size: clamp(1.3rem, 4vw, 1.7rem); margin: 4px 0 0; }
+.mission__closed-text { color: var(--ab-text-dim); line-height: 1.55; margin: 0; max-width: 34ch; }
 .mission__actions { display: flex; gap: 12px; }
 .mission__next { flex: 1; }
 @media (max-width: 560px) {
