@@ -6,6 +6,7 @@ import { useBaseAuth } from '../stores/baseAuth'
 import { useBaseSound } from '../stores/baseSound'
 import { BaseApiError } from '../api/base.client'
 import AgentCodeInput from '../components/AgentCodeInput.vue'
+import { normalizeAgentCode } from '../utils/agentCode'
 
 const auth = useBaseAuth()
 const sound = useBaseSound()
@@ -15,11 +16,11 @@ const code = ref('')
 const error = ref('')
 
 async function login() {
-  if (code.value.replace(/[^A-Z0-9]/gi, '').length !== 10 || auth.childLoading) return
+  if (normalizeAgentCode(code.value).length !== 10 || auth.childLoading) return
   sound.unlock()
   error.value = ''
   try {
-    await auth.loginChild(code.value)
+    await auth.loginChild(normalizeAgentCode(code.value))
     sound.play('success')
     void router.push({ name: 'base-mission' })
   } catch (e) {
@@ -31,7 +32,7 @@ async function login() {
 onMounted(() => {
   const fromHash = auth.consumeCodeFromHash()
   if (fromHash) {
-    code.value = fromHash
+    code.value = normalizeAgentCode(fromHash)
     void login()
   }
 })
@@ -55,7 +56,7 @@ onMounted(() => {
       <p v-if="error" class="ab-alert ab-alert--error" role="alert">{{ error }}</p>
       <button
         class="ab-btn ab-btn--block" type="button"
-        :disabled="code.replace(/[^A-Z0-9]/gi, '').length !== 10 || auth.childLoading"
+        :disabled="normalizeAgentCode(code).length !== 10 || auth.childLoading"
         @click="login"
       >
         {{ auth.childLoading ? 'Проверяем код…' : 'Войти в Подтрибунку' }}

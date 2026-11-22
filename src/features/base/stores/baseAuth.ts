@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import * as api from '../api/base.api'
 import { BaseApiError } from '../api/base.client'
 import type { BaseMe } from '../api/base.types'
+import { normalizeAgentCode } from '../utils/agentCode'
 
 const CHILD_KEY = 'dinamchiki-base-child-token'
 const STAFF_KEY = 'dinamchiki-base-staff-token'
@@ -50,7 +51,7 @@ export const useBaseAuth = defineStore('baseAuth', {
     async loginChild(code: string) {
       this.childLoading = true
       try {
-        const res = await api.loginWithCode(code)
+        const res = await api.loginWithCode(normalizeAgentCode(code))
         if (!res.success || !res.token) throw new BaseApiError(401, res.error || 'Код не подошёл.')
         this.childToken = res.token
         writeStorage(ls, CHILD_KEY, res.token)

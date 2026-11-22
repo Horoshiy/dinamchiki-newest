@@ -2,19 +2,16 @@
 // Ввод кода игрока: 10 символов Crockford base32.
 // Нормализацию (O→0, I/L→1) делает сервер; здесь — верхний регистр и чистка.
 import { computed } from 'vue'
+import { formatAgentCode, normalizeAgentCode } from '../utils/agentCode'
 
 const props = defineProps<{ modelValue: string; loading?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [string]; submit: [] }>()
 
-const clean = computed(() => props.modelValue.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))
-const grouped = computed(() => {
-  const c = clean.value
-  return [c.slice(0, 4), c.slice(4, 8), c.slice(8, 10)].filter(Boolean).join('-')
-})
+const clean = computed(() => normalizeAgentCode(props.modelValue))
+const grouped = computed(() => formatAgentCode(props.modelValue))
 
 function onInput(e: Event) {
-  const v = (e.target as HTMLInputElement).value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)
-  emit('update:modelValue', v)
+  emit('update:modelValue', normalizeAgentCode((e.target as HTMLInputElement).value))
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Enter' && clean.value.length === 10) emit('submit')
