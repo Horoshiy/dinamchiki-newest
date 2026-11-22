@@ -56,12 +56,16 @@ function onKey(e: KeyboardEvent) {
 .code-input__field:focus-within { border-color: var(--ab-cyan); box-shadow: 0 0 0 3px rgba(53, 224, 255, 0.18); }
 .code-input__field.is-full { border-color: var(--ab-lime); box-shadow: 0 0 0 3px rgba(198, 242, 78, 0.16); }
 .code-input__raw {
-  flex: 1; min-height: 64px; padding: 0 18px; background: transparent; border: none; outline: none;
+  flex: 1; min-width: 0; min-height: 64px; padding: 0 18px; background: transparent; border: none; outline: none;
   color: var(--ab-text); font-family: var(--ab-font-mono); font-size: 1.5rem; letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 .code-input__raw::placeholder { color: var(--ab-text-faint); letter-spacing: 0.18em; }
-.code-input__count { padding-right: 16px; font-family: var(--ab-font-mono); font-size: 0.8rem; color: var(--ab-text-faint); }
+.code-input__count { flex-shrink: 0; padding-right: 16px; font-family: var(--ab-font-mono); font-size: 0.8rem; color: var(--ab-text-faint); }
 .code-input__hint { font-size: 0.82rem; margin: 0; }
-@media (max-width: 480px) { .code-input__raw { font-size: 1.2rem; letter-spacing: 0.14em; } }
+@media (max-width: 480px) {
+  .code-input__raw { font-size: 1.15rem; letter-spacing: 0.12em; padding: 0 12px; }
+  .code-input__raw::placeholder { letter-spacing: 0.1em; }
+  .code-input__count { padding-right: 12px; font-size: 0.75rem; }
+}
 </style>

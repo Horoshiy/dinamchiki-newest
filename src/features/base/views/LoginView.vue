@@ -48,10 +48,6 @@ onMounted(() => {
       </div>
       <span class="ab-eyebrow">ДФК «Динамчики» · доступ по коду</span>
       <h1 class="login__title">ПОДТРИБУНКА</h1>
-      <p class="login__lead">
-        Свой клуб под трибуной. Каждый день — новая разминка: расскажи о настрое,
-        силах и сне, получай XP, значки и звание. Твои ответы видишь только ты и тренер.
-      </p>
     </section>
 
     <section class="login__panel ab-card ab-rise ab-rise-1">
@@ -67,6 +63,11 @@ onMounted(() => {
       <p class="login__hint ab-faint">Нет кода? Попроси тренера выдать карточку игрока на тренировке.</p>
       <RouterLink :to="{ name: 'base-staff' }" class="login__staff">Я тренер → тренерская</RouterLink>
     </section>
+
+    <p class="login__lead ab-rise ab-rise-1">
+      Свой клуб под трибуной. Каждый день — новая разминка: расскажи о настрое,
+      силах и сне, получай XP, значки и звание. Твои ответы видишь только ты и тренер.
+    </p>
 
     <section class="login__perks ab-rise ab-rise-2">
       <div class="login__perk"><span>🎯</span><b>Разминка дня</b><i>1 минута в день</i></div>
@@ -101,5 +102,15 @@ onMounted(() => {
 .login__perk b { font-family: var(--ab-font-display); font-size: 0.86rem; }
 .login__perk i { font-style: normal; font-size: 0.72rem; color: var(--ab-text-faint); }
 @media (max-width: 480px) { .login__perks { grid-template-columns: 1fr; } }
+// На телефоне форма входа должна целиком помещаться в первый экран:
+// заголовок сжимается, радар и длинный текст уходят под неё.
+@media (max-width: 680px) {
+  .login { gap: 16px; }
+  .login__hero { padding: 6px 0 0; }
+  .login__radar { display: none; }
+  .login__title { font-size: 1.8rem; margin: 6px 0 0; }
+  .login__panel { padding: 20px 18px; gap: 12px; }
+  .login__lead { font-size: 0.92rem; line-height: 1.5; }
+}
 @media (prefers-reduced-motion: reduce) { .login__radar-sweep, .login__radar-dot { animation: none; } }
 </style>
