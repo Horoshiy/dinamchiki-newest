@@ -1,6 +1,6 @@
 // Сессии «Подтрибунки»: ребёнок (код игрока) и тренер (SMS-код).
-// Child-токен живёт в localStorage (JWT 30 дней), staff-токен — в sessionStorage
-// (дашборд показывает ответы детей — не оставляем его в браузере надолго).
+// Оба токена живут в localStorage: child — 30 дней, staff — 365 (тренер
+// остаётся залогинен, пока сам не нажмёт «выйти» в шапке).
 import { defineStore } from 'pinia'
 import * as api from '../api/base.api'
 import { BaseApiError } from '../api/base.client'
@@ -21,15 +21,14 @@ function writeStorage(store: Storage | undefined, key: string, value: string | n
   } catch { /* приватный режим */ }
 }
 const ls = typeof localStorage !== 'undefined' ? localStorage : undefined
-const ss = typeof sessionStorage !== 'undefined' ? sessionStorage : undefined
 
 export const useBaseAuth = defineStore('baseAuth', {
   state: () => ({
     childToken: readStorage(ls, CHILD_KEY),
     me: null as BaseMe | null,
-    staffToken: readStorage(ss, STAFF_KEY),
-    staffRole: readStorage(ss, STAFF_ROLE_KEY) as 'coach' | 'admin' | null,
-    staffName: readStorage(ss, STAFF_NAME_KEY),
+    staffToken: readStorage(ls, STAFF_KEY),
+    staffRole: readStorage(ls, STAFF_ROLE_KEY) as 'coach' | 'admin' | null,
+    staffName: readStorage(ls, STAFF_NAME_KEY),
     childLoading: false,
     staffLoading: false,
   }),
@@ -104,9 +103,9 @@ export const useBaseAuth = defineStore('baseAuth', {
         this.staffToken = res.token
         this.staffRole = res.role ?? 'coach'
         this.staffName = res.name ?? 'Тренер'
-        writeStorage(ss, STAFF_KEY, res.token)
-        writeStorage(ss, STAFF_ROLE_KEY, this.staffRole)
-        writeStorage(ss, STAFF_NAME_KEY, this.staffName)
+        writeStorage(ls, STAFF_KEY, res.token)
+        writeStorage(ls, STAFF_ROLE_KEY, this.staffRole)
+        writeStorage(ls, STAFF_NAME_KEY, this.staffName)
       } finally {
         this.staffLoading = false
       }
@@ -116,9 +115,9 @@ export const useBaseAuth = defineStore('baseAuth', {
       this.staffToken = null
       this.staffRole = null
       this.staffName = null
-      writeStorage(ss, STAFF_KEY, null)
-      writeStorage(ss, STAFF_ROLE_KEY, null)
-      writeStorage(ss, STAFF_NAME_KEY, null)
+      writeStorage(ls, STAFF_KEY, null)
+      writeStorage(ls, STAFF_ROLE_KEY, null)
+      writeStorage(ls, STAFF_NAME_KEY, null)
     },
 
     /** Вызывается при 401/403 на тренерских запросах — сессия истекла. */
