@@ -236,28 +236,6 @@ export interface CodeInfo {
   locked: boolean
 }
 
-export interface TeamDaily {
-  day_key: string
-  avg_mood: number
-  avg_energy: number
-  avg_pain: number
-  completed: number
-}
-
-export interface TeamAggregate {
-  team_id: number
-  insufficient: boolean
-  message?: string
-  children_count: number
-  responded_count: number
-  days: number
-  avg_mood: number
-  avg_energy: number
-  avg_pain: number
-  attention_count: number
-  daily: TeamDaily[]
-}
-
 export interface AttentionRow {
   child_id: number
   full_name: string

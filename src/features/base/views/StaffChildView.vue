@@ -146,7 +146,6 @@ onMounted(load)
         <RankBadge :rank="detail.rank" :xp="detail.xp" size="md" />
         <div class="child__id">
           <h1 class="child__name">{{ detail.full_name }}</h1>
-          <span class="child__codename ab-mono">{{ detail.codename }}</span>
           <div class="child__metrics">
             <span>🔥 серия {{ detail.streak_current }}</span>
             <span>🏅 рекорд {{ detail.streak_best }}</span>
@@ -256,7 +255,6 @@ onMounted(load)
 .child__spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--ab-line); border-top-color: var(--ab-cyan); animation: ab-sweep 0.9s linear infinite; }
 .child__hero { display: flex; align-items: center; gap: 22px; padding: 26px; flex-wrap: wrap; }
 .child__name { font-size: clamp(1.5rem, 5vw, 2rem); }
-.child__codename { color: var(--ab-cyan); font-size: 0.9rem; }
 .child__metrics { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 0.9rem; color: var(--ab-text-dim); }
 .child__h { font-size: 1.15rem; margin-bottom: 16px; }
 .child__block { padding: 24px; }

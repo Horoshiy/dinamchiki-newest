@@ -4,7 +4,7 @@ import { baseRequest } from './base.client'
 import type {
   AnswerInput, AttentionRow, BaseMe, BaseMission, BaseProgress, CodeInfo, CodeIssue,
   HistoryDetail, HistoryItem, ListResponse, LoginResponse, StaffAuthResponse,
-  StaffChildDetail, StaffChildRow, SubmitResult, TeamAggregate, CoachNote,
+  StaffChildDetail, StaffChildRow, SubmitResult, CoachNote,
 } from './base.types'
 
 // ─── Вход ────────────────────────────────────────────────────────────────────
@@ -69,10 +69,6 @@ export function staffAttention(token: string): Promise<ListResponse<AttentionRow
 
 export function staffChild(token: string, childId: number): Promise<StaffChildDetail> {
   return baseRequest<StaffChildDetail>(`staff/children/${childId}`, { token })
-}
-
-export function staffTeamAggregate(token: string, teamId: number): Promise<TeamAggregate> {
-  return baseRequest<TeamAggregate>(`staff/teams/${teamId}/aggregate`, { token })
 }
 
 export function issueCode(token: string, childId: number): Promise<CodeIssue> {

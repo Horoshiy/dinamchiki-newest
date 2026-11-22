@@ -6,7 +6,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as api from '../api/base.api'
 import { BaseApiError } from '../api/base.client'
-import type { AttentionRow, StaffChildRow, TeamAggregate } from '../api/base.types'
+import type { AttentionRow, StaffChildRow } from '../api/base.types'
 import { useBaseAuth } from '../stores/baseAuth'
 
 const auth = useBaseAuth()
@@ -51,15 +51,10 @@ const query = ref('')
 const filter = ref<'all' | 'done' | 'pending' | 'attention' | 'nocode'>('all')
 const sort = ref<'name' | 'xp' | 'streak' | 'pain' | 'mood'>('name')
 
-const teamId = ref('')
-const agg = ref<TeamAggregate | null>(null)
-const aggLoading = ref(false)
-const aggError = ref('')
-
 const filtered = computed(() => {
   let list = rows.value
   const q = query.value.trim().toLowerCase()
-  if (q) list = list.filter((r) => r.full_name.toLowerCase().includes(q) || r.codename.toLowerCase().includes(q))
+  if (q) list = list.filter((r) => r.full_name.toLowerCase().includes(q))
   if (filter.value === 'done') list = list.filter((r) => r.completed_today)
   else if (filter.value === 'pending') list = list.filter((r) => !r.completed_today)
   else if (filter.value === 'attention') list = list.filter((r) => r.needs_attention_today)
@@ -136,22 +131,6 @@ async function loadDashboard() {
     error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить тренерскую.'
   } finally {
     loading.value = false
-  }
-}
-
-async function loadAggregate() {
-  const id = Number(teamId.value)
-  if (!id || !auth.staffToken) return
-  aggLoading.value = true
-  aggError.value = ''
-  agg.value = null
-  try {
-    agg.value = await api.staffTeamAggregate(auth.staffToken, id)
-  } catch (e) {
-    if (authFail(e)) return
-    aggError.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить сводку.'
-  } finally {
-    aggLoading.value = false
   }
 }
 
@@ -234,7 +213,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 
       <!-- Панель управления -->
       <section class="staff__toolbar ab-rise ab-rise-1">
-        <input v-model="query" class="ab-input staff__search" type="search" placeholder="Поиск по имени или прозвищу…" />
+        <input v-model="query" class="ab-input staff__search" type="search" placeholder="Поиск по имени…" />
         <select v-model="filter" class="ab-input staff__select" aria-label="Фильтр">
           <option value="all">Все игроки</option>
           <option value="done">Прошли сегодня</option>
@@ -277,7 +256,6 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
           <button type="button" class="staff__row" :class="{ 'staff__row--idle': !r.completed_today }" @click="openChild(r.child_id)">
             <span class="staff__name staff__c-name">
               <b>{{ r.full_name }}</b>
-              <i class="ab-mono">{{ r.codename }}</i>
             </span>
             <span class="staff__cell staff__c-mood">{{ moodIcon(r.mood_today) }} <em>{{ moodWord(r.mood_today) }}</em></span>
             <span class="staff__cell staff__c-energy">{{ energyIcon(r.energy_today) }} <em>{{ energyWord(r.energy_today) }}</em></span>
@@ -297,35 +275,6 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
             <span class="staff__tag" :class="r.has_code ? 'staff__tag--code' : 'staff__tag--idle'">{{ r.has_code ? 'код есть' : 'без кода' }}</span>
           </div>
         </div>
-      </section>
-
-      <!-- Сводка по команде -->
-      <section class="staff__agg ab-card ab-rise ab-rise-3">
-        <h2 class="staff__h">Сводка по команде</h2>
-        <p class="ab-faint staff__agg-hint">Средние за 14 дней. Показываем только если ответили ≥ 3 игроков — иначе среднее выдаёт конкретного ребёнка.</p>
-        <div class="staff__agg-form">
-          <input v-model="teamId" class="ab-input" type="number" min="1" placeholder="ID команды" @keydown.enter="loadAggregate" />
-          <button class="ab-btn ab-btn--sm" type="button" :disabled="!teamId || aggLoading" @click="loadAggregate">Показать</button>
-        </div>
-        <p v-if="aggError" class="ab-alert ab-alert--error">{{ aggError }}</p>
-        <template v-if="agg">
-          <p v-if="agg.insufficient" class="ab-alert ab-alert--info">{{ agg.message || 'Мало данных.' }}</p>
-          <template v-else>
-            <div class="staff__agg-stats">
-              <div class="staff__agg-stat"><b>{{ agg.avg_mood }}</b><span>настрой</span></div>
-              <div class="staff__agg-stat"><b>{{ agg.avg_energy }}</b><span>силы</span></div>
-              <div class="staff__agg-stat" :class="{ 'is-warn': agg.avg_pain >= 2 }"><b>{{ agg.avg_pain }}</b><span>боль</span></div>
-              <div class="staff__agg-stat"><b>{{ agg.responded_count }}/{{ agg.children_count }}</b><span>ответили</span></div>
-              <div class="staff__agg-stat" :class="{ 'is-warn': agg.attention_count > 0 }"><b>{{ agg.attention_count }}</b><span>тревог</span></div>
-            </div>
-            <div class="staff__bars">
-              <div v-for="d in agg.daily" :key="d.day_key" class="staff__bar" :title="`${d.day_key}: ответили ${d.completed}`">
-                <span class="staff__bar-fill" :style="{ height: d.completed ? (d.avg_mood / 5 * 100) + '%' : '4%' }" :class="{ 'is-empty': !d.completed }" />
-                <span class="staff__bar-day">{{ d.day_key.slice(8, 10) }}</span>
-              </div>
-            </div>
-          </template>
-        </template>
       </section>
     </template>
   </div>
@@ -365,7 +314,6 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff__row--head { cursor: default; font-family: var(--ab-font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ab-text-faint); border-bottom: 1px solid var(--ab-line); border-radius: 0; }
 .staff__name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .staff__name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.staff__name i { font-style: normal; font-size: 0.74rem; color: var(--ab-text-faint); }
 .staff__cell { min-width: 0; font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .staff__cell em { font-style: normal; color: var(--ab-text-dim); }
 .staff__cell.is-warn { color: #ff8fae; font-weight: 700; }
@@ -378,20 +326,6 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff__tag--warn { background: rgba(255, 61, 113, 0.18); color: #ff8fae; }
 .staff__tag--idle { background: rgba(120, 150, 255, 0.1); color: var(--ab-text-faint); }
 .staff__tag--code { background: rgba(53, 224, 255, 0.14); color: var(--ab-cyan); }
-.staff__agg { padding: 24px; }
-.staff__h { font-size: 1.2rem; margin-bottom: 8px; }
-.staff__agg-hint { font-size: 0.82rem; margin: 0 0 16px; }
-.staff__agg-form { display: flex; gap: 10px; max-width: 320px; margin-bottom: 16px; }
-.staff__agg-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
-.staff__agg-stat { flex: 1; min-width: 90px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px; border-radius: var(--ab-radius-sm); background: rgba(6, 9, 18, 0.5); border: 1px solid var(--ab-line); }
-.staff__agg-stat b { font-family: var(--ab-font-display); font-size: 1.5rem; color: var(--ab-cyan); }
-.staff__agg-stat span { font-size: 0.74rem; color: var(--ab-text-faint); }
-.staff__agg-stat.is-warn b { color: var(--ab-raspberry); }
-.staff__bars { display: flex; align-items: flex-end; gap: 5px; height: 120px; }
-.staff__bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
-.staff__bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--ab-cyan), var(--ab-blue)); min-height: 4px; transition: height 400ms ease; }
-.staff__bar-fill.is-empty { background: rgba(120, 150, 255, 0.12); }
-.staff__bar-day { font-family: var(--ab-font-mono); font-size: 0.6rem; color: var(--ab-text-faint); }
 @media (max-width: 760px) {
   .staff__row--head { display: none; }
   .staff__row {
