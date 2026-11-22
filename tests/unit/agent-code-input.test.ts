@@ -29,8 +29,23 @@ describe('поле ввода кода игрока', () => {
   it('про кириллицу в поле сказано прямо', async () => {
     const w = mount(Harness)
     await w.find('input').setValue('Ф2AW5')
-    expect(w.find('.code-input__warn').text()).toContain('латинских букв')
+    expect(w.find('.code-input__warn').text()).toContain('раскладку')
     expect(w.find('.code-input__hint').exists()).toBe(false)
+  })
+
+  it('предупреждение не гаснет, пока вводят дальше', async () => {
+    const w = mount(Harness)
+    await w.find('input').setValue('Ф')
+    expect(w.find('.code-input__warn').exists()).toBe(true)
+    await w.find('input').setValue('Ф2')
+    expect(w.find('.code-input__warn').exists()).toBe(true)
+  })
+
+  it('после очистки поля предупреждение снимается', async () => {
+    const w = mount(Harness)
+    await w.find('input').setValue('Ф2')
+    await w.find('input').setValue('')
+    expect(w.find('.code-input__warn').exists()).toBe(false)
   })
 
   it('для чистого латинского ввода предупреждения нет', async () => {

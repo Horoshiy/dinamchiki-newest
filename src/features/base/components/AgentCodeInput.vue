@@ -11,12 +11,16 @@ const emit = defineEmits<{ 'update:modelValue': [string]; submit: [] }>()
 const clean = computed(() => normalizeAgentCode(props.modelValue))
 const grouped = computed(() => formatAgentCode(props.modelValue))
 // Символы вне латиницы и цифр не попадают в поле — говорим об этом явно.
+// Флаг держится, пока поле не очищено: символ мог быть отброшен на первом
+// нажатии, и к последнему вводу кириллицы в поле уже не видно.
 const dropped = ref(false)
 
 function onInput(e: Event) {
   const el = e.target as HTMLInputElement
-  const next = normalizeAgentCode(el.value)
-  dropped.value = /[^\u0020-\u007E]/.test(el.value)
+  const raw = el.value
+  const next = normalizeAgentCode(raw)
+  if (/[^\u0020-\u007E]/.test(raw)) dropped.value = true
+  if (raw.trim() === '') dropped.value = false
   emit('update:modelValue', next)
   // Значение в поле — всегда нормализованное: без кириллицы и лишних символов.
   if (el.value !== formatAgentCode(next)) el.value = formatAgentCode(next)
@@ -49,8 +53,8 @@ function onKey(e: KeyboardEvent) {
       />
       <span class="code-input__count">{{ clean.length }}/10</span>
     </div>
-    <p v-if="dropped" class="code-input__warn" role="alert">
-      В коде есть русские буквы — код состоит только из латинских букв и цифр.
+    <p v-if="dropped && clean.length < 10" class="code-input__warn" role="alert">
+      Русские буквы не подходят — переключи раскладку на английскую.
     </p>
     <p v-else class="code-input__hint ab-faint">Код из 10 символов — на карточке, которую дал тренер. Только латинские буквы и цифры.</p>
   </div>
