@@ -36,4 +36,8 @@ const route = useRoute()
 }
 .base-nav__tab:hover { color: var(--ab-text); }
 .base-nav__tab.is-active { background: linear-gradient(180deg, var(--ab-blue-bright), var(--ab-blue)); color: #fff; box-shadow: 0 4px 16px rgba(30, 80, 216, 0.4); }
+@media (max-width: 680px) {
+  .base-nav { width: 100%; justify-content: center; }
+  .base-nav__tab { flex: 1 1 auto; justify-content: center; min-width: 0; padding: 0 10px; gap: 6px; font-size: 0.82rem; white-space: nowrap; }
+}
 </style>

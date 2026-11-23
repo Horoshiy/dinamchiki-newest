@@ -115,7 +115,9 @@ function logout() {
 .ab-footer { text-align: center; font-size: 0.74rem; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
 @media (max-width: 680px) {
   .ab-brand__text { display: none; }
-  .ab-topbar { gap: 10px; }
+  .ab-topbar { gap: 10px; flex-wrap: wrap; row-gap: 10px; }
   .ab-staff-name { display: none; }
+  // Вкладки уезжают на вторую строку: иначе звук и выход вылезают за край экрана.
+  .ab-topbar :deep(.base-nav) { order: 3; width: 100%; }
 }
 </style>
