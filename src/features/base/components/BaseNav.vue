@@ -2,7 +2,7 @@
 // Вкладки раздела. Ребёнок: Разминка / Карточка. Тренер: Тренерская.
 import { useRoute } from 'vue-router'
 
-defineProps<{ mode: 'child' | 'staff' }>()
+defineProps<{ mode: 'child' | 'staff'; admin?: boolean }>()
 const route = useRoute()
 </script>
 
@@ -19,6 +19,9 @@ const route = useRoute()
     <template v-else>
       <RouterLink :to="{ name: 'base-staff' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-staff' || route.name === 'base-staff-child' }">
         <span aria-hidden="true">🧢</span> Тренерская
+      </RouterLink>
+      <RouterLink v-if="admin" :to="{ name: 'base-admin' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-admin' }">
+        <span aria-hidden="true">🛠️</span> Админская
       </RouterLink>
     </template>
   </nav>

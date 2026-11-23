@@ -15,10 +15,12 @@ const route = useRoute()
 const router = useRouter()
 
 const isStaffArea = computed(() => route.name === 'base-staff' || route.name === 'base-staff-child')
-const showChildNav = computed(() => auth.isChildAuthed && !isStaffArea.value)
-const showStaffNav = computed(() => auth.isStaffAuthed && isStaffArea.value)
+const isAdminArea = computed(() => route.name === 'base-admin')
+const showChildNav = computed(() => auth.isChildAuthed && !isStaffArea.value && !isAdminArea.value)
+const showStaffNav = computed(() => auth.isStaffAuthed && (isStaffArea.value || isAdminArea.value))
 
 const brandTo = computed(() => {
+  if (isAdminArea.value) return { name: 'base-admin' }
   if (isStaffArea.value) return { name: 'base-staff' }
   return auth.isChildAuthed ? { name: 'base-mission' } : { name: 'base-login' }
 })
@@ -29,9 +31,9 @@ watch(() => auth.me?.sound_on, (v) => {
 })
 
 function logout() {
-  if (isStaffArea.value) {
+  if (isStaffArea.value || isAdminArea.value) {
     auth.logoutStaff()
-    void router.push({ name: 'base-staff' })
+    void router.push(isAdminArea.value ? { name: 'base-admin' } : { name: 'base-staff' })
   } else {
     auth.logoutChild()
     void router.push({ name: 'base-login' })
@@ -61,7 +63,7 @@ function logout() {
         </RouterLink>
 
         <BaseNav v-if="showChildNav" mode="child" />
-        <BaseNav v-else-if="showStaffNav" mode="staff" />
+        <BaseNav v-else-if="showStaffNav" mode="staff" :admin="auth.staffRole === 'admin'" />
 
         <div class="ab-topbar__right">
           <span v-if="showStaffNav && auth.staffName" class="ab-staff-name ab-mono">{{ auth.staffName }}</span>
@@ -78,7 +80,7 @@ function logout() {
         </div>
       </header>
 
-      <main class="ab-main" :class="{ 'ab-main--wide': isStaffArea }">
+      <main class="ab-main" :class="{ 'ab-main--wide': isStaffArea || isAdminArea }">
         <RouterView />
       </main>
 

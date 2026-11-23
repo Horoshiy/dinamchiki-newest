@@ -4,7 +4,7 @@ import { baseRequest } from './base.client'
 import type {
   AnswerInput, AttentionRow, BaseMe, BaseMission, BaseProgress, CodeInfo, CodeIssue,
   HistoryDetail, HistoryItem, ListResponse, LoginResponse, StaffAuthResponse,
-  StaffChildDetail, StaffChildRow, SubmitResult, CoachNote,
+  StaffChildDetail, StaffChildRow, SubmitResult, CoachNote, AdminWarmup,
 } from './base.types'
 
 // ─── Вход ────────────────────────────────────────────────────────────────────
@@ -85,4 +85,22 @@ export function revokeCode(token: string, childId: number): Promise<{ success: b
 
 export function addNote(token: string, childId: number, text: string): Promise<CoachNote> {
   return baseRequest<CoachNote>(`staff/children/${childId}/note`, { method: 'POST', body: { text }, token })
+}
+
+// ─── Админ ────────────────────────────────────────────────────────────────────
+
+/** Запрос кода входа админу: уходит в его Telegram, телефон в запросе не нужен. */
+export function adminRequestCode(): Promise<{ success: boolean }> {
+  return baseRequest('admin/auth/request-code', { method: 'POST' })
+}
+
+export function adminVerify(code: string): Promise<StaffAuthResponse> {
+  return baseRequest<StaffAuthResponse>('admin/auth/verify', {
+    method: 'POST', body: { code, device_id: 'web-base' },
+  })
+}
+
+/** Кто сегодня ответил хотя бы на один вопрос разминки, по группам. */
+export function adminWarmupToday(token: string): Promise<AdminWarmup> {
+  return baseRequest<AdminWarmup>('admin/warmup/today', { token })
 }

@@ -256,3 +256,38 @@ export interface ListResponse<T> {
   limit: number
   offset: number
 }
+
+// ─── Админская сводка ─────────────────────────────────────────────────────────
+
+export interface AdminWarmupChild {
+  child_id: number
+  full_name: string
+  codename: string
+  /** Сколько вопросов разминки ребёнок ответил сегодня. */
+  answers: number
+  completed_at: string
+  mood: number
+  energy: number
+  pain: number
+  needs_attention: boolean
+  attendance: string
+}
+
+export interface AdminWarmupGroup {
+  team_id: number
+  name: string
+  /** Игроков в группе (с профилем агента). */
+  participants: number
+  answered: number
+  children: AdminWarmupChild[]
+}
+
+export interface AdminWarmup {
+  day_key: string
+  mission_id: number
+  theme: string
+  weekday: number
+  answered: number
+  participants: number
+  groups: AdminWarmupGroup[]
+}

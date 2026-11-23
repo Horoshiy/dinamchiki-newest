@@ -112,6 +112,32 @@ export const useBaseAuth = defineStore('baseAuth', {
       }
     },
 
+    /** Запрос кода входа админу: код приходит в его Telegram. */
+    async adminRequestCode() {
+      this.staffLoading = true
+      try {
+        await api.adminRequestCode()
+      } finally {
+        this.staffLoading = false
+      }
+    },
+
+    async adminLogin(code: string) {
+      this.staffLoading = true
+      try {
+        const res = await api.adminVerify(code)
+        if (!res.success || !res.token) throw new BaseApiError(401, res.error || 'Не удалось войти.')
+        this.staffToken = res.token
+        this.staffRole = res.role ?? 'admin'
+        this.staffName = res.name ?? 'Администратор'
+        writeStorage(ls, STAFF_KEY, res.token)
+        writeStorage(ls, STAFF_ROLE_KEY, this.staffRole)
+        writeStorage(ls, STAFF_NAME_KEY, this.staffName)
+      } finally {
+        this.staffLoading = false
+      }
+    },
+
     logoutStaff() {
       this.staffToken = null
       this.staffRole = null

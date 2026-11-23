@@ -32,6 +32,7 @@ const BaseMissionView    = () => import('@/features/base/views/MissionView.vue')
 const BaseProgressView   = () => import('@/features/base/views/ProgressView.vue')
 const BaseStaffView      = () => import('@/features/base/views/StaffView.vue')
 const BaseStaffChildView = () => import('@/features/base/views/StaffChildView.vue')
+const BaseAdminView      = () => import('@/features/base/views/AdminView.vue')
 
 // Раздел «Сведения об образовательной организации» — обязательный по ст. 29
 // Федерального закона № 273-ФЗ. Грузится отдельными чанками, как и остальное.
@@ -347,6 +348,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'progress', name: 'base-progress', component: BaseProgressView, meta: { title: 'Моя карточка — Подтрибунка', noIndex: true } },
       { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Тренерская — Подтрибунка', noIndex: true } },
       { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Карточка игрока — Подтрибунка', noIndex: true } },
+      { path: 'admin', name: 'base-admin', component: BaseAdminView, meta: { title: 'Админская — Подтрибунка', noIndex: true } },
     ],
   },
   // Прежние адреса раздела. QR-ссылки уже розданы — редирект с сохранением
@@ -434,6 +436,11 @@ router.beforeEach((to) => {
   const needsStaff = to.name === 'base-staff-child'
   if (needsChild && !auth.isChildAuthed) return { name: 'base-login' }
   if (needsStaff && !auth.isStaffAuthed) return { name: 'base-staff' }
+  // Админская: без токена открывается свой экран входа по коду из Telegram.
+  // Тренерский токен туда не пускает — отправляем в тренерскую.
+  if (to.name === 'base-admin' && auth.isStaffAuthed && auth.staffRole !== 'admin') {
+    return { name: 'base-staff' }
+  }
   if (to.name === 'base-login' && auth.isChildAuthed) return { name: 'base-mission' }
   return true
 })

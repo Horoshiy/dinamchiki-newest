@@ -63,6 +63,7 @@ onMounted(() => {
       </button>
       <p class="login__hint ab-faint">Нет кода? Попроси тренера выдать карточку игрока на тренировке.</p>
       <RouterLink :to="{ name: 'base-staff' }" class="login__staff">Я тренер → тренерская</RouterLink>
+      <RouterLink :to="{ name: 'base-admin' }" class="login__staff login__admin">Я администратор → админская</RouterLink>
     </section>
 
     <p class="login__lead ab-rise ab-rise-1">
@@ -96,6 +97,7 @@ onMounted(() => {
 .login__hint { font-size: 0.82rem; margin: 0; text-align: center; }
 .login__staff { align-self: center; color: var(--ab-text-dim); font-size: 0.88rem; text-decoration: none; border-bottom: 1px dashed var(--ab-line-strong); }
 .login__staff:hover { color: var(--ab-cyan); }
+.login__admin { color: var(--ab-text-faint); font-size: 0.82rem; margin-top: -8px; }
 .login__perks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .login__perk { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
   padding: 16px 10px; border-radius: var(--ab-radius-sm); background: rgba(120, 150, 255, 0.05); border: 1px solid var(--ab-line); }
