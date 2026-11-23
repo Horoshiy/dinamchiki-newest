@@ -63,6 +63,10 @@ const query = ref('')
 const filter = ref<'all' | 'done' | 'pending' | 'attention' | 'nocode'>('all')
 const sort = ref<'name' | 'xp' | 'streak' | 'pain' | 'mood'>('name')
 
+// Админу доска приходит уже отфильтрованной: только те, кто сегодня ответил
+// хотя бы на один вопрос. Фильтры «не прошли» и «без кода» тут бессмысленны.
+const isAdmin = computed(() => auth.staffRole === 'admin')
+
 const filtered = computed(() => {
   let list = rows.value
   const q = query.value.trim().toLowerCase()
@@ -218,7 +222,8 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 
       <!-- Сводка дня -->
       <div class="staff__board-summary ab-rise ab-rise-1">
-        <span>Ответили <b>{{ doneCount }}</b> из {{ rows.length }}</span>
+        <span v-if="isAdmin">Ответили сегодня <b>{{ rows.length }}</b></span>
+        <span v-else>Ответили <b>{{ doneCount }}</b> из {{ rows.length }}</span>
         <span>Будут ⚽ <b>{{ willCome }}</b></span>
         <span>Настрой ⌀ <b>{{ avgMood }}</b></span>
         <span>Силы ⌀ <b>{{ avgEnergy }}</b></span>
@@ -230,11 +235,11 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
       <section class="staff__toolbar ab-rise ab-rise-1">
         <input v-model="query" class="ab-input staff__search" type="search" placeholder="Поиск по имени…" />
         <select v-model="filter" class="ab-input staff__select" aria-label="Фильтр">
-          <option value="all">Все игроки</option>
-          <option value="done">Прошли сегодня</option>
-          <option value="pending">Не прошли сегодня</option>
+          <option value="all">{{ isAdmin ? 'Все ответившие' : 'Все игроки' }}</option>
+          <option v-if="!isAdmin" value="done">Прошли сегодня</option>
+          <option v-if="!isAdmin" value="pending">Не прошли сегодня</option>
           <option value="attention">Требуют внимания</option>
-          <option value="nocode">Без кода</option>
+          <option v-if="!isAdmin" value="nocode">Без кода</option>
         </select>
         <select v-model="sort" class="ab-input staff__select" aria-label="Сортировка">
           <option value="name">По имени</option>
@@ -249,13 +254,13 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
       </section>
 
       <div class="staff__summary ab-faint ab-rise ab-rise-1">
-        {{ filtered.length }} из {{ rows.length }} · сегодня прошли {{ doneCount }}
+        {{ filtered.length }} из {{ rows.length }}<template v-if="!isAdmin"> · сегодня прошли {{ doneCount }}</template>
       </div>
 
       <!-- Доска дня: ответы всего состава -->
       <section v-if="loading" class="staff__loading ab-card"><span class="staff__spinner" />Загружаем игроков…</section>
       <section v-else-if="!filtered.length" class="staff__empty ab-card ab-dim">
-        {{ rows.length ? 'Никого не найдено по фильтру.' : 'Пока нет доступных игроков.' }}
+        {{ rows.length ? 'Никого не найдено по фильтру.' : (isAdmin ? 'Сегодня никто ещё не отвечал на разминку.' : 'Пока нет доступных игроков.') }}
       </section>
       <section v-else class="staff__table ab-card ab-rise ab-rise-2">
         <div class="staff__row staff__row--head">
