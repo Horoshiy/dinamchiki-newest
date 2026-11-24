@@ -145,7 +145,9 @@ export function useQuiz() {
     error.value = ''
     try {
       await api.decideQuizLevel(auth.childToken, action)
-      await load()
+      // Решение могло прийти с экрана итогов — возвращаемся к неделям,
+      // иначе останется старая карточка результата со сгоревшим предложением.
+      await goHome()
     } catch (e) {
       await handleError(e)
     }
