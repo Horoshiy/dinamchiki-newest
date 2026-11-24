@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as api from '../api/base.api'
 import { BaseApiError } from '../api/base.client'
-import type { BaseProgress } from '../api/base.types'
+import type { BaseProgress, TeamBoard } from '../api/base.types'
 import { useBaseAuth } from '../stores/baseAuth'
 import { useBaseSound } from '../stores/baseSound'
 import RankBadge from '../components/RankBadge.vue'
@@ -16,6 +16,7 @@ const sound = useBaseSound()
 const router = useRouter()
 
 const progress = ref<BaseProgress | null>(null)
+const teamBoard = ref<TeamBoard | null>(null)
 const loading = ref(false)
 const error = ref('')
 const editing = ref(false)
@@ -42,6 +43,8 @@ async function load() {
     progress.value = await api.getProgress(auth.childToken)
     if (!auth.me) await auth.loadMe().catch(() => {})
     codename.value = auth.me?.codename ?? ''
+    // Место в команде — необязательный блок: при ошибке карточка работает.
+    teamBoard.value = await api.getTeamBoard(auth.childToken).catch(() => null)
   } catch (e) {
     if (e instanceof BaseApiError && (e.status === 401 || e.status === 403)) { auth.logoutChild(); void router.push({ name: 'base-login' }); return }
     error.value = e instanceof BaseApiError ? e.message : 'Не удалось загрузить карточку.'
@@ -103,6 +106,15 @@ onMounted(load)
 
       <p v-if="error" class="ab-alert ab-alert--error">{{ error }}</p>
 
+      <!-- Место в команде по XP -->
+      <section v-if="teamBoard?.me" class="progress__team ab-card ab-rise ab-rise-1">
+        <div class="progress__team-place">
+          <b>{{ teamBoard.me.place }}-е место</b>
+          <span>в команде по XP{{ teamBoard.team_name ? ' · ' + teamBoard.team_name : '' }}</span>
+        </div>
+        <RouterLink :to="{ name: 'base-team' }" class="ab-btn ab-btn--ghost ab-btn--sm progress__team-link">Таблица команды →</RouterLink>
+      </section>
+
       <!-- Быстрые цифры -->
       <section class="progress__stats ab-rise ab-rise-1">
         <div class="progress__stat ab-panel"><b>{{ progress.missions_total }}</b><span>разминок</span></div>
@@ -163,6 +175,11 @@ onMounted(load)
 .progress__cta { align-self: center; text-decoration: none; }
 .progress__done { display: grid; place-items: center; padding: 16px; color: var(--ab-lime); font-weight: 700; font-size: 0.9rem; }
 .progress__block { padding: 24px; }
+.progress__team { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 22px; flex-wrap: wrap; }
+.progress__team-place { display: flex; flex-direction: column; gap: 2px; }
+.progress__team-place b { font-family: var(--ab-font-display); font-size: 1.3rem; color: var(--ab-cyan); }
+.progress__team-place span { font-size: 0.85rem; color: var(--ab-text-dim); }
+.progress__team-link { text-decoration: none; }
 .progress__h { font-size: 1.2rem; margin-bottom: 18px; }
 .ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .ladder__step { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: var(--ab-radius-sm); border: 1px solid transparent; color: var(--ab-text-faint); }

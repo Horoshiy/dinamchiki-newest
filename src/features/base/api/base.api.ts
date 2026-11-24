@@ -7,6 +7,7 @@ import type {
   HistoryDetail, HistoryItem, ListResponse, LoginResponse, StaffAuthResponse,
   StaffChildDetail, StaffChildRow, SubmitResult, CoachNote, AdminWarmup,
   QuizState, QuizParticipant, QuizStart, QuizAnswer, QuizReview, QuizLeaderboard, QuizLevelResult,
+  TeamBoard,
 } from './base.types'
 
 // ─── Вход ────────────────────────────────────────────────────────────────────
@@ -69,6 +70,11 @@ export function getHistory(token: string, limit = 30, offset = 0): Promise<ListR
 
 export function getHistoryDay(token: string, dayKey: string): Promise<HistoryDetail> {
   return baseRequest<HistoryDetail>(`history/${encodeURIComponent(dayKey)}`, { token })
+}
+
+/** Командная таблица XP: место ребёнка в своей команде и состав команды. */
+export function getTeamBoard(token: string): Promise<TeamBoard> {
+  return baseRequest<TeamBoard>('team/board', { token })
 }
 
 // ─── Тренер/админ ────────────────────────────────────────────────────────────

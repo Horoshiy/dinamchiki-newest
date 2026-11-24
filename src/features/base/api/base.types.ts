@@ -458,3 +458,19 @@ export interface QuizLevelResult {
   pending_from_week?: number
   points_after?: number
 }
+
+// ─── Командная таблица XP ─────────────────────────────────────────────────────
+
+export interface TeamBoardItem {
+  place: number
+  name: string
+  xp: number
+  is_me: boolean
+}
+
+export interface TeamBoard {
+  team_name: string
+  total: number
+  items: TeamBoardItem[]
+  me: TeamBoardItem | null
+}

@@ -511,3 +511,75 @@ describe('квиз: доступ и общий зачёт', () => {
     vi.unstubAllGlobals()
   })
 })
+
+// ─── Командная таблица XP ─────────────────────────────────────────────────────
+
+import ProgressView from '@/features/base/views/ProgressView.vue'
+import TeamBoardView from '@/features/base/views/TeamBoardView.vue'
+import type { TeamBoard, BaseProgress } from '@/features/base/api/base.types'
+
+const teamBoardFixture = (): TeamBoard => ({
+  team_name: 'Команда A', total: 2,
+  items: [
+    { place: 1, name: 'Товарищ По Команде', xp: 100, is_me: false },
+    { place: 2, name: 'Соколов Артём', xp: 55, is_me: true },
+  ],
+  me: { place: 2, name: 'Соколов Артём', xp: 55, is_me: true },
+})
+
+const progressFixture = (): BaseProgress => ({
+  xp: 55, rank: 'Новичок', streak_current: 0, streak_best: 0, missions_total: 0,
+  rank_ladder: [{ title: 'Новичок', min_xp: 0, reached: true, current: true }],
+  badges: [], calendar: [],
+})
+
+describe('командная таблица XP', () => {
+  it('без child-токена таблица команды уводит на вход', async () => {
+    await router.push('/podtribunka/team')
+    expect(router.currentRoute.value.name).toBe('base-login')
+  })
+
+  it('карточка показывает место в команде и ссылку на таблицу', async () => {
+    vi.spyOn(api, 'getProgress').mockResolvedValue(progressFixture())
+    vi.spyOn(api, 'getMe').mockResolvedValue({} as BaseMe)
+    vi.spyOn(api, 'getTeamBoard').mockResolvedValue(teamBoardFixture())
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useBaseAuth()
+    auth.childToken = 'child-token'
+    const w = mount(ProgressView, { global: { plugins: [pinia, router] } })
+    await flushPromises()
+    expect(w.text()).toContain('2-е место')
+    expect(w.text()).toContain('в команде по XP')
+    const link = w.findAll('a').find((a) => a.text().includes('Таблица команды'))
+    expect(link).toBeDefined()
+    expect(link!.attributes('href')).toBe('/podtribunka/team')
+  })
+
+  it('таблица команды рендерит строки и подсвечивает себя', async () => {
+    vi.spyOn(api, 'getTeamBoard').mockResolvedValue(teamBoardFixture())
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useBaseAuth()
+    auth.childToken = 'child-token'
+    const w = mount(TeamBoardView, { global: { plugins: [pinia, router] } })
+    await flushPromises()
+    expect(w.text()).toContain('Команда A')
+    expect(w.text()).toContain('Товарищ По Команде')
+    expect(w.find('.team__row.is-me').text()).toContain('Соколов Артём')
+  })
+
+  it('карточка работает и без командной таблицы', async () => {
+    vi.spyOn(api, 'getProgress').mockResolvedValue(progressFixture())
+    vi.spyOn(api, 'getMe').mockResolvedValue({} as BaseMe)
+    vi.spyOn(api, 'getTeamBoard').mockRejectedValue(new BaseApiError(500, 'упс'))
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useBaseAuth()
+    auth.childToken = 'child-token'
+    const w = mount(ProgressView, { global: { plugins: [pinia, router] } })
+    await flushPromises()
+    expect(w.text()).toContain('всего XP')
+    expect(w.text()).not.toContain('Таблица команды')
+  })
+})
