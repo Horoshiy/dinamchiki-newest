@@ -89,7 +89,7 @@ function offer(s) {
   return { direction: 'up', target_category: 'k3', target_title: '9–11 лет', from_week: 10, points_now: s.points, points_after: s.points * 0.75 }
 }
 function weekResult(s) {
-  return { week: 9, correct: s.correct, total: 3, points: s.points, place: s.correct === 3 ? 1 : 3, place_total: 23, offer: s.correct === 3 ? offer(s) : null }
+  return { week: 9, correct: s.correct, total: 3, points: s.points, place: s.correct === 3 ? 1 : 3, place_total: 23, xp_granted: s.correct === 3 ? 20 : 15, offer: s.correct === 3 ? offer(s) : null }
 }
 function review8() {
   return {
@@ -99,7 +99,7 @@ function review8() {
       answered: true, chosen_idx: i === 1 ? 0 : CORRECT, correct_idx: CORRECT, is_correct: i !== 1,
       explanation: EXPLAIN, option_note: i === 1 ? 'Этот вариант неверен, потому что...' : '',
     })),
-    result: { week: 8, correct: 2, total: 3, points: 3, place: 3, place_total: 23, offer: null },
+    result: { week: 8, correct: 2, total: 3, points: 3, place: 3, place_total: 23, xp_granted: 15, offer: null },
   }
 }
 
@@ -332,6 +332,7 @@ const VIEWPORTS = [
     }
     await page.waitForSelector('.quiz-result')
     await expectText(page, vp, 'result', 'Неделя 9 пройдена')
+    await expectText(page, vp, 'result', 'XP в Подтрибунке')
     await check(page, vp, 'quiz-result'); await shot(page, vp, 'quiz-result')
     if (state.correct === 3) {
       await page.waitForSelector('.quiz-offer')

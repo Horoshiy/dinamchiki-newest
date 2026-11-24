@@ -19,6 +19,7 @@ const emit = defineEmits<{ done: [] }>()
       Всего {{ fmtQuizPoints(result.points) }} баллов
       <template v-if="result.place > 0"> · {{ result.place }}-е место из {{ result.place_total }} в категории</template>
     </p>
+    <p v-if="result.xp_granted > 0" class="quiz-result__xp">+{{ result.xp_granted }} XP в Подтрибунке</p>
     <button class="ab-btn ab-btn--lime" type="button" @click="emit('done')">К неделям и рейтингу</button>
   </section>
 </template>
@@ -28,4 +29,5 @@ const emit = defineEmits<{ done: [] }>()
 .quiz-result__title { margin: 0; font-size: clamp(1.3rem, 4vw, 1.7rem); }
 .quiz-result__score { margin: 0; font-size: 2rem; font-weight: 800; font-family: var(--ab-font-display); color: var(--ab-lime); }
 .quiz-result__meta { margin: 0 0 8px; color: var(--ab-text-dim); }
+.quiz-result__xp { margin: 0 0 8px; font-weight: 700; color: var(--ab-cyan); }
 </style>

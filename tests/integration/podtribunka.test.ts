@@ -463,7 +463,7 @@ describe('квиз: доступ и общий зачёт', () => {
     vi.spyOn(api, 'startQuizWeek').mockResolvedValue(quizStartFixture())
     vi.spyOn(api, 'answerQuiz').mockResolvedValue(quizAnswerFixture({
       finished: true, next_question: undefined,
-      result: { week: 3, correct: 3, total: 3, points: 6, place: 1, place_total: 2, offer: null },
+      result: { week: 3, correct: 3, total: 3, points: 6, place: 1, place_total: 2, xp_granted: 20, offer: null },
     }))
     const w = mountQuiz()
     await flushPromises()

@@ -378,6 +378,7 @@ export interface QuizWeekResult {
   points: number
   place: number
   place_total: number
+  xp_granted: number
   offer: QuizOffer | null
 }
 
