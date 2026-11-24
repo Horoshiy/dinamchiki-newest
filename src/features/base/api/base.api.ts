@@ -30,6 +30,11 @@ export function staffPasswordLogin(phone: string, password: string): Promise<Sta
   })
 }
 
+/** Как входить этому номеру: «password» — постоянный пароль, «code» — код из Telegram. */
+export function staffAuthMethod(phone: string): Promise<{ success: boolean; method: 'password' | 'code' }> {
+  return baseRequest(`staff/auth/method?phone=${encodeURIComponent(phone)}`)
+}
+
 // ─── Ребёнок ─────────────────────────────────────────────────────────────────
 
 export function getMe(token: string): Promise<BaseMe> {

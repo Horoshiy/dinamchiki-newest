@@ -2,7 +2,7 @@
 // Тренерская: вход по SMS, доска дня с ответами всего состава, «требуют внимания»,
 // сводка по команде. Прямые ответы дня видны здесь (аудит view_board); карточка
 // ребёнка — по клику (аудит view_answers).
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as api from '../api/base.api'
 import { BaseApiError } from '../api/base.client'
@@ -18,12 +18,30 @@ const code = ref('')
 const password = ref('')
 const loginStep = ref<'phone' | 'code' | 'password'>('phone')
 const loginError = ref('')
+let phoneTimer: number | undefined
 
 // Ввод принимается только из цифр и знаков телефона: буквы и кириллица
 // молча терялись бы при отправке, и номер не совпал бы.
 function onPhoneInput(e: Event) {
   const el = e.target as HTMLInputElement
   phone.value = el.value.replace(/[^\d+()\-\s]/g, '')
+  // Номер с постоянным паролем уводит сразу на поле пароля — без кнопок.
+  if (phoneTimer) window.clearTimeout(phoneTimer)
+  if (phone.value.replace(/\D/g, '').length < 10) return
+  phoneTimer = window.setTimeout(() => { void detectAuthMethod() }, 400)
+}
+
+async function detectAuthMethod() {
+  try {
+    const res = await api.staffAuthMethod(phone.value)
+    if (res.method !== 'password') return
+    loginStep.value = 'password'
+    loginError.value = ''
+    await nextTick()
+    document.querySelector<HTMLInputElement>('#staff-password')?.focus()
+  } catch {
+    // Сервер не ответил — тренер возьмёт код или нажмёт «постоянный пароль» вручную.
+  }
 }
 // Код из SMS — строго цифры: пробел или буква из буфера обмена ломает проверку.
 function onStaffCodeInput(e: Event) {
