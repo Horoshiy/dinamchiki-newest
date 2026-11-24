@@ -23,6 +23,13 @@ export function staffVerify(phone: string, code: string): Promise<StaffAuthRespo
   })
 }
 
+/** Вход тренера по постоянному паролю (вместо кода из Telegram). */
+export function staffPasswordLogin(phone: string, password: string): Promise<StaffAuthResponse> {
+  return baseRequest<StaffAuthResponse>('staff/auth/login', {
+    method: 'POST', body: { phone, password, device_id: 'web-base' },
+  })
+}
+
 // ─── Ребёнок ─────────────────────────────────────────────────────────────────
 
 export function getMe(token: string): Promise<BaseMe> {

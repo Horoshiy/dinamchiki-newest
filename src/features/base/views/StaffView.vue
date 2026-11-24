@@ -15,7 +15,8 @@ const router = useRouter()
 // ─── Вход ────────────────────────────────────────────────────────────────────
 const phone = ref('')
 const code = ref('')
-const loginStep = ref<'phone' | 'code'>('phone')
+const password = ref('')
+const loginStep = ref<'phone' | 'code' | 'password'>('phone')
 const loginError = ref('')
 
 // Ввод принимается только из цифр и знаков телефона: буквы и кириллица
@@ -45,6 +46,16 @@ async function verify() {
   loginError.value = ''
   try {
     await auth.staffLogin(phone.value, code.value.trim())
+    await loadDashboard()
+  } catch (e) {
+    loginError.value = e instanceof BaseApiError ? e.message : 'Не удалось войти.'
+  }
+}
+async function loginWithPassword() {
+  if (!password.value || auth.staffLoading) return
+  loginError.value = ''
+  try {
+    await auth.staffPasswordLogin(phone.value, password.value)
     await loadDashboard()
   } catch (e) {
     loginError.value = e instanceof BaseApiError ? e.message : 'Не удалось войти.'
@@ -170,7 +181,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
     <section v-if="!auth.isStaffAuthed" class="staff-login ab-card ab-rise">
       <span class="ab-eyebrow">Доступ персонала</span>
       <h1 class="staff-login__title">Тренерская</h1>
-      <p class="ab-dim">Вход по номеру телефона и коду из SMS. Доступно тренерам и администраторам клуба.</p>
+      <p class="ab-dim">Вход по номеру телефона: код из SMS или постоянный пароль. Доступно тренерам и администраторам клуба.</p>
 
       <template v-if="loginStep === 'phone'">
         <label class="ab-eyebrow" for="staff-phone">Телефон</label>
@@ -178,14 +189,30 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
         <button class="ab-btn ab-btn--block" type="button" :disabled="phone.replace(/\D/g, '').length < 10 || auth.staffLoading" @click="requestCode">
           {{ auth.staffLoading ? 'Отправляем…' : 'Получить код' }}
         </button>
+        <button
+          class="staff-login__back"
+          type="button"
+          :disabled="phone.replace(/\D/g, '').length < 10"
+          @click="loginStep = 'password'; password = ''; loginError = ''"
+        >
+          У меня постоянный пароль
+        </button>
       </template>
-      <template v-else>
+      <template v-else-if="loginStep === 'code'">
         <label class="ab-eyebrow" for="staff-code">Код из SMS на {{ phone }}</label>
         <input id="staff-code" :value="code" class="ab-input staff-login__code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" @input="onStaffCodeInput" @keydown.enter="verify" />
         <button class="ab-btn ab-btn--block" type="button" :disabled="!code.trim() || auth.staffLoading" @click="verify">
           {{ auth.staffLoading ? 'Проверяем…' : 'Войти в тренерскую' }}
         </button>
         <button class="staff-login__back" type="button" @click="loginStep = 'phone'; code = ''; loginError = ''">← изменить номер</button>
+      </template>
+      <template v-else>
+        <label class="ab-eyebrow" for="staff-password">Постоянный пароль для {{ phone }}</label>
+        <input id="staff-password" v-model="password" class="ab-input" type="password" autocomplete="current-password" placeholder="••••" @keydown.enter="loginWithPassword" />
+        <button class="ab-btn ab-btn--block" type="button" :disabled="!password || auth.staffLoading" @click="loginWithPassword">
+          {{ auth.staffLoading ? 'Проверяем…' : 'Войти по паролю' }}
+        </button>
+        <button class="staff-login__back" type="button" @click="loginStep = 'phone'; password = ''; loginError = ''">← изменить номер</button>
       </template>
 
       <p v-if="loginError" class="ab-alert ab-alert--error" role="alert">{{ loginError }}</p>
@@ -307,6 +334,7 @@ onMounted(() => { if (auth.isStaffAuthed) void loadDashboard() })
 .staff-login__title { font-size: 1.9rem; }
 .staff-login__code { letter-spacing: 0.4em; font-family: var(--ab-font-mono); font-size: 1.4rem; text-align: center; }
 .staff-login__back, .staff-login__child { background: none; border: none; color: var(--ab-text-dim); font-size: 0.86rem; cursor: pointer; text-align: center; text-decoration: none; }
+.staff-login__back:disabled { opacity: 0.45; cursor: default; }
 .staff-login__child { color: var(--ab-cyan); }
 .staff__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .staff__title { font-size: clamp(1.6rem, 5vw, 2.2rem); }

@@ -112,6 +112,23 @@ export const useBaseAuth = defineStore('baseAuth', {
       }
     },
 
+    /** Вход тренера по постоянному паролю — без кода из Telegram. */
+    async staffPasswordLogin(phone: string, password: string) {
+      this.staffLoading = true
+      try {
+        const res = await api.staffPasswordLogin(phone, password)
+        if (!res.success || !res.token) throw new BaseApiError(401, res.error || 'Не удалось войти.')
+        this.staffToken = res.token
+        this.staffRole = res.role ?? 'coach'
+        this.staffName = res.name ?? 'Тренер'
+        writeStorage(ls, STAFF_KEY, res.token)
+        writeStorage(ls, STAFF_ROLE_KEY, this.staffRole)
+        writeStorage(ls, STAFF_NAME_KEY, this.staffName)
+      } finally {
+        this.staffLoading = false
+      }
+    },
+
     /** Запрос кода входа админу: код приходит в его Telegram. */
     async adminRequestCode() {
       this.staffLoading = true
