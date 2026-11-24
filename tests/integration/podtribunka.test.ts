@@ -71,6 +71,18 @@ describe('guard: доступ в Подтрибунку', () => {
     expect(router.currentRoute.value.name).toBe('base-staff-child')
   })
 
+  it('без child-токена квиз уводит на вход', async () => {
+    await router.push('/podtribunka/quiz')
+    expect(router.currentRoute.value.name).toBe('base-login')
+  })
+
+  it('с child-токеном квиз доступен', async () => {
+    const auth = useBaseAuth()
+    auth.childToken = 'child-token'
+    await router.push('/podtribunka/quiz')
+    expect(router.currentRoute.value.name).toBe('base-quiz')
+  })
+
   it('вошедшего ребёнка со входа уводит на разминку', async () => {
     const auth = useBaseAuth()
     auth.childToken = 'child-token'
@@ -339,5 +351,163 @@ describe('useMission: fuel необязательный', () => {
     const sent = submit.mock.calls[0][1]
     expect(sent).toHaveLength(4)
     expect(sent.find((a) => a.question_id === 5)).toBeUndefined()
+  })
+})
+// ─── Воскресный квиз: зачёт общий с ботом ─────────────────────────────────────
+
+import QuizView from '@/features/base/views/QuizView.vue'
+import MissionView from '@/features/base/views/MissionView.vue'
+import { BaseApiError } from '@/features/base/api/base.client'
+import type { QuizState, QuizLeaderboard, QuizStart, QuizAnswer } from '@/features/base/api/base.types'
+
+const quizStateFixture = (over: Partial<QuizState> = {}): QuizState => ({
+  season: { id: 1, name: 'Сезон', weeks: 40, current_week: 3, playable_from: 1, playable_to: 3, frozen: false, over: false },
+  participant: { id: 10, category: 'k2', category_title: '7–8 лет', points: 3, place: 2, place_total: 2, category_locked: true },
+  join: null,
+  weeks: [
+    { week: 3, status: 'open', pos: 0, correct: 0, total: 0 },
+    { week: 2, status: 'finished', pos: 3, correct: 2, total: 3 },
+  ],
+  offer: null,
+  ...over,
+})
+
+const quizBoardFixture = (): QuizLeaderboard => ({
+  category: 'k2', title: '7–8 лет', current_week: 3, weeks: 40, season_over: false, total: 2,
+  items: [
+    { place: 1, name: 'Буцыкина Полина', points: 6, is_me: false },
+    { place: 2, name: 'Иванов Артём', points: 3, is_me: true },
+  ],
+  me: null,
+})
+
+const quizQuestion = (pos: number) => ({
+  pos, question_id: 11 + pos, text: `Вопрос ${pos + 1}?`, options: ['раз', 'два', 'три'], has_image: false, total: 3,
+})
+
+const quizStartFixture = (): QuizStart => ({
+  attempt_id: 5, week: 3, category: 'k2', category_title: '7–8 лет', pos: 0, total: 3, finished: false,
+  question: quizQuestion(0),
+})
+
+const quizAnswerFixture = (over: Partial<QuizAnswer> = {}): QuizAnswer => ({
+  is_correct: true, correct_idx: 1, chosen_idx: 1, explanation: 'потому что', option_note: '',
+  finished: false, points: 4, place: 2, place_total: 2, next_question: quizQuestion(1),
+  ...over,
+})
+
+function mountQuiz() {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const auth = useBaseAuth()
+  auth.childToken = 'child-token'
+  return mount(QuizView, { global: { plugins: [pinia, router] } })
+}
+
+describe('квиз: доступ и общий зачёт', () => {
+  it('главный экран: недели и рейтинг с лидерами бота', async () => {
+    vi.spyOn(api, 'getQuizState').mockResolvedValue(quizStateFixture())
+    vi.spyOn(api, 'getQuizLeaderboard').mockResolvedValue(quizBoardFixture())
+    const w = mountQuiz()
+    await flushPromises()
+    expect(w.text()).toContain('Неделя 3')
+    expect(w.text()).toContain('Буцыкина Полина')
+    expect(w.text()).toContain('7–8 лет')
+  })
+
+  it('ответ на вопрос: фидбек и следующий вопрос', async () => {
+    vi.spyOn(api, 'getQuizState').mockResolvedValue(quizStateFixture())
+    vi.spyOn(api, 'getQuizLeaderboard').mockResolvedValue(quizBoardFixture())
+    vi.spyOn(api, 'startQuizWeek').mockResolvedValue(quizStartFixture())
+    const answer = vi.spyOn(api, 'answerQuiz').mockResolvedValue(quizAnswerFixture())
+    const w = mountQuiz()
+    await flushPromises()
+
+    const weekBtn = w.findAll('.quiz-weeks__row').find((b) => b.text().includes('Неделя 3'))!
+    await weekBtn.trigger('click')
+    await flushPromises()
+    expect(w.text()).toContain('Вопрос 1?')
+    expect(w.text()).not.toContain('correct_idx')
+
+    await w.findAll('.quiz-q__opt')[1].trigger('click')
+    await flushPromises()
+    expect(answer).toHaveBeenCalledWith('child-token', 5, 0, 1)
+    expect(w.text()).toContain('Верно')
+    expect(w.text()).toContain('потому что')
+
+    await w.findAll('button').find((b) => b.text().includes('Следующий вопрос'))!.trigger('click')
+    await flushPromises()
+    expect(w.text()).toContain('Вопрос 2?')
+  })
+
+  it('409 already_answered (ответили в боте) — перечитывает состояние', async () => {
+    const state = vi.spyOn(api, 'getQuizState').mockResolvedValue(quizStateFixture())
+    vi.spyOn(api, 'getQuizLeaderboard').mockResolvedValue(quizBoardFixture())
+    vi.spyOn(api, 'startQuizWeek').mockResolvedValue(quizStartFixture())
+    vi.spyOn(api, 'answerQuiz').mockRejectedValue(new BaseApiError(409, 'Ответ уже принят', 'already_answered'))
+    const w = mountQuiz()
+    await flushPromises()
+
+    await w.findAll('.quiz-weeks__row').find((b) => b.text().includes('Неделя 3'))!.trigger('click')
+    await flushPromises()
+    await w.findAll('.quiz-q__opt')[0].trigger('click')
+    await flushPromises()
+    expect(state.mock.calls.length).toBeGreaterThanOrEqual(2)
+    expect(w.text()).toContain('Неделя 3')
+    expect(w.find('.quiz-q').exists()).toBe(false)
+  })
+
+  it('итоги недели после последнего ответа', async () => {
+    vi.spyOn(api, 'getQuizState').mockResolvedValue(quizStateFixture())
+    vi.spyOn(api, 'getQuizLeaderboard').mockResolvedValue(quizBoardFixture())
+    vi.spyOn(api, 'startQuizWeek').mockResolvedValue(quizStartFixture())
+    vi.spyOn(api, 'answerQuiz').mockResolvedValue(quizAnswerFixture({
+      finished: true, next_question: undefined,
+      result: { week: 3, correct: 3, total: 3, points: 6, place: 1, place_total: 2, offer: null },
+    }))
+    const w = mountQuiz()
+    await flushPromises()
+    await w.findAll('.quiz-weeks__row').find((b) => b.text().includes('Неделя 3'))!.trigger('click')
+    await flushPromises()
+    await w.findAll('.quiz-q__opt')[1].trigger('click')
+    await flushPromises()
+    expect(w.text()).toContain('Неделя 3 пройдена')
+    expect(w.text()).toContain('3 из 3')
+  })
+
+  it('незаписанный ребёнок видит выбор категории', async () => {
+    vi.spyOn(api, 'getQuizState').mockResolvedValue(quizStateFixture({
+      participant: null,
+      join: { allowed: [{ code: 'k2', title: '7–8 лет', recommended: true }, { code: 'k3', title: '9–11 лет', recommended: false }], needs_dob: false, not_published: false },
+    }))
+    vi.spyOn(api, 'getQuizLeaderboard').mockResolvedValue(quizBoardFixture())
+    const join = vi.spyOn(api, 'joinQuiz').mockResolvedValue(quizStateFixture().participant!)
+    const w = mountQuiz()
+    await flushPromises()
+    expect(w.text()).toContain('В какой категории будешь играть')
+    await w.findAll('button').find((b) => b.text().includes('⭐ 7–8 лет'))!.trigger('click')
+    await flushPromises()
+    expect(join).toHaveBeenCalledWith('child-token', 'k2', false)
+  })
+
+  it('в разминке есть ссылка на квиз', async () => {
+    // fetch стабим глобально: маунт .vue может тянуть свой экземпляр api-модуля.
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      const body = url.includes('mission/today')
+        ? { mission_id: 1, day_key: '2026-11-24', weekday: 2, theme: 'Тема', slogan: '', questions: [], completed: false, checkin_open: true }
+        : { child_id: 1, codename: 'Сокол', rank: 'Игрок', xp: 0, streak_current: 0, streak_best: 0, badges: [] }
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) } as Response
+    }))
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useBaseAuth()
+    auth.childToken = 'child-token'
+    const w = mount(MissionView, { global: { plugins: [pinia, router] } })
+    await flushPromises()
+    const link = w.findAll('a').find((a) => a.text().includes('Воскресный квиз'))
+    expect(link).toBeDefined()
+    expect(link!.attributes('href')).toBe('/podtribunka/quiz')
+    vi.unstubAllGlobals()
   })
 })

@@ -291,3 +291,169 @@ export interface AdminWarmup {
   participants: number
   groups: AdminWarmupGroup[]
 }
+
+// ─── Воскресный квиз (зачёт общий с ботом) ────────────────────────────────────
+
+export interface QuizSeason {
+  id: number
+  name: string
+  weeks: number
+  current_week: number
+  playable_from: number
+  playable_to: number
+  frozen: boolean
+  over: boolean
+}
+
+export interface QuizParticipant {
+  id: number
+  category: string
+  category_title: string
+  points: number
+  place: number
+  place_total: number
+  pending_category?: string
+  pending_from_week?: number
+  category_locked: boolean
+}
+
+export interface QuizJoinOption {
+  code: string
+  title: string
+  recommended: boolean
+}
+
+export interface QuizJoin {
+  allowed: QuizJoinOption[]
+  needs_dob: boolean
+  not_published: boolean
+}
+
+export interface QuizOffer {
+  direction: 'up' | 'down'
+  target_category: string
+  target_title: string
+  from_week: number
+  points_now: number
+  points_after: number
+}
+
+export type QuizWeekStatus = 'open' | 'in_progress' | 'finished' | 'closed'
+
+export interface QuizWeek {
+  week: number
+  status: QuizWeekStatus
+  pos: number
+  correct: number
+  total: number
+}
+
+export interface QuizState {
+  season: QuizSeason
+  participant: QuizParticipant | null
+  join: QuizJoin | null
+  weeks: QuizWeek[]
+  offer: QuizOffer | null
+}
+
+export interface QuizQuestion {
+  pos: number
+  question_id: number
+  text: string
+  options: string[]
+  has_image: boolean
+  total: number
+}
+
+export interface QuizMedia {
+  type: 'photo' | 'video'
+  question_id: number
+  kind: 'question' | 'answer'
+}
+
+export interface QuizWeekResult {
+  week: number
+  correct: number
+  total: number
+  points: number
+  place: number
+  place_total: number
+  offer: QuizOffer | null
+}
+
+export interface QuizStart {
+  attempt_id: number
+  week: number
+  category: string
+  category_title: string
+  pos: number
+  total: number
+  finished: boolean
+  question?: QuizQuestion
+  result?: QuizWeekResult
+}
+
+export interface QuizAnswer {
+  is_correct: boolean
+  correct_idx: number
+  chosen_idx: number
+  explanation: string
+  option_note: string
+  finished: boolean
+  points: number
+  place: number
+  place_total: number
+  answer_media?: QuizMedia
+  next_question?: QuizQuestion
+  result?: QuizWeekResult
+}
+
+export interface QuizReviewItem {
+  pos: number
+  question_id: number
+  text: string
+  options: string[]
+  has_image: boolean
+  answered: boolean
+  chosen_idx: number | null
+  correct_idx: number | null
+  is_correct: boolean | null
+  explanation?: string
+  option_note?: string
+  answer_media?: QuizMedia
+}
+
+export interface QuizReview {
+  week: number
+  finished: boolean
+  correct: number
+  total: number
+  items: QuizReviewItem[]
+  result?: QuizWeekResult
+}
+
+export interface QuizLeaderboardItem {
+  place: number
+  name: string
+  points: number
+  is_me: boolean
+}
+
+export interface QuizLeaderboard {
+  category: string
+  title: string
+  current_week: number
+  weeks: number
+  season_over: boolean
+  total: number
+  items: QuizLeaderboardItem[]
+  me: QuizLeaderboardItem | null
+}
+
+export interface QuizLevelResult {
+  accepted: boolean
+  category: string
+  pending_category?: string
+  pending_from_week?: number
+  points_after?: number
+}

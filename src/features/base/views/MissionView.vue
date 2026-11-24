@@ -143,6 +143,16 @@ onMounted(async () => {
         </div>
       </template>
     </template>
+
+    <!-- Ссылка на воскресный квиз: зачёт общий с ботом -->
+    <RouterLink v-if="mission" :to="{ name: 'base-quiz' }" class="mission__quiz ab-card ab-rise">
+      <span class="mission__quiz-icon" aria-hidden="true">🏆</span>
+      <span class="mission__quiz-body">
+        <span class="mission__quiz-title">Воскресный квиз</span>
+        <span class="mission__quiz-text">10 вопросов о футболе каждое воскресенье в 10:00. Отвечай здесь или в боте — зачёт общий.</span>
+      </span>
+      <span class="mission__quiz-arrow" aria-hidden="true">→</span>
+    </RouterLink>
   </div>
 </template>
 
@@ -161,6 +171,13 @@ onMounted(async () => {
 .mission__closed-text { color: var(--ab-text-dim); line-height: 1.55; margin: 0; max-width: 34ch; }
 .mission__actions { display: flex; gap: 12px; }
 .mission__next { flex: 1; }
+.mission__quiz { display: flex; align-items: center; gap: 14px; padding: 18px 20px; text-decoration: none; color: var(--ab-text); transition: all 150ms ease; }
+.mission__quiz:hover { border-color: var(--ab-blue-bright); transform: translateY(-2px); }
+.mission__quiz-icon { font-size: 1.8rem; }
+.mission__quiz-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.mission__quiz-title { font-family: var(--ab-font-display); font-weight: 800; }
+.mission__quiz-text { color: var(--ab-text-dim); font-size: 0.9rem; line-height: 1.45; }
+.mission__quiz-arrow { color: var(--ab-cyan); font-size: 1.3rem; font-weight: 800; }
 @media (max-width: 560px) {
   .mission__actions { position: sticky; bottom: 0; padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, transparent, rgba(6, 9, 18, 0.9) 30%); }

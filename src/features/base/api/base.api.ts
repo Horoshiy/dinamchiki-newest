@@ -1,10 +1,12 @@
 // Эндпоинты «Подтрибунки». Детские вызываются с child-токеном,
 // тренерские — со staff-токеном. Идентичность ребёнка сервер берёт из JWT.
-import { baseRequest } from './base.client'
+import { baseRequest, BaseApiError } from './base.client'
+import { appConfig } from '@/app/config/app.config'
 import type {
   AnswerInput, AttentionRow, BaseMe, BaseMission, BaseProgress, CodeInfo, CodeIssue,
   HistoryDetail, HistoryItem, ListResponse, LoginResponse, StaffAuthResponse,
   StaffChildDetail, StaffChildRow, SubmitResult, CoachNote, AdminWarmup,
+  QuizState, QuizParticipant, QuizStart, QuizAnswer, QuizReview, QuizLeaderboard, QuizLevelResult,
 } from './base.types'
 
 // ─── Вход ────────────────────────────────────────────────────────────────────
@@ -115,4 +117,46 @@ export function adminVerify(code: string): Promise<StaffAuthResponse> {
 /** Кто сегодня ответил хотя бы на один вопрос разминки, по группам. */
 export function adminWarmupToday(token: string): Promise<AdminWarmup> {
   return baseRequest<AdminWarmup>('admin/warmup/today', { token })
+}
+
+// ─── Воскресный квиз (зачёт общий с ботом) ────────────────────────────────────
+
+export function getQuizState(token: string): Promise<QuizState> {
+  return baseRequest<QuizState>('quiz/state', { token })
+}
+
+export function joinQuiz(token: string, category: string, confirm = false): Promise<QuizParticipant> {
+  return baseRequest<QuizParticipant>('quiz/join', { method: 'POST', body: { category, confirm }, token })
+}
+
+export function startQuizWeek(token: string, week: number): Promise<QuizStart> {
+  return baseRequest<QuizStart>(`quiz/weeks/${week}/start`, { method: 'POST', token })
+}
+
+export function getQuizWeek(token: string, week: number): Promise<QuizReview> {
+  return baseRequest<QuizReview>(`quiz/weeks/${week}`, { token })
+}
+
+export function answerQuiz(token: string, attemptId: number, pos: number, optionIdx: number): Promise<QuizAnswer> {
+  return baseRequest<QuizAnswer>(`quiz/attempts/${attemptId}/answer`, {
+    method: 'POST', body: { pos, option_idx: optionIdx }, token,
+  })
+}
+
+export function getQuizLeaderboard(token: string, category: string): Promise<QuizLeaderboard> {
+  return baseRequest<QuizLeaderboard>(`quiz/leaderboard?category=${encodeURIComponent(category)}`, { token })
+}
+
+export function decideQuizLevel(token: string, action: 'accept' | 'decline'): Promise<QuizLevelResult> {
+  return baseRequest<QuizLevelResult>('quiz/level', { method: 'POST', body: { action }, token })
+}
+
+/** Картинка вопроса / медиа ответа. Bearer не уходит в <img>, забираем blob'ом. */
+export async function fetchQuizMedia(token: string, questionId: number, kind: 'question' | 'answer'): Promise<string> {
+  const base = appConfig.baseApi.replace(/\/+$/, '')
+  const res = await fetch(`${base}/quiz/media/${questionId}?kind=${kind}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new BaseApiError(res.status, 'Не удалось загрузить картинку')
+  return URL.createObjectURL(await res.blob())
 }

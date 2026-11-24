@@ -4,10 +4,13 @@ import { appConfig } from '@/app/config/app.config'
 
 export class BaseApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  /** Машинный код ошибки (есть у квиз-эндпоинтов): already_answered, needs_confirm… */
+  code?: string
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.name = 'BaseApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -48,8 +51,8 @@ export async function baseRequest<T>(path: string, opts: RequestOptions = {}): P
       try { data = JSON.parse(text) } catch { data = null }
     }
     if (!res.ok) {
-      const msg = (data as { error?: string } | null)?.error || defaultError(res.status)
-      throw new BaseApiError(res.status, msg)
+      const err = data as { error?: string; code?: string } | null
+      throw new BaseApiError(res.status, err?.error || defaultError(res.status), err?.code)
     }
     return data as T
   } catch (e) {

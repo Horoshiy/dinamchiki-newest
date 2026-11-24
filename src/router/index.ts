@@ -29,6 +29,7 @@ const ConsentPage     = () => import('@/pages/legal/ConsentPage.vue')
 const AgentShell         = () => import('@/features/base/components/AgentShell.vue')
 const BaseLoginView      = () => import('@/features/base/views/LoginView.vue')
 const BaseMissionView    = () => import('@/features/base/views/MissionView.vue')
+const BaseQuizView       = () => import('@/features/base/views/QuizView.vue')
 const BaseProgressView   = () => import('@/features/base/views/ProgressView.vue')
 const BaseStaffView      = () => import('@/features/base/views/StaffView.vue')
 const BaseStaffChildView = () => import('@/features/base/views/StaffChildView.vue')
@@ -345,6 +346,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', name: 'base-login', component: BaseLoginView, meta: { title: 'Подтрибунка', noIndex: true } },
       { path: 'mission', name: 'base-mission', component: BaseMissionView, meta: { title: 'Разминка дня — Подтрибунка', noIndex: true } },
+      { path: 'quiz', name: 'base-quiz', component: BaseQuizView, meta: { title: 'Квиз — Подтрибунка', noIndex: true } },
       { path: 'progress', name: 'base-progress', component: BaseProgressView, meta: { title: 'Моя карточка — Подтрибунка', noIndex: true } },
       { path: 'staff', name: 'base-staff', component: BaseStaffView, meta: { title: 'Тренерская — Подтрибунка', noIndex: true } },
       { path: 'staff/child/:id', name: 'base-staff-child', component: BaseStaffChildView, props: true, meta: { title: 'Карточка игрока — Подтрибунка', noIndex: true } },
@@ -432,7 +434,7 @@ export const router = createRouter({
 router.beforeEach((to) => {
   if (!to.path.startsWith('/podtribunka')) return true
   const auth = useBaseAuth()
-  const needsChild = to.name === 'base-mission' || to.name === 'base-progress'
+  const needsChild = to.name === 'base-mission' || to.name === 'base-progress' || to.name === 'base-quiz'
   const needsStaff = to.name === 'base-staff-child'
   if (needsChild && !auth.isChildAuthed) return { name: 'base-login' }
   if (needsStaff && !auth.isStaffAuthed) return { name: 'base-staff' }

@@ -12,6 +12,9 @@ const route = useRoute()
       <RouterLink :to="{ name: 'base-mission' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-mission' }">
         <span aria-hidden="true">⚽</span> Разминка
       </RouterLink>
+      <RouterLink :to="{ name: 'base-quiz' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-quiz' }">
+        <span aria-hidden="true">🏆</span> Квиз
+      </RouterLink>
       <RouterLink :to="{ name: 'base-progress' }" class="base-nav__tab" :class="{ 'is-active': route.name === 'base-progress' }">
         <span aria-hidden="true">📇</span> Карточка
       </RouterLink>
