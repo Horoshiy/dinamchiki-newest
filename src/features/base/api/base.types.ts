@@ -474,3 +474,34 @@ export interface TeamBoard {
   items: TeamBoardItem[]
   me: TeamBoardItem | null
 }
+
+// ─── Админская таблица XP ─────────────────────────────────────────────────────
+
+export interface AdminXPTeam {
+  id: number
+  name: string
+  children: number
+}
+
+export interface AdminXPRow {
+  child_id: number
+  full_name: string
+  codename: string
+  team_name: string
+  xp: number
+  rank: string
+  streak_current: number
+  missions_total: number
+  quiz_points: number
+  quiz_category: string
+  last_mission_date: string
+}
+
+export interface AdminXPBoard {
+  teams: AdminXPTeam[]
+  team_id: number
+  items: AdminXPRow[]
+  total: number
+  xp_sum: number
+  xp_avg: number
+}

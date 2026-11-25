@@ -7,7 +7,7 @@ import type {
   HistoryDetail, HistoryItem, ListResponse, LoginResponse, StaffAuthResponse,
   StaffChildDetail, StaffChildRow, SubmitResult, CoachNote, AdminWarmup,
   QuizState, QuizParticipant, QuizStart, QuizAnswer, QuizReview, QuizLeaderboard, QuizLevelResult,
-  TeamBoard,
+  TeamBoard, AdminXPBoard,
 } from './base.types'
 
 // ─── Вход ────────────────────────────────────────────────────────────────────
@@ -123,6 +123,11 @@ export function adminVerify(code: string): Promise<StaffAuthResponse> {
 /** Кто сегодня ответил хотя бы на один вопрос разминки, по группам. */
 export function adminWarmupToday(token: string): Promise<AdminWarmup> {
   return baseRequest<AdminWarmup>('admin/warmup/today', { token })
+}
+
+/** Таблица XP по командам: team_id=0 — все команды. */
+export function adminXPBoard(token: string, teamId = 0): Promise<AdminXPBoard> {
+  return baseRequest<AdminXPBoard>(`admin/xp?team_id=${teamId}`, { token })
 }
 
 // ─── Воскресный квиз (зачёт общий с ботом) ────────────────────────────────────

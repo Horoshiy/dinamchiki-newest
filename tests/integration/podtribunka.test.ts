@@ -583,3 +583,70 @@ describe('командная таблица XP', () => {
     expect(w.text()).not.toContain('Таблица команды')
   })
 })
+
+// ─── Админская таблица XP ─────────────────────────────────────────────────────
+
+import AdminView from '@/features/base/views/AdminView.vue'
+import type { AdminXPBoard } from '@/features/base/api/base.types'
+
+const adminXPFixture = (): AdminXPBoard => ({
+  teams: [{ id: 1, name: 'Юг 2016', children: 2 }, { id: 2, name: 'Север 2015', children: 1 }],
+  team_id: 0, total: 3, xp_sum: 210, xp_avg: 70,
+  items: [
+    { child_id: 1, full_name: 'Лидеров Лидер', codename: 'Молния', team_name: 'Юг 2016', xp: 100, rank: 'Игрок', streak_current: 5, missions_total: 12, quiz_points: 30, quiz_category: 'k3', last_mission_date: '2026-11-24' },
+    { child_id: 2, full_name: 'Соколов Артём', codename: 'Сокол', team_name: 'Юг 2016', xp: 55, rank: 'Новичок', streak_current: 3, missions_total: 8, quiz_points: 29, quiz_category: 'k3', last_mission_date: '2026-11-23' },
+    { child_id: 3, full_name: 'Орлов Орёл', codename: '', team_name: 'Север 2015', xp: 55, rank: 'Новичок', streak_current: 0, missions_total: 2, quiz_points: 0, quiz_category: '', last_mission_date: '' },
+  ],
+})
+
+describe('админская таблица XP', () => {
+  function mountAdmin() {
+    vi.spyOn(api, 'adminWarmupToday').mockResolvedValue({ day_key: '2026-11-25', mission_id: 1, theme: '', weekday: 3, answered: 0, participants: 0, groups: [] })
+    const xp = vi.spyOn(api, 'adminXPBoard').mockResolvedValue(adminXPFixture())
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useBaseAuth()
+    auth.staffToken = 'staff-token'
+    auth.staffRole = 'admin'
+    auth.staffName = 'Админ'
+    const w = mount(AdminView, { global: { plugins: [pinia, router] } })
+    return { w, xp }
+  }
+
+  it('вкладка XP показывает таблицу с показателями', async () => {
+    const { w } = mountAdmin()
+    await flushPromises()
+    await w.findAll('.admin__tab').find((b) => b.text().includes('Таблица XP'))!.trigger('click')
+    await flushPromises()
+    expect(w.text()).toContain('Лидеров Лидер')
+    expect(w.text()).toContain('«Молния»')
+    expect(w.text()).toContain('Сумма XP')
+    const rows = w.findAll('.admin__table tbody tr')
+    expect(rows.length).toBe(3)
+    expect(rows[0].text()).toContain('Лидеров Лидер') // сортировка по XP по умолчанию
+  })
+
+  it('выбор команды перезапрашивает таблицу', async () => {
+    const { w, xp } = mountAdmin()
+    await flushPromises()
+    await w.findAll('.admin__tab').find((b) => b.text().includes('Таблица XP'))!.trigger('click')
+    await flushPromises()
+    await w.find('.admin__select').setValue('1')
+    await flushPromises()
+    expect(xp).toHaveBeenLastCalledWith('staff-token', 1)
+  })
+
+  it('клик по заголовку сортирует', async () => {
+    const { w } = mountAdmin()
+    await flushPromises()
+    await w.findAll('.admin__tab').find((b) => b.text().includes('Таблица XP'))!.trigger('click')
+    await flushPromises()
+    const missionsTh = w.findAll('.admin__table th').find((t) => t.text().includes('Разминок'))!
+    await missionsTh.trigger('click')
+    await flushPromises()
+    expect(w.findAll('.admin__table tbody tr')[0].text()).toContain('Лидеров Лидер') // 12 разминок
+    await missionsTh.trigger('click')
+    await flushPromises()
+    expect(w.findAll('.admin__table tbody tr')[0].text()).toContain('Орлов Орёл') // 2 разминки
+  })
+})
